@@ -11,7 +11,6 @@
 #ifndef AXIOM_DSCV_PROTOCOL_H
 #define AXIOM_DSCV_PROTOCOL_H
 
-#define PDEBUG
 #include "dprintf.h"
 
 #include "axiom_nic_api_user.h"

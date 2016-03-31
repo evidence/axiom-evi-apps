@@ -27,7 +27,6 @@ int main(int argc, char **argv)
 {
     int master_slave;
     axiom_dev_t *dev = NULL;
-    axiom_err_t err;
     axiom_node_id_t topology[AXIOM_NUM_NODES][AXIOM_NUM_INTERFACES];
     axiom_if_id_t routing_tables[AXIOM_NUM_NODES][AXIOM_NUM_NODES];
     axiom_if_id_t final_routing_table[AXIOM_NUM_NODES];
