@@ -30,6 +30,46 @@ axiom_sim_node_args_t axiom_nodes[AXIOM_NUM_NODES];
    id_node1 node, on its id_iface_1 is connected with id_node12 node
 */
 /* axiom_node_id_t topology[NUMBER_OF_NODES][AXIOM_NUM_INTERFACES]; */
+#ifdef EXAMPLE0
+axiom_topology_t start_topology = {
+    .topology = {
+        { 2, 3, AXIOM_NULL_NODE, AXIOM_NULL_NODE},
+        { 3, 2, AXIOM_NULL_NODE, AXIOM_NULL_NODE},
+        { 0, 1, AXIOM_NULL_NODE, AXIOM_NULL_NODE},
+        { 1, 0, AXIOM_NULL_NODE, AXIOM_NULL_NODE},
+    },
+    .num_nodes = AXIOM_NUM_NODES,
+    .num_interfaces = AXIOM_NUM_INTERFACES
+};
+axiom_topology_t end_test_topology = {
+    .topology = {
+        { 1, 3, AXIOM_NULL_NODE, AXIOM_NULL_NODE},
+        { 0, 2, AXIOM_NULL_NODE, AXIOM_NULL_NODE},
+        { 3, 1, AXIOM_NULL_NODE, AXIOM_NULL_NODE},
+        { 2, 0, AXIOM_NULL_NODE, AXIOM_NULL_NODE},
+    },
+    .num_nodes = AXIOM_NUM_NODES,
+    .num_interfaces = AXIOM_NUM_INTERFACES
+};
+int end_test_local_routing_table [AXIOM_NUM_NODES][AXIOM_NUM_NODES][AXIOM_NUM_INTERFACES] = {
+        {{ 0, 0, 0, 0},  /* Node 0 */
+        { 1, 0, 0, 0},
+        { 1, 0, 0, 0},
+        { 0, 1, 0, 0},},
+        {{ 1, 0, 0, 0},  /* Node 1 */
+        { 0, 0, 0, 0},
+        { 0, 1, 0, 0},
+        { 1, 0, 0, 0},},
+        {{ 0, 1, 0, 0},  /* Node 2 */
+        { 0, 1, 0, 0},
+        { 0, 0, 0, 0},
+        { 1, 0, 0, 0},},
+        {{ 0, 1, 0, 0},  /* Node 3 */
+        { 0, 1, 0, 0},
+        { 1, 0, 0, 0},
+        { 0, 0, 0, 0},},
+};
+#endif /* EXAMPLE0 */
 #ifdef EXAMPLE1
 axiom_topology_t start_topology = {
     .topology = {
