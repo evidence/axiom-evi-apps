@@ -18,6 +18,9 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 
+#ifndef AXIOM_SIM
+#define AXIOM_SIM   1
+#endif
 #include "axiom_node_code.h"
 #include "axiom_simulator.h"
 #include "axiom_net.h"
