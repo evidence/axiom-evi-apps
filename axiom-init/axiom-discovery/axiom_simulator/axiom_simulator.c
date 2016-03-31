@@ -15,6 +15,9 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 
+#ifndef AXIOM_SIM
+#define AXIOM_SIM   1
+#endif
 #include "axiom_simulator.h"
 #include "../axiom_route_compute.h"
 

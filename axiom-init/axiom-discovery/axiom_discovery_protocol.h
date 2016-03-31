@@ -16,10 +16,15 @@
 
 #include "axiom_nic_api_user.h"
 #include "axiom_nic_packets.h"
+#ifdef AXIOM_SIM
 #include "axiom_sim_topology.h" // XXX.REAL Into axiom_topology.h has to define:
                                 // - AXIOM_NUM_NODES (maximum nodes number, ex: 256)
                                 // - AXIOM_NUM_INTERFACES (4 interfaces )
-
+#else
+#define AXIOM_NUM_NODES               255
+#define AXIOM_NUM_INTERFACES          4
+#define AXIOM_NULL_NODE              255
+#endif
 
 /* Master node ID */
 #define AXIOM_MASTER_ID               0

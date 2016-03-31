@@ -500,13 +500,13 @@ int end_test_local_routing_table [AXIOM_NUM_NODES][AXIOM_NUM_NODES][AXIOM_NUM_IN
 #endif
 
 axiom_sim_topology_t final_topology = {
-    .num_nodes = AXIOM_NUM_NODES,
+    .num_nodes = AXIOM_MAX_NUM_NODES,
     .num_interfaces = AXIOM_NUM_INTERFACES
 };
 
-axiom_if_id_t all_routing_tables[AXIOM_NUM_NODES][AXIOM_NUM_NODES];
+axiom_if_id_t all_routing_tables[AXIOM_MAX_NUM_NODES][AXIOM_MAX_NUM_NODES];
 
-extern axiom_node_id_t topology[AXIOM_NUM_NODES][AXIOM_NUM_INTERFACES];
+extern axiom_node_id_t topology[AXIOM_MAX_NUM_NODES][AXIOM_NUM_INTERFACES];
 
 void *master(void *args)
 {
@@ -601,8 +601,12 @@ int main(int argc, char **argv)
     /* ********************************************************************* */
     printf("\n************* TEST RESULTS *******************");
     /* ************ TOPOLOGY *****************/
+#if 0
     cmp = memcmp(&end_test_topology.topology, &final_topology.topology,
                                         sizeof(final_topology.topology));
+#endif
+    cmp = memcmp(&end_test_topology.topology, &final_topology.topology,
+                  sizeof(uint8_t) * AXIOM_NUM_NODES * AXIOM_NUM_INTERFACES);
     if (cmp == 0)
     {
         printf("\nDiscovered Topology OK");

@@ -18,10 +18,10 @@ typedef struct node_args {
     pthread_t tid;
     int num_interfaces;
     axiom_node_id_t node_id;
-    axiom_node_id_t node_topology[AXIOM_NUM_NODES][AXIOM_NUM_INTERFACES];
-    int local_routing[AXIOM_NUM_NODES][AXIOM_NUM_INTERFACES];
-    axiom_if_id_t routing_tables[AXIOM_NUM_NODES][AXIOM_NUM_NODES];
-    axiom_if_id_t final_routing_table[AXIOM_NUM_NODES];
+    axiom_node_id_t node_topology[AXIOM_MAX_NUM_NODES][AXIOM_NUM_INTERFACES];
+    int local_routing[AXIOM_MAX_NUM_NODES][AXIOM_NUM_INTERFACES];
+    axiom_if_id_t routing_tables[AXIOM_MAX_NUM_NODES][AXIOM_NUM_NODES];
+    axiom_if_id_t final_routing_table[AXIOM_MAX_NUM_NODES];
     axiom_net_t *net;   /* net emulator status */
 } axiom_sim_node_args_t;
 

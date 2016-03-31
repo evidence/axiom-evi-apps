@@ -9,6 +9,9 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 
+#ifndef AXIOM_SIM
+#define AXIOM_SIM   1
+#endif
 #include "axiom_nic_packets.h"
 #include "axiom_nic_routing.h"
 #include "axiom_simulator.h"
