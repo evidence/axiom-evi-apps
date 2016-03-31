@@ -26,7 +26,8 @@
 int main(int argc, char **argv)
 {
     int master_slave;
-    axiom_dev_t *dev;
+    axiom_dev_t *dev = NULL;
+    axiom_err_t err;
     axiom_node_id_t topology[AXIOM_NUM_NODES][AXIOM_NUM_INTERFACES];
     axiom_if_id_t routing_tables[AXIOM_NUM_NODES][AXIOM_NUM_NODES];
     axiom_if_id_t final_routing_table[AXIOM_NUM_NODES];
@@ -42,6 +43,17 @@ int main(int argc, char **argv)
         exit(-1);
     }
 
+    /* open the axiom device */
+    dev = axiom_open(NULL);
+    if (dev == NULL)
+    {
+        perror("axiom_open()");
+        exit(-1);
+    }
+
+    /* bind the current process on port 0 */
+    /* err = axiom_bind(dev, AXIOM_SMALL_PORT_DISCOVERY); */
+
     if (master_slave == MASTER_PARAMETER)
     {
         /* Master code */
@@ -52,6 +64,8 @@ int main(int argc, char **argv)
         /* Slave code */
         axiom_slave_node_code(dev, topology, final_routing_table);
     }
+
+    axiom_close(dev);
 
     return 0;
 }
