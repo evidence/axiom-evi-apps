@@ -5,7 +5,7 @@ AXIOM_NIC_UL := ../../axiom-nic/axiom_user_library
 
 APPS := axiom_init
 CLEANFILES = $(APPS) *.o
-CFLAGS += -Wall -g -DPDEBUG -I../../axiom-docs/include/ -Iaxiom-discovery
+CFLAGS += -Wall -g -DPDEBUG -I$(AXIOM_INCLUDE) -I$(AXIOM_DISC)
 
 PWD := $(shell pwd)
 #MKFILE_DIR := $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
