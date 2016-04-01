@@ -30,7 +30,7 @@ typedef axiom_topology_t axiom_sim_topology_t;
 
 void print_topology(axiom_sim_topology_t *tpl);
 void print_local_routing_table(axiom_sim_node_args_t *nodes, int num_nodes);
-void print_routing_tables (axiom_if_id_t rt[][AXIOM_NUM_NODES]);
+void print_routing_tables (axiom_if_id_t rt[][AXIOM_MAX_NUM_NODES]);
 void print_received_routing_table(axiom_sim_node_args_t *nodes, int num_nodes);
 int start_nodes(axiom_sim_node_args_t *nodes, int num_nodes, int master_node,
                 void *(*master_body)(void *), void *(*slave_body)(void *));

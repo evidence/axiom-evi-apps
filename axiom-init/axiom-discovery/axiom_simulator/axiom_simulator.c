@@ -69,7 +69,7 @@ void print_local_routing_table(axiom_sim_node_args_t *nodes, int num_nodes)
     }
 }
 
-void print_routing_tables (axiom_if_id_t rt[][AXIOM_NUM_NODES])
+void print_routing_tables (axiom_if_id_t rt[][AXIOM_MAX_NUM_NODES])
 {
     int i, j;
     int comma = 0;
