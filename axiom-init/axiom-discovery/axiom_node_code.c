@@ -119,6 +119,9 @@ void axiom_master_node_code(axiom_dev_t *dev, axiom_node_id_t topology[][AXIOM_N
     /* print the final topology */
     print_topology(topology, number_of_total_nodes);
 
+    /* print my routing table */
+    print_my_routing_table(dev, AXIOM_MASTER_ID, number_of_total_nodes-1);
+
 }
 
 /* Slave node code*/
@@ -151,7 +154,7 @@ void axiom_slave_node_code(axiom_dev_t *dev, axiom_node_id_t topology[][AXIOM_NU
             else
             {
                 /* print my routing table */
-               print_my_routing_table(dev, my_node_id, max_node_id);
+                print_my_routing_table(dev, my_node_id, max_node_id);
 
             }
         }
