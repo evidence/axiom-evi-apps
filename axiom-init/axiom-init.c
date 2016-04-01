@@ -15,6 +15,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <getopt.h>
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -27,9 +28,9 @@
 
 static void usage(void)
 {
-    printf("usage: ./axiom-init [OPTION...]\n");
-    printf("-n\t\tslave | master\t\tstart node as master or as slave\n");
-    printf("-h, --help\t\t\t\tprint this help\n");
+    printf("usage: axiom-init -n [master | slave]\n\n");
+    printf("-n, --node  [slave | master]   start node as master or as slave\n");
+    printf("-h, --help                     print this help\n\n");
 }
 
 int main(int argc, char **argv)
@@ -37,45 +38,39 @@ int main(int argc, char **argv)
     int master_slave, ret;
     char *s_master = "master";
     char *s_slave = "slave";
-    int c;
-    char cvalue[30];
+    char node_str[30];
     axiom_dev_t *dev = NULL;
+
+    int long_index =0;
+    int opt = 0;
     axiom_node_id_t topology[AXIOM_NUM_NODES][AXIOM_NUM_INTERFACES];
     axiom_if_id_t routing_tables[AXIOM_NUM_NODES][AXIOM_NUM_NODES];
     axiom_if_id_t final_routing_table[AXIOM_NUM_NODES];
+    static struct option long_options[] = {
+        {"node", required_argument, 0, 'n'},
+        {"help", no_argument, 0, 'h'},
+        {0, 0, 0, 0}
+    };
 
-    while ((c = getopt (argc, argv, "hn:")) != -1)
+
+    while ((opt = getopt_long(argc, argv,"hn:",
+                         long_options, &long_index )) != -1)
     {
-        switch (c)
+        switch (opt)
         {
-            case 'h':
-                usage();
-                exit(-1);
             case 'n':
-                sscanf(optarg, "%s", cvalue);
+                sscanf(optarg, "%s", node_str);
                 break;
-            case '?':
-                if (optopt == 'n')
-                {
-                    usage();
-                }
-                else if (isprint (optopt))
-                {
-                    usage();
-                }
-                else
-                {
-                    usage();
-                }
-                return 1;
+            case 'h':
             default:
+                usage();
                 exit(-1);
         }
     }
 
-    if (strlen(cvalue) == strlen(s_master))
+    if (strlen(node_str) == strlen(s_master))
     {
-        ret = memcmp(cvalue, s_master, strlen(cvalue));
+        ret = memcmp(node_str, s_master, strlen(node_str));
         if (ret == 0)
         {
             master_slave = MASTER_PARAMETER;
@@ -86,26 +81,23 @@ int main(int argc, char **argv)
             exit(-1);
         }
     }
-    else
+    else if (strlen(node_str) == strlen(s_slave))
     {
-        if (strlen(cvalue) == strlen(s_slave))
+        ret = memcmp(node_str, s_slave, strlen(node_str));
+        if (ret == 0)
         {
-            ret = memcmp(cvalue, s_slave, strlen(cvalue));
-            if (ret == 0)
-            {
-                master_slave = SLAVE_PARAMETER;
-            }
-            else
-            {
-                usage();
-                exit(-1);
-            }
+            master_slave = SLAVE_PARAMETER;
         }
         else
         {
             usage();
             exit(-1);
         }
+    }
+    else
+    {
+        usage();
+        exit(-1);
     }
 
     /* open the axiom device */

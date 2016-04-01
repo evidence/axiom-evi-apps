@@ -21,19 +21,20 @@
 
 #include "axiom_nic_types.h"
 #include "axiom_nic_api_user.h"
+#include "axiom_nic_packets.h"
 
 static void usage(void)
 {
-    printf("usage: ./axiom-recv-small [OPTION...]\n");
-    printf("-p, --port\tport_id\t\tport used for receiving\n");
-    printf("-h, --help\t\t\tprint this help\n");
+    printf("usage: axiom-recv-small [-p port]\n\n");
+    printf("-p, --port  port     port used for receiving\n");
+    printf("-h, --help           print this help\n\n");
 }
 
 int main(int argc, char **argv)
 {
     axiom_dev_t *dev = NULL;
     axiom_msg_id_t recv_ret;
-    axiom_node_id_t src_id;
+    axiom_node_id_t src_id, my_node_id;
     int port, port_ok = 0;
     axiom_flag_t flag;
     axiom_payload_t payload;
@@ -90,11 +91,6 @@ int main(int argc, char **argv)
             printf("port number = %i\n", port);
         }
     }
-    else
-    {
-        usage();
-        exit(-1);
-    }
 
     /* open the axiom device */
     dev = axiom_open(NULL);
@@ -104,9 +100,16 @@ int main(int argc, char **argv)
         exit(-1);
     }
 
-    /* bind the current process on port */
-    /* err = axiom_bind(dev, port); */
+    my_node_id = axiom_get_node_id(dev);
 
+    /* bind the current process on port */
+#if 0
+    if (port_ok == 1) {
+        err = axiom_bind(dev, port);
+    }
+#endif
+
+    printf("[node %d] receiving small message...\n", my_node_id);
     /* receive a small message from port*/
     recv_ret =  axiom_recv_small(dev, &src_id, (axiom_port_t *)&port, &flag, &payload);
     if (recv_ret == AXIOM_RET_ERROR)
@@ -116,7 +119,11 @@ int main(int argc, char **argv)
     else
     {
         printf("Message received on port %d\n", port);
-        printf("\t- source_node_id = %d\n", src_id);
+        if (flag & AXIOM_SMALL_FLAG_NEIGHBOUR) {
+            printf("\t- local_interface = %d\n", src_id);
+        } else {
+            printf("\t- source_node_id = %d\n", src_id);
+        }
         printf("\t- flag = %d\n", flag);
         printf("\t- payload = %d\n", payload);
     }

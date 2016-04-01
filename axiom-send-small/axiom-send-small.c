@@ -21,43 +21,43 @@
 
 #include "axiom_nic_types.h"
 #include "axiom_nic_api_user.h"
+#include "axiom_nic_packets.h"
 
 static void usage(void)
 {
-    printf("usage: ./axiom-sen-small [OPTION...]\n");
-    printf("--port\t\tport_id\t\tport used for sending\n");
-    printf("--id\t\tnode_id\t\tid of the destination node \n");
-    printf("--payload\tpayload\t\tmessage to send \n");
-    printf("-h, --help\t\t\tprint this help\n");
+    printf("usage: ./axiom-sen-small [[-p port] [-n] [-h]] -d dest -l payload\n\n");
+    printf("-p, --port      port     port used for sending\n");
+    printf("-d, --dest      dest     dest node id or local if (TO_NEIGHBOUR) \n");
+    printf("-n, --neighbour          send to neighbour\n");
+    printf("-l, --payload   payload  message to send \n");
+    printf("-h, --help               print this help\n");
 }
 
 int main(int argc, char **argv)
 {
     axiom_dev_t *dev = NULL;
-    axiom_msg_id_t recv_ret;
-    int port, dst_id, port_ok = 0, dst_ok = 0, payload_ok = 0;
+    axiom_msg_id_t recv_ret, my_node_id;
+    int port = 1, dst_id, port_ok = 0, dst_ok = 0, payload_ok = 0, to_neighbour = 0;
     axiom_flag_t flag = 0;
     axiom_payload_t payload;
 
     int long_index =0;
     int opt = 0;
     static struct option long_options[] = {
-        {"id", required_argument, 0, 'i'},
+        {"dest", required_argument, 0, 'd'},
         {"port", required_argument, 0, 'p'},
-        {"payload", required_argument, 0, 'm'},
-        {"helb", no_argument, 0, 'h'},
+        {"payload", required_argument, 0, 'l'},
+        {"neighbour", no_argument, 0, 'n'},
+        {"help", no_argument, 0, 'h'},
         {0, 0, 0, 0}
     };
 
 
-    while ((opt = getopt_long(argc, argv,"i:p:",
+    while ((opt = getopt_long(argc, argv,"hp:d:nl:",
                          long_options, &long_index )) != -1)
     {
         switch (opt)
         {
-            case 'h':
-                usage();
-                exit(-1);
             case 'p' :
                 if (sscanf(optarg, "%i", &port) != 1)
                 {
@@ -70,7 +70,7 @@ int main(int argc, char **argv)
                 }
                 break;
 
-            case 'i' :
+            case 'd' :
                if (sscanf(optarg, "%i", &dst_id) != 1)
                {
                    usage();
@@ -82,7 +82,11 @@ int main(int argc, char **argv)
                }
                break;
 
-            case 'm' :
+            case 'n' :
+               to_neighbour = 1;
+               break;
+
+            case 'l' :
                if (sscanf(optarg, "%i", &payload) != 1)
                {
                    usage();
@@ -93,12 +97,8 @@ int main(int argc, char **argv)
                    payload_ok = 1;
                }
                break;
-
-            case '?':
-                usage();
-                exit(-1);
-
-             default:
+            case 'h':
+            default:
                 usage();
                 exit(-1);
         }
@@ -110,18 +110,13 @@ int main(int argc, char **argv)
         /* port arameter inserted */
         if ((port <= 0) || (port > 255))
         {
-            printf("Allowed port number = %i; [0 < port < 256]\n", port);
+            printf("Port not allowed [%i]; [0 < port < 256]\n", port);
             exit(-1);
         }
         else
         {
             printf("port number = %i\n", port);
         }
-    }
-    else
-    {
-        usage();
-        exit(-1);
     }
 
     /* check destination node parameter */
@@ -155,6 +150,12 @@ int main(int argc, char **argv)
         exit(-1);
     }
 
+    /* check neighbour parameter */
+    if (to_neighbour == 1)
+    {
+        flag = AXIOM_SMALL_FLAG_NEIGHBOUR;
+    }
+
 
 
     /* open the axiom device */
@@ -165,10 +166,17 @@ int main(int argc, char **argv)
         exit(-1);
     }
 
-    /* bind the current process on port */
-    /* err = axiom_bind(dev, port); */
+    my_node_id = axiom_get_node_id(dev);
 
-    /* receive a small message from port*/
+    /* bind the current process on port */
+#if 0
+    if (port_ok == 1) {
+        err = axiom_bind(dev, port);
+    }
+#endif
+
+    printf("[node %d] sending small message...\n", my_node_id);
+    /* send a small message*/
     recv_ret =  axiom_send_small(dev, (axiom_node_id_t)dst_id,
                                 (axiom_port_t)port, flag,
                                  (axiom_payload_t*)&payload);
@@ -179,7 +187,11 @@ int main(int argc, char **argv)
     else
     {
         printf("Message sent to port %d\n", port);
-        printf("\t- destination_node_id = %d\n", dst_id);
+        if (flag & AXIOM_SMALL_FLAG_NEIGHBOUR) {
+            printf("\t- local_interface = %d\n", dst_id);
+        } else {
+            printf("\t- destination_node_id = %d\n", dst_id);
+        }
         printf("\t- flag = %d\n", flag);
         printf("\t- payload = %d\n", payload);
     }
