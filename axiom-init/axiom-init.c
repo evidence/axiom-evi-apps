@@ -25,6 +25,13 @@
 #define SLAVE_PARAMETER     0
 #define MASTER_PARAMETER    1
 
+static void usage(void)
+{
+    printf("usage: ./axiom-init [OPTION...]\n");
+    printf("-n\t\tslave | master\t\tstart node as master or as slave\n");
+    printf("-h, --help\t\t\t\tprint this help\n");
+}
+
 int main(int argc, char **argv)
 {
     int master_slave, ret;
@@ -37,38 +44,28 @@ int main(int argc, char **argv)
     axiom_if_id_t routing_tables[AXIOM_NUM_NODES][AXIOM_NUM_NODES];
     axiom_if_id_t final_routing_table[AXIOM_NUM_NODES];
 
-#if 0
-    /* first parameter: Master or slave */
-    if (argc < 2) {
-        printf("Parameter required: Master or Slave\n");
-        exit(-1);
-    }
-
-    if (sscanf(argv[1], "%i", &master_slave) != 1) {
-        perror("parameter is not an integer");
-        exit(-1);
-    }
-#endif
-
-    while ((c = getopt (argc, argv, "n:")) != -1)
+    while ((c = getopt (argc, argv, "hn:")) != -1)
     {
         switch (c)
         {
+            case 'h':
+                usage();
+                exit(-1);
             case 'n':
                 sscanf(optarg, "%s", cvalue);
                 break;
             case '?':
                 if (optopt == 'n')
                 {
-                    printf ("Option -%c requires an argument.\n", optopt);
+                    usage();
                 }
                 else if (isprint (optopt))
                 {
-                    printf ("Unknown option '-%c'.\n", optopt);
+                    usage();
                 }
                 else
                 {
-                    printf ("Unknown option character '\\x%x'.\n", optopt);
+                    usage();
                 }
                 return 1;
             default:
@@ -85,7 +82,7 @@ int main(int argc, char **argv)
         }
         else
         {
-            printf("Parameter required: -n master or slave\n");
+            usage();
             exit(-1);
         }
     }
@@ -100,13 +97,13 @@ int main(int argc, char **argv)
             }
             else
             {
-                printf("Parameter required: -n master or slave\n");
+                usage();
                 exit(-1);
             }
         }
         else
         {
-            printf("Parameter required: -n master or slave\n");
+            usage();
             exit(-1);
         }
     }
