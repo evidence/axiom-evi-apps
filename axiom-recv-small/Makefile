@@ -1,6 +1,6 @@
 AXIOM_NIC_UL := ../../axiom-nic/axiom_user_library
 
-APPS := axiom_recv_small
+APPS := axiom-recv-small
 CLEANFILES = $(APPS) *.o
 CFLAGS += -Wall -g -DPDEBUG -I../../axiom-docs/include/
 
@@ -9,9 +9,9 @@ CFLAGS += -Wall -g -DPDEBUG -I../../axiom-docs/include/
 
 all: $(APPS)
 
-axiom_recv_small: axiom_recv_small.o $(AXIOM_NIC_UL)/axiom_user_api.o
+axiom-recv-small: axiom-recv-small.o $(AXIOM_NIC_UL)/axiom_user_api.o
 
-axiom_recv_small.o: axiom_recv_small.c
+axiom-recv-small.o: axiom-recv-small.c
 
 clean:
 	rm -rf $(CLEANFILES)
