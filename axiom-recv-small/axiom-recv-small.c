@@ -22,6 +22,13 @@
 #include "axiom_nic_types.h"
 #include "axiom_nic_api_user.h"
 
+static void usage(void)
+{
+    printf("usage: ./axiom-recv-small [OPTION...]\n");
+    printf("-p, --port\tport_id\t\tport used for receiving\n");
+    printf("-h, --help\t\t\tprint this help\n");
+}
+
 int main(int argc, char **argv)
 {
     axiom_dev_t *dev = NULL;
@@ -35,19 +42,23 @@ int main(int argc, char **argv)
     int opt = 0;
     static struct option long_options[] = {
             {"port", required_argument, 0, 'p'},
+            {"help", no_argument,       0, 'h'},
             {0, 0, 0, 0}
     };
 
 
-    while ((opt = getopt_long(argc, argv,"p:",
+    while ((opt = getopt_long(argc, argv,"hp:",
                          long_options, &long_index )) != -1)
     {
         switch (opt)
         {
-             case 'p' :
+            case 'h':
+                usage();
+                exit(-1);
+            case 'p' :
                 if (sscanf(optarg, "%i", &port) != 1)
                 {
-                    printf("please use option --port 'port_number'\n");
+                    usage();
                     exit(-1);
                 }
                 else
@@ -57,11 +68,11 @@ int main(int argc, char **argv)
                 break;
 
             case '?':
-                printf ("An argument is required\n");
+                usage();
                 exit(-1);
 
              default:
-                printf("Allowed paramater is --port 'port_number'\n");
+                usage();
                 exit(-1);
         }
     }
@@ -81,7 +92,7 @@ int main(int argc, char **argv)
     }
     else
     {
-        printf("please use option --port 'port_number'\n");
+        usage();
         exit(-1);
     }
 
