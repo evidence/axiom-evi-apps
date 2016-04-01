@@ -82,7 +82,6 @@ int main(int argc, char **argv)
         if (ret == 0)
         {
             master_slave = MASTER_PARAMETER;
-            printf ("                   master!!!\n");
         }
         else
         {
@@ -98,7 +97,6 @@ int main(int argc, char **argv)
             if (ret == 0)
             {
                 master_slave = SLAVE_PARAMETER;
-                printf ("               slave!!!\n");
             }
             else
             {
