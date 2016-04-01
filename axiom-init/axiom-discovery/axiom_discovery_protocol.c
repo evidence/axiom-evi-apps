@@ -317,7 +317,9 @@ int axiom_slave_node_discovery (
     /* init local topolgy structure */
     init_topology_structure(topology);
 
-
+    /* sets its id to zero */
+    *my_node_id = 0;
+    axiom_set_node_id(dev, *my_node_id);
     /* Reads its id */
     *my_node_id = axiom_get_node_id(dev);
 
