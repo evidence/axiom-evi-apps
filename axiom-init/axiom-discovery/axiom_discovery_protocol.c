@@ -293,6 +293,9 @@ int axiom_master_node_discovery(axiom_dev_t *dev,
 
     init_topology_structure(topology);
 
+    /* sets its id to zero */
+    axiom_set_node_id(dev, AXIOM_MASTER_ID);
+
     ret = discover_phase(dev, &next_id, topology);
     *number_of_total_nodes = next_id + 1;
 
