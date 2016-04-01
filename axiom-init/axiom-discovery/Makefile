@@ -1,8 +1,9 @@
+AXIOM_INCLUDE := ../../../axiom-docs/include
 AXIOM_SIM := axiom_simulator
 
 APPS := axiom_discovery_protocol_test axsw_discovery_protocol_test
 CLEANFILES = $(APPS) *.o $(AXIOM_SIM)/*.o
-CFLAGS += -Wall -g -DPDEBUG -I../../../axiom-docs/include/ -I./axiom_simulator/
+CFLAGS += -Wall -g -DPDEBUG -I$(AXIOM_INCLUDE) -I./axiom_simulator/
 LDFLAGS += -pthread
 
 PWD := $(shell pwd)
