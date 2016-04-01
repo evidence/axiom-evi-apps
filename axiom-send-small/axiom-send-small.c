@@ -22,6 +22,15 @@
 #include "axiom_nic_types.h"
 #include "axiom_nic_api_user.h"
 
+static void usage(void)
+{
+    printf("usage: ./axiom-sen-small [OPTION...]\n");
+    printf("--port\t\tport_id\t\tport used for sending\n");
+    printf("--id\t\tnode_id\t\tid of the destination node \n");
+    printf("--payload\tpayload\t\tmessage to send \n");
+    printf("-h, --help\t\t\tprint this help\n");
+}
+
 int main(int argc, char **argv)
 {
     axiom_dev_t *dev = NULL;
@@ -36,6 +45,7 @@ int main(int argc, char **argv)
         {"id", required_argument, 0, 'i'},
         {"port", required_argument, 0, 'p'},
         {"payload", required_argument, 0, 'm'},
+        {"helb", no_argument, 0, 'h'},
         {0, 0, 0, 0}
     };
 
@@ -45,10 +55,13 @@ int main(int argc, char **argv)
     {
         switch (opt)
         {
-             case 'p' :
+            case 'h':
+                usage();
+                exit(-1);
+            case 'p' :
                 if (sscanf(optarg, "%i", &port) != 1)
                 {
-                    printf("please use option --port 'port_number'\n");
+                    usage();
                     exit(-1);
                 }
                 else
@@ -60,7 +73,7 @@ int main(int argc, char **argv)
             case 'i' :
                if (sscanf(optarg, "%i", &dst_id) != 1)
                {
-                   printf("please use option --id 'destination_node_id'\n");
+                   usage();
                    exit(-1);
                }
                else
@@ -72,7 +85,7 @@ int main(int argc, char **argv)
             case 'm' :
                if (sscanf(optarg, "%i", &payload) != 1)
                {
-                   printf("please use option --payload 'payload'\n");
+                   usage();
                    exit(-1);
                }
                else
@@ -82,11 +95,11 @@ int main(int argc, char **argv)
                break;
 
             case '?':
-                printf ("Specific arguments are required\n");
+                usage();
                 exit(-1);
 
              default:
-                printf("Allowed paramater are --id 'destination_node_id' -port 'port_number'\n");
+                usage();
                 exit(-1);
         }
     }
@@ -107,7 +120,7 @@ int main(int argc, char **argv)
     }
     else
     {
-        printf("please use all options\n");
+        usage();
         exit(-1);
     }
 
@@ -127,7 +140,7 @@ int main(int argc, char **argv)
     }
     else
     {
-        printf("please use all options\n");
+        usage();
         exit(-1);
     }
 
@@ -138,7 +151,7 @@ int main(int argc, char **argv)
     }
     else
     {
-        printf("please use all options\n");
+        usage();
         exit(-1);
     }
 
