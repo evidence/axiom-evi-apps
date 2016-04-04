@@ -17,9 +17,12 @@ CC := ${CCPREFIX}gcc
 
 all: $(APPS)
 
-axiom-send-small: axiom-send-small.o $(AXIOM_NIC_UL)/axiom_user_api.o
+axiom-send-small: axiom-send-small.o $(AXIOM_NIC_UL)/axiom_user_api.a
 
 axiom-send-small.o: axiom-send-small.c
+
+$(AXIOM_NIC_UL)/axiom_user_api.a:
+	cd $(AXIOM_NIC_UL) && make CCPREFIX=$(CCPREFIX)
 
 install: $(APPS)
 	cp $(APPS) $(DESTDIR)/usr/bin/

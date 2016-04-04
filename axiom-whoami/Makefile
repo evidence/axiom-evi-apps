@@ -16,9 +16,12 @@ CC := ${CCPREFIX}gcc
 
 all: $(APPS)
 
-axiom-whoami: axiom-whoami.o $(AXIOM_NIC_UL)/axiom_user_api.o
+axiom-whoami: axiom-whoami.o $(AXIOM_NIC_UL)/axiom_user_api.a
 
 axiom-whoami.o: axiom-whoami.c
+
+$(AXIOM_NIC_UL)/axiom_user_api.a:
+	cd $(AXIOM_NIC_UL) && make CCPREFIX=$(CCPREFIX)
 
 install: $(APPS)
 	cp $(APPS) $(DESTDIR)/usr/bin/
