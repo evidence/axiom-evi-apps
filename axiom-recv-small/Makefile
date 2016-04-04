@@ -3,8 +3,6 @@ AXIOM_NIC_UL := ../../axiom-evi-nic/axiom_user_library
 
 APPS := axiom-recv-small
 CLEANFILES = $(APPS) *.o
-DFLAGS := -g -DPDEBUG
-CFLAGS += -Wall $(DFLAGS) -I$(AXIOM_INCLUDE)
 
 PWD := $(shell pwd)
 #MKFILE_DIR := $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
@@ -13,6 +11,8 @@ DESTDIR := ${BUILDROOT}/output/target
 CCPREFIX := ${BUILDROOT}/output/host/usr/bin/arm-linux-
 CC := ${CCPREFIX}gcc
 
+DFLAGS := -g -DPDEBUG
+CFLAGS += -Wall $(DFLAGS) -I$(PWD)/$(AXIOM_INCLUDE)
 
 .PHONY: all clean
 
