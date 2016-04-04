@@ -1,7 +1,7 @@
-AXIOM_INCLUDE := ../../axiom-docs/include
+AXIOM_INCLUDE := ../../axiom-evi-nic/include
 AXIOM_DISC := axiom-discovery
 AXIOM_SIM := $(AXIOM_DISC)/axiom_simulator
-AXIOM_NIC_UL := ../../axiom-nic/axiom_user_library
+AXIOM_NIC_UL := ../../axiom-evi-nic/axiom_user_library
 
 APPS := axiom-init
 CLEANFILES = $(APPS) *.o
@@ -9,7 +9,7 @@ CFLAGS += -Wall -g -DPDEBUG -I$(AXIOM_INCLUDE) -I$(AXIOM_DISC)
 
 PWD := $(shell pwd)
 #MKFILE_DIR := $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
-BUILDROOT := ${PWD}/../../axiom-buildroot
+BUILDROOT := ${PWD}/../../axiom-evi-buildroot
 DESTDIR := ${BUILDROOT}/output/target
 CCPREFIX := ${BUILDROOT}/output/host/usr/bin/arm-linux-
 CC := ${CCPREFIX}gcc

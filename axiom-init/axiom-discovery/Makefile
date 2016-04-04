@@ -1,4 +1,4 @@
-AXIOM_INCLUDE := ../../../axiom-docs/include
+AXIOM_INCLUDE := ../../../axiom-evi-nic/include
 AXIOM_SIM := axiom_simulator
 
 APPS := axiom_discovery_protocol_test axsw_discovery_protocol_test
@@ -8,7 +8,7 @@ LDFLAGS += -pthread
 
 PWD := $(shell pwd)
 #MKFILE_DIR := $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
-BUILDROOT := ${PWD}/../../../axiom-buildroot
+BUILDROOT := ${PWD}/../../../axiom-evi-buildroot
 DESTDIR := ${BUILDROOT}/output/target
 CCPREFIX := ${BUILDROOT}/output/host/usr/bin/arm-linux-
 CC := ${CCPREFIX}gcc
