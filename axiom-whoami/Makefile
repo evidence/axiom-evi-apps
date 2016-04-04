@@ -3,7 +3,8 @@ AXIOM_NIC_UL := ../../axiom-evi-nic/axiom_user_library
 
 APPS := axiom-whoami
 CLEANFILES = $(APPS) *.o
-CFLAGS += -Wall -g -DPDEBUG -I$(AXIOM_INCLUDE)
+DFLAGS := -g -DPDEBUG
+CFLAGS += -Wall $(DFLAGS) -I$(AXIOM_INCLUDE)
 
 PWD := $(shell pwd)
 #MKFILE_DIR := $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
