@@ -25,7 +25,7 @@
 
 static void usage(void)
 {
-    printf("usage: ./axiom-sen-small [[-p port] [-n] [-h]] -d dest -l payload\n\n");
+    printf("usage: ./axiom-send-small [[-p port] [-n] [-h]] -d dest -l payload\n\n");
     printf("-p, --port      port     port used for sending\n");
     printf("-d, --dest      dest     dest node id or local if (TO_NEIGHBOUR) \n");
     printf("-n, --neighbour          send to neighbour\n");
