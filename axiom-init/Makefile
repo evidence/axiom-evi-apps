@@ -3,7 +3,7 @@ AXIOM_DISC := axiom-discovery
 AXIOM_NIC_UL := ../../axiom-evi-nic/axiom_user_library
 
 APPS := axiom-init
-CLEANFILES = $(APPS) *.o $(AXIOM_DISC)/*.o
+CLEANFILES = $(APPS) *.o
 
 PWD := $(shell pwd)
 #MKFILE_DIR := $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
@@ -15,9 +15,9 @@ CC := ${CCPREFIX}gcc
 DFLAGS := -g -DPDEBUG
 CFLAGS += -Wall $(DFLAGS) -I$(PWD)/$(AXIOM_INCLUDE) -I$(PWD)/$(AXIOM_DISC)
 
-.PHONY: all clean
+.PHONY: all clean axiom-discovery
 
-all: $(APPS)
+all: $(APPS) axiom-discovery
 
 axiom-init: axiom-init.o  $(AXIOM_DISC)/axiom_node_code.o $(AXIOM_DISC)/axiom_discovery_protocol.o $(AXIOM_DISC)/axiom_route_compute.o $(AXIOM_DISC)/axiom_route_delivery.o $(AXIOM_DISC)/axiom_route_set.o $(AXIOM_NIC_UL)/axiom_user_api.a
 
@@ -26,10 +26,14 @@ axiom-init.o: axiom-init.c $(AXIOM_INCLUDE)/axiom_nic_types.h $(AXIOM_INCLUDE)/a
 $(AXIOM_NIC_UL)/axiom_user_api.a:
 	cd $(AXIOM_NIC_UL) && make CCPREFIX=$(CCPREFIX)
 
+axiom_disovery:
+	cd $(AXIOM_DISC) && make CCPREFIX=$(CCPREFIX)
+
 install: $(APPS)
 	cp $(APPS) $(DESTDIR)/usr/bin/
 
 clean:
+	cd $(AXIOM_DISC) && make clean
 	rm -rf $(CLEANFILES)
 
 
