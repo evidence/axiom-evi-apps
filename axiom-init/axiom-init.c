@@ -26,10 +26,14 @@
 #define SLAVE_PARAMETER     0
 #define MASTER_PARAMETER    1
 
+int verbose = 0;
+
 static void usage(void)
 {
-    printf("usage: axiom-init -n [master | slave]\n\n");
+    printf("usage: axiom-init -n [master | slave]\n");
+    printf("Start AXIOM discovery and routing algorithm in master or slaves mode\n\n");
     printf("-n, --node  [slave | master]   start node as master or as slave\n");
+    printf("-v, --verbose                  verbose output\n\n");
     printf("-h, --help                     print this help\n\n");
 }
 
@@ -48,18 +52,22 @@ int main(int argc, char **argv)
     axiom_if_id_t final_routing_table[AXIOM_MAX_NODES];
     static struct option long_options[] = {
         {"node", required_argument, 0, 'n'},
+        {"verbose", no_argument, 0, 'v'},
         {"help", no_argument, 0, 'h'},
         {0, 0, 0, 0}
     };
 
 
-    while ((opt = getopt_long(argc, argv,"hn:",
+    while ((opt = getopt_long(argc, argv,"hvn:",
                          long_options, &long_index )) != -1)
     {
         switch (opt)
         {
             case 'n':
                 sscanf(optarg, "%s", node_str);
+                break;
+            case 'v':
+                verbose = 1;
                 break;
             case 'h':
             default:
@@ -113,13 +121,21 @@ int main(int argc, char **argv)
 
     if (master_slave == MASTER_PARAMETER)
     {
+        printf("Starting master node...\n");
+
         /* Master code */
-        axiom_master_node_code(dev, topology, routing_tables, final_routing_table);
+        axiom_master_node_code(dev, topology, routing_tables, final_routing_table, verbose);
+
+        printf("\nMaster node end\n");
     }
     else
     {
+        printf("Starting slave node...\n");
+
         /* Slave code */
-        axiom_slave_node_code(dev, topology, final_routing_table);
+        axiom_slave_node_code(dev, topology, final_routing_table, verbose);
+
+        printf("\nSlave node end\n");
     }
 
     axiom_close(dev);

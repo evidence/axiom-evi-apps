@@ -15,6 +15,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <getopt.h>
+#include <inttypes.h>
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -22,11 +23,14 @@
 #include "axiom_nic_types.h"
 #include "axiom_nic_api_user.h"
 #include "axiom_nic_packets.h"
+#include "dprintf.h"
 
 static void usage(void)
 {
-    printf("usage: axiom-recv-small [-p port]\n\n");
+    printf("usage: axiom-recv-small [[-p port] [-o] | [-h]]\n");
+    printf("Receive AXIOM small raw message\n\n");
     printf("-p, --port  port     port used for receiving\n");
+    printf("-o, --once           receive once\n\n");
     printf("-h, --help           print this help\n\n");
 }
 
@@ -35,7 +39,8 @@ int main(int argc, char **argv)
     axiom_dev_t *dev = NULL;
     axiom_msg_id_t recv_ret;
     axiom_node_id_t src_id, my_node_id;
-    int port, port_ok = 0;
+    axiom_port_t port, recv_port;
+    int port_ok = 0, once = 0;
     axiom_flag_t flag;
     axiom_payload_t payload;
 
@@ -43,36 +48,32 @@ int main(int argc, char **argv)
     int opt = 0;
     static struct option long_options[] = {
             {"port", required_argument, 0, 'p'},
+            {"once", no_argument,       0, 'o'},
             {"help", no_argument,       0, 'h'},
             {0, 0, 0, 0}
     };
 
 
-    while ((opt = getopt_long(argc, argv,"hp:",
+    while ((opt = getopt_long(argc, argv,"hop:",
                          long_options, &long_index )) != -1)
     {
         switch (opt)
         {
-            case 'h':
-                usage();
-                exit(-1);
+            case 'o':
+                once = 1;
+                break;
+
             case 'p' :
-                if (sscanf(optarg, "%i", &port) != 1)
+                if (sscanf(optarg, "%" SCNu8, &port) != 1)
                 {
                     usage();
                     exit(-1);
                 }
-                else
-                {
-                    port_ok = 1;
-                }
+                port_ok = 1;
                 break;
 
-            case '?':
-                usage();
-                exit(-1);
-
-             default:
+            case 'h':
+            default:
                 usage();
                 exit(-1);
         }
@@ -83,12 +84,8 @@ int main(int argc, char **argv)
         /* port arameter inserted */
         if ((port <= 0) || (port > 255))
         {
-            printf("port number = %i; [0 < port < 256]\n", port);
+            printf("Port not allowed [%u]; [0 < port < 256]\n", port);
             exit(-1);
-        }
-        else
-        {
-            printf("port number = %i\n", port);
         }
     }
 
@@ -109,25 +106,34 @@ int main(int argc, char **argv)
     }
 #endif
 
-    printf("[node %d] receiving small message...\n", my_node_id);
-    /* receive a small message from port*/
-    recv_ret =  axiom_recv_small(dev, &src_id, (axiom_port_t *)&port, &flag, &payload);
-    if (recv_ret == AXIOM_RET_ERROR)
-    {
-           printf("Receive error");
-    }
-    else
-    {
-        printf("Message received on port %d\n", port);
+    do {
+        if (port_ok == 1) {
+            printf("[node %u] receiving small message on port %u...\n",
+                    my_node_id, port);
+        } else {
+            printf("[node %u] receiving small message on all port...\n",
+                    my_node_id);
+        }
+        /* receive a small message from port*/
+        recv_ret =  axiom_recv_small(dev, &src_id, (axiom_port_t *)&recv_port,
+                &flag, &payload);
+        if (recv_ret == AXIOM_RET_ERROR)
+        {
+            EPRINTF("receive error");
+            break;
+        }
+
+        printf("[node %u] message received on port %u\n", my_node_id, recv_port);
         if (flag & AXIOM_SMALL_FLAG_NEIGHBOUR) {
-            printf("\t- local_interface = %d\n", src_id);
+            printf("\t- local_interface = %u\n", src_id);
             printf("\t- flag = %s\n", "NEIGHBOUR");
         } else {
-            printf("\t- source_node_id = %d\n", src_id);
-            printf("\t- flag = %d\n", flag);
+            printf("\t- source_node_id = %u\n", src_id);
+            printf("\t- flag = %u\n", flag);
         }
-        printf("\t- payload = %d\n", payload);
-    }
+        printf("\t- payload = %u\n", payload);
+
+    } while (!once);
 
     axiom_close(dev);
 
