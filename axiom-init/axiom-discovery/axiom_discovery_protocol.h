@@ -1,7 +1,7 @@
 /*
  * axiom_discovery_protocol.h
  *
- * Version:     v0.2
+ * Version:     v0.3.1
  * Last update: 2016-03-22
  *
  * This file contains the AXIOM NIC discovery phase
