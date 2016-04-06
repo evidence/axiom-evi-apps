@@ -22,13 +22,13 @@
 
 /* Initializes the gloabl Topology matrix of a node:
  * initially, it kwnows that no node is connected */
-static void init_topology_structure(axiom_node_id_t topology[][AXIOM_NUM_INTERFACES])
+static void init_topology_structure(axiom_node_id_t topology[][AXIOM_MAX_INTERFACES])
 {
     int i,j;
 
-    for (i = 0; i < AXIOM_NUM_NODES; i++)
+    for (i = 0; i < AXIOM_MAX_NODES; i++)
     {
-        for (j = 0; j < AXIOM_NUM_INTERFACES; j++)
+        for (j = 0; j < AXIOM_MAX_INTERFACES; j++)
         {
             topology[i][j] = AXIOM_NULL_NODE; /* node id NULL_NODE doesn't exist*/
         }
@@ -63,7 +63,7 @@ uint8_t axiom_codify_routing_mask(axiom_dev_t *dev, axiom_node_id_t node_id,
  *
  */
 int discover_phase(axiom_dev_t *dev, axiom_node_id_t *next_id,
-        axiom_node_id_t topology[][AXIOM_NUM_INTERFACES])
+        axiom_node_id_t topology[][AXIOM_MAX_INTERFACES])
 {
     axiom_if_id_t num_interface = 0;
     uint8_t if_features = 0;
@@ -87,7 +87,7 @@ int discover_phase(axiom_dev_t *dev, axiom_node_id_t *next_id,
     DPRINTF("Number of interface = %d", num_interface);
 
     /* For each interface */
-    for (i = 0; i < AXIOM_NUM_INTERFACES; i++)
+    for (i = 0; i < AXIOM_MAX_INTERFACES; i++)
     {
         /* get interface feature*/
         axiom_get_if_info (dev, i, &if_features);
@@ -240,9 +240,9 @@ int discover_phase(axiom_dev_t *dev, axiom_node_id_t *next_id,
                                                         axiom_set_routing(dev, node_index, b_mask);
                                                     }
                                                     NDPRINTF("Node:%d TOPOLOGY\n", my_node_id);
-                                                    for (a = 0; a < AXIOM_NUM_NODES; a++)
+                                                    for (a = 0; a < AXIOM_MAX_NODES; a++)
                                                     {
-                                                        for (b = 0; b < AXIOM_NUM_INTERFACES; b++)
+                                                        for (b = 0; b < AXIOM_MAX_INTERFACES; b++)
                                                             NDPRINTF("%d ", topology[a][b]);
                                                     }
                                                 }
@@ -285,7 +285,7 @@ int discover_phase(axiom_dev_t *dev, axiom_node_id_t *next_id,
 
 /* Master node Discovery Algorithm code */
 int axiom_master_node_discovery(axiom_dev_t *dev,
-                          axiom_node_id_t topology[][AXIOM_NUM_INTERFACES],
+                          axiom_node_id_t topology[][AXIOM_MAX_INTERFACES],
                           axiom_node_id_t *number_of_total_nodes)
 {
     axiom_node_id_t next_id = AXIOM_MASTER_ID;
@@ -304,7 +304,7 @@ int axiom_master_node_discovery(axiom_dev_t *dev,
 
 /* Other nodes Discovery Algorithm code */
 int axiom_slave_node_discovery (
-        axiom_dev_t *dev, axiom_node_id_t topology[][AXIOM_NUM_INTERFACES],
+        axiom_dev_t *dev, axiom_node_id_t topology[][AXIOM_MAX_INTERFACES],
                      axiom_node_id_t *my_node_id)
 {
     axiom_node_id_t next_id;
@@ -440,14 +440,14 @@ int axiom_slave_node_discovery (
                     DPRINTF("Node:%d Ended discovery phase, send my topology table to _node:%d on my interface:%d", *my_node_id, src_node_id, src_interface);
 
                     /* Send topology list to the node which sent me the start message */
-                    for (i = 0; i < AXIOM_NUM_NODES; i ++)
+                    for (i = 0; i < AXIOM_MAX_NODES; i ++)
                     {
-                        for (j = 0; j < AXIOM_NUM_INTERFACES; j++)
+                        for (j = 0; j < AXIOM_MAX_INTERFACES; j++)
                         {
                             if (topology[i][j] != AXIOM_NULL_NODE)
                             {
                                 /* find the remote node interface */
-                                for(w = 0; w < AXIOM_NUM_INTERFACES; w++)
+                                for(w = 0; w < AXIOM_MAX_INTERFACES; w++)
                                 {
                                     if (topology[topology[i][j]][w] == i)
                                         break;

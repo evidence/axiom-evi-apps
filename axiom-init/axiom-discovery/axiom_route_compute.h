@@ -34,8 +34,8 @@
  * @param number_of_total_nodes number of nodes into network
  * @return none
  */
-void axiom_compute_routing_tables(axiom_node_id_t topology[][AXIOM_NUM_INTERFACES],
-                                  axiom_if_id_t routing_tables[][AXIOM_NUM_NODES],
+void axiom_compute_routing_tables(axiom_node_id_t topology[][AXIOM_MAX_INTERFACES],
+                                  axiom_if_id_t routing_tables[][AXIOM_MAX_NODES],
                                   axiom_node_id_t number_of_total_nodes);
 
 #endif /* !ROUTE_COMPUTE_H */

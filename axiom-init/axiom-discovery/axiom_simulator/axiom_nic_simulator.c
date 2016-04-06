@@ -17,9 +17,6 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 
-#ifndef AXIOM_SIM
-#define AXIOM_SIM   1
-#endif
 #include "axiom_nic_api_user.h"
 #include "axiom_nic_packets.h"
 #include "axiom_nic_discovery.h"
@@ -77,7 +74,7 @@ axiom_get_if_number(axiom_dev_t *dev, axiom_if_id_t* if_number)
 axiom_err_t
 axiom_get_if_info(axiom_dev_t *dev, axiom_if_id_t if_number, uint8_t* if_features)
 {
-    if (if_number >= AXIOM_NUM_INTERFACES)
+    if (if_number >= AXIOM_MAX_INTERFACES)
     {
         return AXIOM_RET_ERROR;
     }
@@ -105,7 +102,7 @@ axiom_set_routing(axiom_dev_t *dev, axiom_node_id_t node_id, uint8_t enabled_mas
 {
     uint8_t i;
 
-    for (i = 0; i < AXIOM_NUM_INTERFACES; i++)
+    for (i = 0; i < AXIOM_MAX_INTERFACES; i++)
     {
         if (enabled_mask & (uint8_t)(1 << i))
         {
@@ -132,7 +129,7 @@ axiom_err_t axiom_get_routing(axiom_dev_t *dev, axiom_node_id_t node_id, uint8_t
 
     *enabled_mask = 0;
 
-    for (i = 0; i < AXIOM_NUM_INTERFACES; i++)
+    for (i = 0; i < AXIOM_MAX_INTERFACES; i++)
     {
         if (((axiom_sim_node_args_t*)dev)->local_routing[node_id][i] == 1)
         {

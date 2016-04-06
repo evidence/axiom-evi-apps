@@ -9,9 +9,6 @@
 #include <sys/socket.h>
 #include <arpa/inet.h>
 
-#ifndef AXIOM_SIM
-#define AXIOM_SIM   1
-#endif
 #include "axiom_nic_packets.h"
 #include "axiom_nic_routing.h"
 #include "axiom_simulator.h"
@@ -21,7 +18,7 @@
 
 typedef struct axiom_net {
     int switch_fd;
-    int connected_if[AXIOM_NUM_INTERFACES];
+    int connected_if[AXIOM_MAX_INTERFACES];
 } axiom_net_t;
 
 

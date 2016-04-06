@@ -22,6 +22,6 @@
  *                  the routes to set into the hardware routing table
  */
 axiom_msg_id_t axiom_set_routing_table(axiom_dev_t *dev,
-                    axiom_if_id_t final_routing_table[AXIOM_NUM_NODES]);
+                    axiom_if_id_t final_routing_table[AXIOM_MAX_NODES]);
 
 #endif /* !ROUTE_SET_H */

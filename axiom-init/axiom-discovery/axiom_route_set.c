@@ -26,13 +26,13 @@
  *                            received from Master node
  */
 static void set_my_routing_table(axiom_dev_t *dev,
-                    axiom_if_id_t final_routing_table[AXIOM_NUM_NODES])
+                    axiom_if_id_t final_routing_table[AXIOM_MAX_NODES])
 {
 	axiom_node_id_t node_id_index;
 	axiom_if_id_t interface_index_to_set;
 
 	/* set final routing table */
-    for (node_id_index = 0; node_id_index < AXIOM_NUM_NODES; node_id_index++)
+    for (node_id_index = 0; node_id_index < AXIOM_MAX_NODES; node_id_index++)
 	{
         uint8_t enabled_mask = 0;
         interface_index_to_set = final_routing_table[node_id_index];
@@ -64,7 +64,7 @@ static void set_my_routing_table(axiom_dev_t *dev,
 }
 
 axiom_msg_id_t axiom_set_routing_table(axiom_dev_t *dev,
-                axiom_if_id_t final_routing_table[AXIOM_NUM_NODES])
+                axiom_if_id_t final_routing_table[AXIOM_MAX_NODES])
 {
     axiom_if_id_t if_index;
     uint8_t if_features = 0;
@@ -90,7 +90,7 @@ axiom_msg_id_t axiom_set_routing_table(axiom_dev_t *dev,
         indicating to set their routing tables */
 
         /* For each interface send all messages */
-        for (if_index = 0; (if_index < AXIOM_NUM_INTERFACES) && (ret == AXIOM_RET_OK); if_index++)
+        for (if_index = 0; (if_index < AXIOM_MAX_INTERFACES) && (ret == AXIOM_RET_OK); if_index++)
         {
             /* get interface features */
             axiom_get_if_info (dev, if_index, &if_features);
@@ -112,7 +112,7 @@ axiom_msg_id_t axiom_set_routing_table(axiom_dev_t *dev,
         }
 
         /* For each interface receive all messages */
-        for (if_index = 0; (if_index < AXIOM_NUM_INTERFACES) && (ret == AXIOM_RET_OK); if_index++)
+        for (if_index = 0; (if_index < AXIOM_MAX_INTERFACES) && (ret == AXIOM_RET_OK); if_index++)
         {
             /* get interface features */
             axiom_get_if_info (dev, if_index, &if_features);
@@ -162,7 +162,7 @@ axiom_msg_id_t axiom_set_routing_table(axiom_dev_t *dev,
         }
 
         /* For each interface send all messages */
-        for (if_index = 0; (if_index < AXIOM_NUM_INTERFACES) && (ret == AXIOM_RET_OK); if_index++)
+        for (if_index = 0; (if_index < AXIOM_MAX_INTERFACES) && (ret == AXIOM_RET_OK); if_index++)
         {
             /* get interface features */
             axiom_get_if_info (dev, if_index, &if_features);

@@ -13,17 +13,10 @@
 
 #include "dprintf.h"
 
+#include "axiom_nic_types.h"
 #include "axiom_nic_api_user.h"
 #include "axiom_nic_packets.h"
-#ifdef AXIOM_SIM
-#include "axiom_sim_topology.h" // XXX.REAL Into axiom_topology.h has to define:
-                                // - AXIOM_NUM_NODES (maximum nodes number, ex: 256)
-                                // - AXIOM_NUM_INTERFACES (4 interfaces )
-#else
-#define AXIOM_NUM_NODES               255
-#define AXIOM_NUM_INTERFACES          4
-#define AXIOM_NULL_NODE              255
-#endif
+#include "axiom_sim_topology.h"
 
 /* Master node ID */
 #define AXIOM_MASTER_ID               0
@@ -51,7 +44,7 @@ uint8_t axiom_codify_routing_mask(axiom_dev_t *dev, axiom_node_id_t node_id,
  *          is initialized at the end of the discovery phase
  */
 int axiom_master_node_discovery(axiom_dev_t *dev,
-                          axiom_node_id_t topology[][AXIOM_NUM_INTERFACES],
+                          axiom_node_id_t topology[][AXIOM_MAX_INTERFACES],
                           axiom_node_id_t *number_of_total_nodes);
 
 /*
@@ -61,7 +54,7 @@ int axiom_master_node_discovery(axiom_dev_t *dev,
  * @param my_node_id final id of the node
  */
 int axiom_slave_node_discovery(
-        axiom_dev_t *dev, axiom_node_id_t topology[][AXIOM_NUM_INTERFACES],
+        axiom_dev_t *dev, axiom_node_id_t topology[][AXIOM_MAX_INTERFACES],
                      axiom_node_id_t *my_node_id);
 
 #endif  /* !AXIOM_DSCV_PROTOCOL_H */

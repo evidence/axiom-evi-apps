@@ -43,12 +43,12 @@
 /* This function initializes a node routing table: the node
    is connected with no other node
    It initializes fisrt and second level node neighbours tables too*/
-static void init_node_routing_table(axiom_if_id_t rt[][AXIOM_NUM_NODES],
-                         axiom_if_id_t neighbour_table[][AXIOM_NUM_NODES])
+static void init_node_routing_table(axiom_if_id_t rt[][AXIOM_MAX_NODES],
+                         axiom_if_id_t neighbour_table[][AXIOM_MAX_NODES])
 {
     int i;
 
-    for (i = 0; i < AXIOM_NUM_NODES; i++)
+    for (i = 0; i < AXIOM_MAX_NODES; i++)
     {
         /* node routing table*/
         rt[0][i] = AXIOM_NULL_RT_INTERFACE;
@@ -65,9 +65,9 @@ static void init_node_routing_table(axiom_if_id_t rt[][AXIOM_NUM_NODES],
     Return the number of founded neighbours */
 static uint8_t compute_first_level_neighbours(
                        axiom_node_id_t actual_node_id,
-                       axiom_node_id_t topology[][AXIOM_NUM_INTERFACES],
-                       axiom_if_id_t routing_tables[][AXIOM_NUM_NODES],
-                       axiom_node_id_t neighbour_table[][AXIOM_NUM_NODES])
+                       axiom_node_id_t topology[][AXIOM_MAX_INTERFACES],
+                       axiom_if_id_t routing_tables[][AXIOM_MAX_NODES],
+                       axiom_node_id_t neighbour_table[][AXIOM_MAX_NODES])
 {
     axiom_if_id_t interface_index, interface_index_to_set;
     axiom_node_id_t neighbour_id;
@@ -75,7 +75,7 @@ static uint8_t compute_first_level_neighbours(
 
     neighbours_counter = 0;
 
-    for (interface_index = 0; interface_index < AXIOM_NUM_INTERFACES; interface_index++)
+    for (interface_index = 0; interface_index < AXIOM_MAX_INTERFACES; interface_index++)
     {
         if (topology[actual_node_id][interface_index] != AXIOM_NULL_NODE)
         {
@@ -123,15 +123,15 @@ static uint8_t compute_first_level_neighbours(
 
 /* This function is executed by the Master node in order to
  * compute all nodes routing table.*/
-void axiom_compute_routing_tables(axiom_node_id_t topology[][AXIOM_NUM_INTERFACES],
-                                  axiom_if_id_t routing_tables[][AXIOM_NUM_NODES],
+void axiom_compute_routing_tables(axiom_node_id_t topology[][AXIOM_MAX_INTERFACES],
+                                  axiom_if_id_t routing_tables[][AXIOM_MAX_NODES],
                                   axiom_node_id_t number_of_total_nodes)
 {
     /* ID of the node of of which the master is computing the routing table*/
     axiom_node_id_t actual_node_id;
     /* temp_rt[0] contains info about the n-level 'actual_node_id' neighbours*/
     /* temp_rt[1] contains info about the (n+1)-level 'actual_node_id' neighbours*/
-    axiom_node_id_t neighbour_table[2][AXIOM_NUM_NODES];
+    axiom_node_id_t neighbour_table[2][AXIOM_MAX_NODES];
 
     axiom_node_id_t node_index;
     axiom_if_id_t interface_index;
@@ -160,7 +160,7 @@ void axiom_compute_routing_tables(axiom_node_id_t topology[][AXIOM_NUM_INTERFACE
                     first_neighbour_id = neighbour_table[0][node_index];
 
                     /* compute the neighbours of 'neighbour_id' node */
-                    for (interface_index = 0; interface_index < AXIOM_NUM_INTERFACES; interface_index++)
+                    for (interface_index = 0; interface_index < AXIOM_MAX_INTERFACES; interface_index++)
                     {
                         if ((topology[first_neighbour_id][interface_index] != AXIOM_NULL_NODE) &&
                             (topology[first_neighbour_id][interface_index] != actual_node_id))
@@ -186,11 +186,11 @@ void axiom_compute_routing_tables(axiom_node_id_t topology[][AXIOM_NUM_INTERFACE
             }
 
             /* the second level neighbours become the next first level neighbours in the algorithm */
-            memcpy(&neighbour_table[0], &neighbour_table[1], AXIOM_NUM_NODES*sizeof(axiom_node_id_t));
+            memcpy(&neighbour_table[0], &neighbour_table[1], AXIOM_MAX_NODES*sizeof(axiom_node_id_t));
 
         } while (neighbours_counter < number_of_total_nodes - 1);
         /* exit from cycle when 'actual_node_id' routing table has been completed with all the
-            AXIOM_NUM_NODES - 1 nodes info */
+            AXIOM_MAX_NODES - 1 nodes info */
     }
     return;
 }

@@ -18,7 +18,7 @@
  * @return XXX
  */
 axiom_msg_id_t axiom_delivery_routing_tables(axiom_dev_t *dev,
-                          axiom_if_id_t routing_tables[][AXIOM_NUM_NODES],
+                          axiom_if_id_t routing_tables[][AXIOM_MAX_NODES],
                           axiom_node_id_t number_of_total_nodes);
 
 /*
@@ -32,7 +32,7 @@ axiom_msg_id_t axiom_delivery_routing_tables(axiom_dev_t *dev,
  */
 axiom_err_t axiom_receive_routing_tables(axiom_dev_t *dev,
                             axiom_node_id_t my_node_id,
-                            axiom_if_id_t routing_tables[AXIOM_NUM_NODES],
+                            axiom_if_id_t routing_tables[AXIOM_MAX_NODES],
                             axiom_node_id_t *max_node_id);
 
 #endif /* !ROUTE_DELIVERY_H */

@@ -43,9 +43,9 @@ int main(int argc, char **argv)
 
     int long_index =0;
     int opt = 0;
-    axiom_node_id_t topology[AXIOM_NUM_NODES][AXIOM_NUM_INTERFACES];
-    axiom_if_id_t routing_tables[AXIOM_NUM_NODES][AXIOM_NUM_NODES];
-    axiom_if_id_t final_routing_table[AXIOM_NUM_NODES];
+    axiom_node_id_t topology[AXIOM_MAX_NODES][AXIOM_MAX_INTERFACES];
+    axiom_if_id_t routing_tables[AXIOM_MAX_NODES][AXIOM_MAX_NODES];
+    axiom_if_id_t final_routing_table[AXIOM_MAX_NODES];
     static struct option long_options[] = {
         {"node", required_argument, 0, 'n'},
         {"help", no_argument, 0, 'h'},

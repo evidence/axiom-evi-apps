@@ -9,16 +9,13 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 
-#ifndef AXIOM_SIM
-#define AXIOM_SIM   1
-#endif
 #include "axiom_nic_packets.h"
 #include "axiom_nic_routing.h"
 #include "axiom_simulator.h"
 #include "axiom_net.h"
 
 typedef struct axiom_net {
-    int node_if_fd[AXIOM_NUM_INTERFACES];
+    int node_if_fd[AXIOM_MAX_INTERFACES];
     int num_of_ended_rt;
 } axiom_net_t;
 
@@ -99,7 +96,8 @@ axiom_net_setup(axiom_sim_node_args_t *nodes, axiom_sim_topology_t *tpl)
             axiom_net_free(nodes, tpl);
             return -ENOMEM;
         }
-	nodes[i].net->num_of_ended_rt = 0;
+        memset(nodes[i].net->node_if_fd, 0, sizeof(int) * AXIOM_MAX_INTERFACES);
+        nodes[i].net->num_of_ended_rt = 0;
     }
 
     for (i = 0; i < tpl->num_nodes; i++) {
@@ -213,7 +211,7 @@ axiom_net_send_small(axiom_dev_t *dev, axiom_if_id_t dest_node_id,
         /* Payload */
         message.payload= *payload;
 
-        for (if_index = 0; if_index < AXIOM_NUM_INTERFACES; if_index ++)
+        for (if_index = 0; if_index < AXIOM_MAX_INTERFACES; if_index ++)
         {
            if (((axiom_sim_node_args_t*)dev)->local_routing[dest_node_id][if_index] == 1)
            {
@@ -252,14 +250,14 @@ axiom_net_recv_small_neighbour(axiom_dev_t *dev, axiom_node_id_t *src_interface,
         axiom_port_t *port, axiom_flag_t *flag, axiom_payload_t *payload)
 {
     axiom_small_msg_t message;
-    struct pollfd fds[AXIOM_NUM_INTERFACES];
+    struct pollfd fds[AXIOM_MAX_INTERFACES];
     int i, read_counter, interface_counter;
     ssize_t read_bytes;
 
     NDPRINTF("Wait to receive from the following interfaces:");
 
     interface_counter = 0;
-    for (i = 0; i < AXIOM_NUM_INTERFACES; i++)
+    for (i = 0; i < AXIOM_MAX_INTERFACES; i++)
     {
         /* get the socket descriptor (or zero value) of each node interface */
         fds[i].fd =  ((axiom_sim_node_args_t*)dev)->net->node_if_fd[i];
@@ -351,14 +349,14 @@ axiom_net_recv_small(axiom_dev_t *dev, axiom_node_id_t *src_node_id,
        into my local routing table; they represent the nodes to which I have
        to send packets that Master has to send them through me */
     num_nodes_after_me = 1;
-    for (node_index = my_id + 1; node_index < AXIOM_NUM_NODES; node_index++)
+    for (node_index = my_id + 1; node_index < AXIOM_MAX_NODES; node_index++)
     {
-        for (if_index = 0; if_index < AXIOM_NUM_INTERFACES; if_index ++)
+        for (if_index = 0; if_index < AXIOM_MAX_INTERFACES; if_index ++)
         {
             if (((axiom_sim_node_args_t*)dev)->local_routing[node_index][if_index] == 1)
             {
                 num_nodes_after_me++;
-                if_index = AXIOM_NUM_INTERFACES;
+                if_index = AXIOM_MAX_INTERFACES;
             }
         }
     }
@@ -368,7 +366,7 @@ axiom_net_recv_small(axiom_dev_t *dev, axiom_node_id_t *src_node_id,
     do_flag = 1;
     for (node_index = 0; (node_index < my_id) && (do_flag == 1); node_index++)
     {
-        for (if_index = 0; (if_index < AXIOM_NUM_INTERFACES) && (do_flag == 1); if_index ++)
+        for (if_index = 0; (if_index < AXIOM_MAX_INTERFACES) && (do_flag == 1); if_index ++)
         {
             if (((axiom_sim_node_args_t*)dev)->local_routing[node_index][if_index] == 1)
             {

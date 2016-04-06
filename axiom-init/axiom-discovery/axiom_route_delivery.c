@@ -26,11 +26,11 @@
  *        Master
  * @param final_routing_table node local routing table to initialize
  */
-static void init_my_routing_table (axiom_if_id_t final_routing_table[AXIOM_NUM_NODES])
+static void init_my_routing_table (axiom_if_id_t final_routing_table[AXIOM_MAX_NODES])
 {
     uint8_t i;
 
-    for (i = 0; i < AXIOM_NUM_NODES; i++)
+    for (i = 0; i < AXIOM_MAX_NODES; i++)
     {
         /* initialized the zero; it will be written with coded
            interface values:
@@ -40,7 +40,7 @@ static void init_my_routing_table (axiom_if_id_t final_routing_table[AXIOM_NUM_N
 }
 
 axiom_msg_id_t axiom_delivery_routing_tables(axiom_dev_t *dev,
-                           axiom_if_id_t routing_tables[][AXIOM_NUM_NODES],
+                           axiom_if_id_t routing_tables[][AXIOM_MAX_NODES],
                            axiom_node_id_t number_of_total_nodes)
 {
     axiom_node_id_t dest_node_index, rt_node_index;
@@ -90,7 +90,7 @@ axiom_msg_id_t axiom_delivery_routing_tables(axiom_dev_t *dev,
 
 axiom_err_t axiom_receive_routing_tables(axiom_dev_t *dev,
                         axiom_node_id_t my_node_id,
-                        axiom_if_id_t final_routing_table[AXIOM_NUM_NODES],
+                        axiom_if_id_t final_routing_table[AXIOM_MAX_NODES],
                         axiom_node_id_t *max_node_id)
 {
     axiom_node_id_t src_node_id, node_to_set;

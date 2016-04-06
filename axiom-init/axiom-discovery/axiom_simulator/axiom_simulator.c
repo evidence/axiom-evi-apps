@@ -15,9 +15,6 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 
-#ifndef AXIOM_SIM
-#define AXIOM_SIM   1
-#endif
 #include "axiom_simulator.h"
 #include "../axiom_route_compute.h"
 
@@ -69,22 +66,22 @@ void print_local_routing_table(axiom_sim_node_args_t *nodes, int num_nodes)
     }
 }
 
-void print_routing_tables (axiom_if_id_t rt[][AXIOM_MAX_NUM_NODES])
+void print_routing_tables (axiom_if_id_t rt[][AXIOM_MAX_NODES], int num_nodes)
 {
     int i, j;
     int comma = 0;
 
 
-    for (i = 0; i < AXIOM_NUM_NODES; i++)
+    for (i = 0; i < num_nodes; i++)
     {
         printf("\nNode %d ROUTING TABLE\n", i);
-        for (j = 0; j < AXIOM_NUM_NODES; j++) {
+        for (j = 0; j < num_nodes; j++) {
             printf("\tNode%d", j);
         }
 
         printf("\n");
         printf("IF");
-        for (j = 0; j < AXIOM_NUM_NODES; j++)
+        for (j = 0; j < num_nodes; j++)
         {
             printf ("\t(");
             if (rt[i][j] & AXIOM_IF_0)
@@ -132,7 +129,7 @@ print_received_routing_table(axiom_sim_node_args_t *nodes, int num_nodes)
     for (index = 0; index < num_nodes; index++)
     {
         printf("\nNode %d RECEIVED ROUTING TABLE\n", nodes[index].node_id);
-        for (j = 0; j < AXIOM_NUM_NODES; j++) {
+        for (j = 0; j < AXIOM_MAX_NODES; j++) {
             printf("\tNode%d", j);
         }
 
@@ -196,7 +193,7 @@ int start_nodes(axiom_sim_node_args_t *nodes, int num_nodes, int master_node,
 
 
         /* init the number of node interfaces */
-        nodes[i].num_interfaces = AXIOM_NUM_INTERFACES;
+        nodes[i].num_interfaces = AXIOM_MAX_INTERFACES;
         /* init the node local routing table */
         for (j = 0; j < num_nodes; j++)
         {
