@@ -189,10 +189,11 @@ int main(int argc, char **argv)
         printf("Message sent to port %d\n", port);
         if (flag & AXIOM_SMALL_FLAG_NEIGHBOUR) {
             printf("\t- local_interface = %d\n", dst_id);
+            printf("\t- flag = %s\n", "NEIGHBOUR");
         } else {
             printf("\t- destination_node_id = %d\n", dst_id);
+            printf("\t- flag = %d\n", flag);
         }
-        printf("\t- flag = %d\n", flag);
         printf("\t- payload = %d\n", payload);
     }
 
