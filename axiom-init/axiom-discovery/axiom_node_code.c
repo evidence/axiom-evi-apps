@@ -112,15 +112,23 @@ void axiom_master_node_code(axiom_dev_t *dev, axiom_node_id_t topology[][AXIOM_M
         }
         else
         {
-            /* Say to all nodes to set the received routing table */
-            sleep(2);
+            /* sleep(2); */
             /* XXX: maybe is better to add a new message from all nodes to
              * node 0 to say: "ok, I'm node X and I received the routing table"
              */
-            ret = axiom_set_routing_table(dev, final_routing_table);
+            ret = axiom_wait_rt_received(dev, number_of_total_nodes);
             if (ret == AXIOM_RET_ERROR)
             {
-                EPRINTF("Master: axiom_set_routing_table failed");
+                EPRINTF("Master: axiom_wait_rt_received failed");
+            }
+            else
+            {
+                /* Say to all nodes to set the received routing table */
+                ret = axiom_set_routing_table(dev, final_routing_table);
+                if (ret == AXIOM_RET_ERROR)
+                {
+                    EPRINTF("Master: axiom_set_routing_table failed");
+                }
             }
         }
     }

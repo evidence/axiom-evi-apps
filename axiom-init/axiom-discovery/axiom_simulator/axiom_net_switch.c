@@ -384,6 +384,10 @@ axiom_net_recv_small(axiom_dev_t *dev, axiom_node_id_t *src_node_id,
             {
                 *payload = small_eth.small_msg.payload;
             }
+            else if (rt_message.command ==  AXIOM_RT_CMD_RT_REPLY)
+            {
+                *payload = small_eth.small_msg.payload;
+            }
         }
     }
 

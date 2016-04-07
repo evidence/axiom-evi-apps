@@ -22,6 +22,14 @@ axiom_msg_id_t axiom_delivery_routing_tables(axiom_dev_t *dev,
                           axiom_node_id_t number_of_total_nodes);
 
 /*
+ * @brief This function is executed by the Master node in order to
+ *        wait for all nodes routing table receiption confirmation.
+ * @param number_of_total_nodes number of nodes into the network
+ * @return XXX
+ */
+axiom_msg_id_t axiom_wait_rt_received(axiom_dev_t *dev,
+                           axiom_node_id_t number_of_total_nodes);
+/*
  * @brief This function is executed by each non-Master node in order
  *        to receive its routing table
  * @param my_node_id id of the node that calls this function for
