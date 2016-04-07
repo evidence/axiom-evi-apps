@@ -25,10 +25,10 @@ axiom-init: axiom-init.o $(AXIOM_DISC)/axiom_node_code.o $(AXIOM_DISC)/axiom_dis
 axiom-init.o: axiom-init.c $(AXIOM_DISC)/axiom_node_code.h $(HEADERS)
 
 $(AXIOM_NIC_UL)*:
-	cd $(AXIOM_NIC_UL) && make CCPREFIX=$(CCPREFIX)
+	cd $(AXIOM_NIC_UL) && make CCPREFIX=$(CCPREFIX) DFLAGS="$(DFLAGS)"
 
 $(AXIOM_DISC)*:
-	cd $(AXIOM_DISC) && make CCPREFIX=$(CCPREFIX)
+	cd $(AXIOM_DISC) && make CCPREFIX=$(CCPREFIX) DFLAGS="$(DFLAGS)"
 
 install: all
 	cp $(APPS) $(DESTDIR)/usr/bin/
