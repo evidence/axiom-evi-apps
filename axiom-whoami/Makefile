@@ -2,6 +2,7 @@ AXIOM_INCLUDE := ../../axiom-evi-nic/include
 AXIOM_NIC_UL := ../../axiom-evi-nic/axiom_user_library
 
 APPS := axiom-whoami
+HEADERS := $(AXIOM_INCLUDE)/*.h
 CLEANFILES = $(APPS) *.o
 
 PWD := $(shell pwd)
@@ -20,12 +21,12 @@ all: $(APPS)
 
 axiom-whoami: axiom-whoami.o $(AXIOM_NIC_UL)/axiom_user_api.a
 
-axiom-whoami.o: axiom-whoami.c
+axiom-whoami.o: axiom-whoami.c $(HEADERS)
 
-$(AXIOM_NIC_UL)/axiom_user_api.a:
+$(AXIOM_NIC_UL)*:
 	cd $(AXIOM_NIC_UL) && make CCPREFIX=$(CCPREFIX)
 
-install: $(APPS)
+install: all
 	cp $(APPS) $(DESTDIR)/usr/bin/
 
 clean:

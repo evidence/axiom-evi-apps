@@ -3,6 +3,7 @@ AXIOM_DISC := axiom-discovery
 AXIOM_NIC_UL := ../../axiom-evi-nic/axiom_user_library
 
 APPS := axiom-init
+HEADERS := $(AXIOM_INCLUDE)/*.h
 CLEANFILES = $(APPS) *.o
 
 PWD := $(shell pwd)
@@ -15,21 +16,21 @@ CC := ${CCPREFIX}gcc
 DFLAGS := -g -DPDEBUG
 CFLAGS += -Wall $(DFLAGS) -I$(PWD)/$(AXIOM_INCLUDE) -I$(PWD)/$(AXIOM_DISC)
 
-.PHONY: all clean axiom-discovery
+.PHONY: all install clean $(AXIOM_DISC) $(AXIOM_NIC_UL)/axiom_user_api.a
 
-all: axiom-discovery $(APPS)
+all: $(AXIOM_DISC) $(APPS)
 
-axiom-init: axiom-init.o  $(AXIOM_DISC)/axiom_node_code.o $(AXIOM_DISC)/axiom_discovery_protocol.o $(AXIOM_DISC)/axiom_route_compute.o $(AXIOM_DISC)/axiom_route_delivery.o $(AXIOM_DISC)/axiom_route_set.o $(AXIOM_NIC_UL)/axiom_user_api.a
+axiom-init: axiom-init.o $(AXIOM_DISC)/axiom_node_code.o $(AXIOM_DISC)/axiom_discovery_protocol.o $(AXIOM_DISC)/axiom_route_compute.o $(AXIOM_DISC)/axiom_route_delivery.o $(AXIOM_DISC)/axiom_route_set.o $(AXIOM_NIC_UL)/axiom_user_api.a
 
-axiom-init.o: axiom-init.c $(AXIOM_INCLUDE)/axiom_nic_types.h $(AXIOM_INCLUDE)/axiom_sim_topology.h $(AXIOM_DISC)/axiom_node_code.h
+axiom-init.o: axiom-init.c $(AXIOM_DISC)/axiom_node_code.h $(HEADERS)
 
-$(AXIOM_NIC_UL)/axiom_user_api.a:
+$(AXIOM_NIC_UL)*:
 	cd $(AXIOM_NIC_UL) && make CCPREFIX=$(CCPREFIX)
 
-axiom_disovery:
+$(AXIOM_DISC)*:
 	cd $(AXIOM_DISC) && make CCPREFIX=$(CCPREFIX)
 
-install: $(APPS)
+install: all
 	cp $(APPS) $(DESTDIR)/usr/bin/
 
 clean:

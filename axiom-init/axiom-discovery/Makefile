@@ -2,8 +2,9 @@ AXIOM_INCLUDE := ../../../axiom-evi-nic/include
 AXIOM_SIM := axiom_simulator
 
 APPS := axiom_discovery_protocol_test axsw_discovery_protocol_test
+HEADERS := $(AXIOM_INCLUDE)/*.h
 CLEANFILES = $(APPS) *.o $(AXIOM_SIM)/*.o
-CFLAGS += -Wall -g -DPDEBUG -I$(AXIOM_INCLUDE) -I./axiom_simulator/
+CFLAGS += -Wall -g -DPDEBUG -I$(AXIOM_INCLUDE) -I./$(AXIOM_SIM)
 LDFLAGS += -pthread
 
 PWD := $(shell pwd)
@@ -23,25 +24,28 @@ axsw_discovery_protocol_test: axiom_discovery_protocol_test.o $(AXIOM_SIM)/axiom
 
 axiom_discovery_protocol_test: axiom_discovery_protocol_test.o $(AXIOM_SIM)/axiom_simulator.o $(AXIOM_SIM)/axiom_nic_simulator.o axiom_node_code.o  axiom_discovery_protocol.o axiom_route_compute.o axiom_route_delivery.o axiom_route_set.o $(AXIOM_SIM)/axiom_net_socketpair.o
 
-axiom_discovery_protocol_test.o: axiom_discovery_protocol_test.c $(AXIOM_SIM)/axiom_simulator.h axiom_discovery_protocol.h
 
-axiom_simulator.o: $(AXIOM_SIM)/axiom_simulator.c $(AXIOM_SIM)/axiom_simulator.h axiom_route_compute.h
+axiom_discovery_protocol_test.o: axiom_discovery_protocol_test.c $(AXIOM_SIM)/axiom_simulator.h axiom_discovery_protocol.h $(HEADERS)
 
-axiom_net_socketpair.o: $(AXIOM_SIM)/axiom_net_socketpair.c $(AXIOM_SIM)/axiom_net.h
+axiom_node_code.o: axiom_node_code.c axiom_node_code.h axiom_route_compute.h axiom_route_delivery.h axiom_route_set.h axiom_discovery_protocol.h $(HEADERS)
 
-axiom_net_switch.o: $(AXIOM_SIM)/axiom_net_switch.c $(AXIOM_SIM)/axiom_net.h
+axiom_discovery_protocol.o: axiom_discovery_protocol.c axiom_discovery_protocol.h $(HEADERS)
 
-axiom_node_code.o: axiom_node_code.c axiom_node_code.h axiom_route_compute.h axiom_route_delivery.h axiom_route_set.h axiom_discovery_protocol.h
+axiom_route_compute.o: axiom_route_compute.c axiom_discovery_protocol.h axiom_route_compute.h $(HEADERS)
 
-axiom_discovery_protocol.o: axiom_discovery_protocol.c axiom_discovery_protocol.h
+axiom_route_delivery.o: axiom_route_delivery.c axiom_route_delivery.h axiom_discovery_protocol.h axiom_route_compute.h $(HEADERS)
 
-axiom_nic_simulator.o: $(AXIOM_SIM)/axiom_nic_simulator.c $(AXIOM_SIM)/axiom_simulator.h
+axiom_route_set.o: axiom_route_set.c axiom_discovery_protocol.h axiom_route_compute.h axiom_route_set.h $(HEADERS)
 
-axiom_route_compute.o: axiom_route_compute.c axiom_discovery_protocol.h axiom_route_compute.h
 
-axiom_route_delivery.o: axiom_route_delivery.c axiom_route_delivery.h axiom_discovery_protocol.h axiom_route_compute.h
+$(AXIOM_SIM)/axiom_simulator.o: $(AXIOM_SIM)/axiom_simulator.c $(AXIOM_SIM)/axiom_simulator.h axiom_route_compute.h $(HEADERS)
 
-axiom_route_set.o: axiom_route_set.c axiom_discovery_protocol.h axiom_route_compute.h axiom_route_set.h
+$(AXIOM_SIM)/axiom_net_socketpair.o: $(AXIOM_SIM)/axiom_net_socketpair.c $(AXIOM_SIM)/axiom_net.h $(HEADERS)
+
+$(AXIOM_SIM)/axiom_net_switch.o: $(AXIOM_SIM)/axiom_net_switch.c $(AXIOM_SIM)/axiom_net.h $(HEADERS)
+
+$(AXIOM_SIM)/axiom_nic_simulator.o: $(AXIOM_SIM)/axiom_nic_simulator.c $(AXIOM_SIM)/axiom_simulator.h $(HEADERS)
+
 
 clean:
 	rm -rf $(CLEANFILES)
