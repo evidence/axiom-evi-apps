@@ -1,4 +1,4 @@
-APPS_DIR := axiom-init axiom-recv-small axiom-send-small axiom-whoami
+APPS_DIR := axiom-init axiom-recv-small axiom-send-small axiom-whoami axiom-info
 CLEAN_DIR := $(addprefix _clean_, $(APPS_DIR))
 INSTALL_DIR := $(addprefix _install_, $(APPS_DIR))
 
