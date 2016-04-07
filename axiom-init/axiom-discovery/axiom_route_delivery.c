@@ -107,7 +107,6 @@ axiom_msg_id_t axiom_wait_rt_received(axiom_dev_t *dev,
         /* receive reply from node which have received the routing table */
         ret = axiom_recv_small_delivery(dev, &src_node_id,
                 &cmd, &payload_node_id, &payload_if_id);
-
         if ((ret == AXIOM_RET_OK) && (cmd == AXIOM_RT_CMD_RT_REPLY))
         {
             if (reply_received[payload_node_id] == 0)
