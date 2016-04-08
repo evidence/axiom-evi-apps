@@ -22,7 +22,7 @@ axiom-info: axiom-info.o $(AXIOM_NIC_UL)/axiom_user_api.a
 
 axiom-info.o: axiom-info.c
 
-$(AXIOM_NIC_UL)*:
+$(AXIOM_NIC_UL)/%:
 	cd $(AXIOM_NIC_UL) && make CCPREFIX=$(CCPREFIX) DFLAGS="$(DFLAGS)"
 
 install: all
