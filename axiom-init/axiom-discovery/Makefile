@@ -5,8 +5,8 @@ APPS := axiom_discovery_protocol_test axsw_discovery_protocol_test
 HEADERS := $(AXIOM_INCLUDE)/*.h
 CLEANFILES = $(APPS) *.o $(AXIOM_SIM)/*.o
 
-DFLAGS := -g -PDEBUG
-CFLAGS += -Wall -I$(AXIOM_INCLUDE) -I./$(AXIOM_SIM)
+DFLAGS := -g -DPDEBUG
+CFLAGS += -Wall $(DFLAGS) -I$(AXIOM_INCLUDE) -I./$(AXIOM_SIM)
 LDFLAGS += -pthread
 
 PWD := $(shell pwd)
