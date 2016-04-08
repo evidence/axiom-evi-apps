@@ -23,8 +23,9 @@
 #include "axiom_nic_types.h"
 #include "axiom_node_code.h"
 
-#define SLAVE_PARAMETER     0
-#define MASTER_PARAMETER    1
+#define MS_INIT_PARAMETER      -1
+#define SLAVE_PARAMETER         0
+#define MASTER_PARAMETER        1
 
 int verbose = 0;
 
@@ -39,7 +40,7 @@ static void usage(void)
 
 int main(int argc, char **argv)
 {
-    int master_slave, ret;
+    int master_slave = MS_INIT_PARAMETER;
     char *s_master = "master";
     char *s_slave = "slave";
     char node_str[30];
@@ -65,6 +66,14 @@ int main(int argc, char **argv)
         {
             case 'n':
                 sscanf(optarg, "%s", node_str);
+                if (strncmp(node_str, s_master, strlen(s_master)) == 0)
+                {
+                    master_slave = MASTER_PARAMETER;
+                }
+                else if (strncmp(node_str, s_slave, strlen(s_slave)) == 0)
+                {
+                    master_slave = SLAVE_PARAMETER;
+                }
                 break;
             case 'v':
                 verbose = 1;
@@ -76,34 +85,9 @@ int main(int argc, char **argv)
         }
     }
 
-    if (strlen(node_str) == strlen(s_master))
+    if (master_slave == MS_INIT_PARAMETER)
     {
-        ret = memcmp(node_str, s_master, strlen(node_str));
-        if (ret == 0)
-        {
-            master_slave = MASTER_PARAMETER;
-        }
-        else
-        {
-            usage();
-            exit(-1);
-        }
-    }
-    else if (strlen(node_str) == strlen(s_slave))
-    {
-        ret = memcmp(node_str, s_slave, strlen(node_str));
-        if (ret == 0)
-        {
-            master_slave = SLAVE_PARAMETER;
-        }
-        else
-        {
-            usage();
-            exit(-1);
-        }
-    }
-    else
-    {
+        EPRINTF("node must be \"master\" or \"slave\"");
         usage();
         exit(-1);
     }
@@ -116,7 +100,7 @@ int main(int argc, char **argv)
         exit(-1);
     }
 
-    /* bind the current process on port 0 */
+    /* TODO: bind the current process on port 0 */
     /* err = axiom_bind(dev, AXIOM_SMALL_PORT_DISCOVERY); */
 
     if (master_slave == MASTER_PARAMETER)
@@ -128,7 +112,7 @@ int main(int argc, char **argv)
 
         printf("\nMaster node end\n");
     }
-    else
+    else if (master_slave ==  SLAVE_PARAMETER)
     {
         printf("Starting slave node...\n");
 
