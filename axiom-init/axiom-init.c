@@ -33,7 +33,7 @@ static void usage(void)
     printf("usage: axiom-init -n [master | slave]\n");
     printf("Start AXIOM discovery and routing algorithm in master or slaves mode\n\n");
     printf("-n, --node  [slave | master]   start node as master or as slave\n");
-    printf("-v, --verbose                  verbose output\n\n");
+    printf("-v, --verbose                  verbose output\n");
     printf("-h, --help                     print this help\n\n");
 }
 
