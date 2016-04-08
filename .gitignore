@@ -7,6 +7,7 @@ axiom-whoami/axiom-whoami
 axiom-init/axiom-discovery/axsw_discovery_protocol_test
 axiom-init/axiom-discovery/axiom_discovery_protocol_test
 axiom-init/axiom-init
+axiom-info/axiom-info
 
 #
 # Normal rules
