@@ -1,5 +1,5 @@
 /*
- * axiom_node_code.c
+ * axiom_discovery_node.c
  *
  * Version:     v0.3.1
  * Last update: 2016-03-22
@@ -15,7 +15,7 @@
 #include <unistd.h>
 #include <sys/types.h>
 
-#include "axiom_node_code.h"
+#include "axiom_discovery_node.h"
 #include "axiom_nic_discovery.h"
 #include "axiom_route_compute.h"
 #include "axiom_route_delivery.h"
@@ -80,7 +80,7 @@ void print_my_routing_table(axiom_dev_t *dev,
 }
 
 /* Master node code */
-void axiom_master_node_code(axiom_dev_t *dev, axiom_node_id_t topology[][AXIOM_MAX_INTERFACES],
+void axiom_discovery_master(axiom_dev_t *dev, axiom_node_id_t topology[][AXIOM_MAX_INTERFACES],
                       axiom_if_id_t routing_tables[][AXIOM_MAX_NODES],
                       axiom_if_id_t final_routing_table[AXIOM_MAX_NODES], int verbose)
 {
@@ -144,7 +144,7 @@ void axiom_master_node_code(axiom_dev_t *dev, axiom_node_id_t topology[][AXIOM_M
 }
 
 /* Slave node code*/
-void axiom_slave_node_code(axiom_dev_t *dev, axiom_node_id_t topology[][AXIOM_MAX_INTERFACES],
+void axiom_discovery_slave(axiom_dev_t *dev, axiom_node_id_t topology[][AXIOM_MAX_INTERFACES],
                      axiom_if_id_t final_routing_table[AXIOM_MAX_NODES], int verbose)
 {
     axiom_node_id_t my_node_id, max_node_id = 0;

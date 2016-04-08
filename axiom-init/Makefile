@@ -20,9 +20,9 @@ CFLAGS += -Wall $(DFLAGS) -I$(PWD)/$(AXIOM_INCLUDE) -I$(PWD)/$(AXIOM_DISC)
 
 all: $(APPS)
 
-axiom-init: axiom-init.o $(AXIOM_DISC)/axiom_node_code.o $(AXIOM_DISC)/axiom_discovery_protocol.o $(AXIOM_DISC)/axiom_route_compute.o $(AXIOM_DISC)/axiom_route_delivery.o $(AXIOM_DISC)/axiom_route_set.o $(AXIOM_NIC_UL)/axiom_user_api.a
+axiom-init: axiom-init.o $(AXIOM_DISC)/axiom_discovery_node.o $(AXIOM_DISC)/axiom_discovery_protocol.o $(AXIOM_DISC)/axiom_route_compute.o $(AXIOM_DISC)/axiom_route_delivery.o $(AXIOM_DISC)/axiom_route_set.o $(AXIOM_NIC_UL)/axiom_user_api.a
 
-axiom-init.o: axiom-init.c $(AXIOM_DISC)/axiom_node_code.h $(HEADERS)
+axiom-init.o: axiom-init.c $(AXIOM_DISC)/axiom_discovery_node.h $(HEADERS)
 
 $(AXIOM_NIC_UL)/%:
 	cd $(AXIOM_NIC_UL) && make CCPREFIX=$(CCPREFIX) DFLAGS="$(DFLAGS)"

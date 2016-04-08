@@ -21,7 +21,7 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 
-#include "axiom_node_code.h"
+#include "axiom_discovery_node.h"
 #include "axiom_simulator.h"
 #include "axiom_net.h"
 
@@ -179,7 +179,7 @@ void *master(void *args)
     /* get the pointer to the running thread 'axiom_nodes' entry */
     p_node_info = (axiom_dev_t *)get_node_info();
 
-    axiom_master_node_code(p_node_info, axiom_args->node_topology, axiom_args->routing_tables,
+    axiom_discovery_master(p_node_info, axiom_args->node_topology, axiom_args->routing_tables,
 					axiom_args->final_routing_table, 1);
 
     memcpy(final_topology.topology, axiom_args->node_topology, sizeof(axiom_args->node_topology));
@@ -201,7 +201,7 @@ void *slave(void *args)
 
     /* get the pointer to the running thread 'axiom_nodes' entry */
     p_node_info = (axiom_dev_t *)get_node_info();
-    axiom_slave_node_code(p_node_info, axiom_args->node_topology,
+    axiom_discovery_slave(p_node_info, axiom_args->node_topology,
             axiom_args->final_routing_table, 1);
 
     return 0;

@@ -21,7 +21,7 @@
 #include <sys/socket.h>
 
 #include "axiom_nic_types.h"
-#include "axiom_node_code.h"
+#include "axiom_discovery_node.h"
 
 #define MS_INIT_PARAMETER      -1
 #define SLAVE_PARAMETER         0
@@ -108,7 +108,7 @@ int main(int argc, char **argv)
         printf("Starting master node...\n");
 
         /* Master code */
-        axiom_master_node_code(dev, topology, routing_tables, final_routing_table, verbose);
+        axiom_discovery_master(dev, topology, routing_tables, final_routing_table, verbose);
 
         printf("\nMaster node end\n");
     }
@@ -117,7 +117,7 @@ int main(int argc, char **argv)
         printf("Starting slave node...\n");
 
         /* Slave code */
-        axiom_slave_node_code(dev, topology, final_routing_table, verbose);
+        axiom_discovery_slave(dev, topology, final_routing_table, verbose);
 
         printf("\nSlave node end\n");
     }

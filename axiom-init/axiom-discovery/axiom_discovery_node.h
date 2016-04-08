@@ -1,14 +1,14 @@
 /*
- * axiom_node_code.c
+ * axiom_discovery_node.h
  *
  * Version:     v0.3.1
- * Last update: 2016-03-22
+ * Last update: 2016-04-08
  *
  * This file defines prototypes of  AXIOM NIC init phase
  *
  */
-#ifndef AXIOM_NODE_CODE_H
-#define AXIOM_NODE_CODE_H
+#ifndef AXIOM_DISCOVERY_NODE_H
+#define AXIOM_DISCOVERY_NODE_H
 
 #include "axiom_discovery_protocol.h"
 
@@ -22,7 +22,7 @@
  * @param final_routing_table   final master node routing table
  * @param verbose               enable verbose output
  */
-void axiom_master_node_code(axiom_dev_t *dev, axiom_node_id_t topology[][AXIOM_MAX_INTERFACES],
+void axiom_discovery_master(axiom_dev_t *dev, axiom_node_id_t topology[][AXIOM_MAX_INTERFACES],
                       axiom_if_id_t routing_tables[][AXIOM_MAX_NODES],
                       axiom_if_id_t final_routing_table[AXIOM_MAX_NODES],
                       int verbose);
@@ -35,8 +35,8 @@ void axiom_master_node_code(axiom_dev_t *dev, axiom_node_id_t topology[][AXIOM_M
  * @param final_routing_table   final node routing table
  * @param verbose               enable verbose output
  */
-void axiom_slave_node_code(axiom_dev_t *dev, axiom_node_id_t topology[][AXIOM_MAX_INTERFACES],
+void axiom_discovery_slave(axiom_dev_t *dev, axiom_node_id_t topology[][AXIOM_MAX_INTERFACES],
                      axiom_if_id_t final_routing_table[AXIOM_MAX_NODES],
                      int verbose);
 
-#endif /*! AXIOM_NODE_CODE_H*/
+#endif /*! AXIOM_DISCOVERY_NODE_H*/
