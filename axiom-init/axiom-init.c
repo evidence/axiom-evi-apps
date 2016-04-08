@@ -38,6 +38,33 @@ static void usage(void)
     printf("-h, --help                     print this help\n\n");
 }
 
+void run_discovery(axiom_dev_t *dev, int master_slave)
+{
+    axiom_node_id_t topology[AXIOM_MAX_NODES][AXIOM_MAX_INTERFACES];
+    axiom_if_id_t routing_tables[AXIOM_MAX_NODES][AXIOM_MAX_NODES];
+    axiom_if_id_t final_routing_table[AXIOM_MAX_NODES];
+
+    if (master_slave == MASTER_PARAMETER)
+    {
+        printf("Starting master node...\n");
+
+        /* Master code */
+        axiom_discovery_master(dev, topology, routing_tables, final_routing_table, verbose);
+
+        printf("\nMaster node end\n");
+    }
+    else if (master_slave ==  SLAVE_PARAMETER)
+    {
+        printf("Starting slave node...\n");
+
+        /* Slave code */
+        axiom_discovery_slave(dev, topology, final_routing_table, verbose);
+
+        printf("\nSlave node end\n");
+    }
+
+}
+
 int main(int argc, char **argv)
 {
     int master_slave = MS_INIT_PARAMETER;
@@ -48,9 +75,6 @@ int main(int argc, char **argv)
 
     int long_index =0;
     int opt = 0;
-    axiom_node_id_t topology[AXIOM_MAX_NODES][AXIOM_MAX_INTERFACES];
-    axiom_if_id_t routing_tables[AXIOM_MAX_NODES][AXIOM_MAX_NODES];
-    axiom_if_id_t final_routing_table[AXIOM_MAX_NODES];
     static struct option long_options[] = {
         {"node", required_argument, 0, 'n'},
         {"verbose", no_argument, 0, 'v'},
@@ -103,24 +127,7 @@ int main(int argc, char **argv)
     /* TODO: bind the current process on port 0 */
     /* err = axiom_bind(dev, AXIOM_SMALL_PORT_DISCOVERY); */
 
-    if (master_slave == MASTER_PARAMETER)
-    {
-        printf("Starting master node...\n");
-
-        /* Master code */
-        axiom_discovery_master(dev, topology, routing_tables, final_routing_table, verbose);
-
-        printf("\nMaster node end\n");
-    }
-    else if (master_slave ==  SLAVE_PARAMETER)
-    {
-        printf("Starting slave node...\n");
-
-        /* Slave code */
-        axiom_discovery_slave(dev, topology, final_routing_table, verbose);
-
-        printf("\nSlave node end\n");
-    }
+    run_discovery(dev, master_slave);
 
     axiom_close(dev);
 
