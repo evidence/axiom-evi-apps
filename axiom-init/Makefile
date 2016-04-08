@@ -1,5 +1,5 @@
 AXIOM_INCLUDE := ../../axiom-evi-nic/include
-AXIOM_DISC := axiom-discovery
+AXIOM_DISC := ./axiom-discovery
 AXIOM_NIC_UL := ../../axiom-evi-nic/axiom_user_library
 
 APPS := axiom-init
@@ -16,18 +16,18 @@ CC := ${CCPREFIX}gcc
 DFLAGS := -g -DPDEBUG
 CFLAGS += -Wall $(DFLAGS) -I$(PWD)/$(AXIOM_INCLUDE) -I$(PWD)/$(AXIOM_DISC)
 
-.PHONY: all install clean $(AXIOM_DISC) $(AXIOM_NIC_UL)/axiom_user_api.a
+.PHONY: all install clean
 
-all: $(AXIOM_DISC) $(APPS)
+all: $(APPS)
 
 axiom-init: axiom-init.o $(AXIOM_DISC)/axiom_node_code.o $(AXIOM_DISC)/axiom_discovery_protocol.o $(AXIOM_DISC)/axiom_route_compute.o $(AXIOM_DISC)/axiom_route_delivery.o $(AXIOM_DISC)/axiom_route_set.o $(AXIOM_NIC_UL)/axiom_user_api.a
 
 axiom-init.o: axiom-init.c $(AXIOM_DISC)/axiom_node_code.h $(HEADERS)
 
-$(AXIOM_NIC_UL)*:
+$(AXIOM_NIC_UL)/%:
 	cd $(AXIOM_NIC_UL) && make CCPREFIX=$(CCPREFIX) DFLAGS="$(DFLAGS)"
 
-$(AXIOM_DISC)*:
+$(AXIOM_DISC)/%.o:
 	cd $(AXIOM_DISC) && make CCPREFIX=$(CCPREFIX) DFLAGS="$(DFLAGS)"
 
 install: all

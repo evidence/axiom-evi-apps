@@ -23,7 +23,7 @@ axiom-send-small: axiom-send-small.o $(AXIOM_NIC_UL)/axiom_user_api.a
 
 axiom-send-small.o: axiom-send-small.c $(HEADERS)
 
-$(AXIOM_NIC_UL)*:
+$(AXIOM_NIC_UL)/%:
 	cd $(AXIOM_NIC_UL) && make CCPREFIX=$(CCPREFIX) DFLAGS="$(DFLAGS)"
 
 install: all

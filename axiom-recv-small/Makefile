@@ -23,7 +23,7 @@ axiom-recv-small: axiom-recv-small.o $(AXIOM_NIC_UL)/axiom_user_api.a
 
 axiom-recv-small.o: axiom-recv-small.c $(HEADERS)
 
-$(AXIOM_NIC_UL)*:
+$(AXIOM_NIC_UL)/%:
 	cd $(AXIOM_NIC_UL) && make CCPREFIX=$(CCPREFIX) DFLAGS="$(DFLAGS)"
 
 install: all

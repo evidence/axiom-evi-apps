@@ -23,7 +23,7 @@ axiom-whoami: axiom-whoami.o $(AXIOM_NIC_UL)/axiom_user_api.a
 
 axiom-whoami.o: axiom-whoami.c $(HEADERS)
 
-$(AXIOM_NIC_UL)*:
+$(AXIOM_NIC_UL)/%:
 	cd $(AXIOM_NIC_UL) && make CCPREFIX=$(CCPREFIX) DFLAGS="$(DFLAGS)"
 
 install: all
