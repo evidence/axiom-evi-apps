@@ -324,7 +324,6 @@ send_from_slave_to_master(axiom_dev_t *dev, axiom_if_id_t dest_node_id,
 
         /* send the message */
         write_ret = write( ((axiom_sim_node_args_t*)dev)->net->node_if_fd[if_index], &message, sizeof(message));
-
         if ((write_ret == -1) || (write_ret == 0))
         {
             return AXIOM_RET_ERROR;

@@ -84,12 +84,12 @@ void print_routing_tables (axiom_if_id_t rt[][AXIOM_MAX_NODES], int num_nodes)
         for (j = 0; j < num_nodes; j++)
         {
             printf ("\t(");
-            if (rt[i][j] & AXIOM_IF_0)
+            if (rt[i][j] & 0x01)
             {
                 printf ("%d", 0);
                 comma = 1;
             }
-            if (rt[i][j] & AXIOM_IF_1)
+            if (rt[i][j] & 0x02)
             {
                 if (comma == 1)
                     printf(",");
@@ -97,7 +97,7 @@ void print_routing_tables (axiom_if_id_t rt[][AXIOM_MAX_NODES], int num_nodes)
                     comma = 1;
                 printf ("%d", 1);
             }
-            if (rt[i][j] & AXIOM_IF_2)
+            if (rt[i][j] & 0x04)
             {
                 if (comma == 1)
                     printf(",");
@@ -105,7 +105,7 @@ void print_routing_tables (axiom_if_id_t rt[][AXIOM_MAX_NODES], int num_nodes)
                     comma = 1;
                 printf ("%d", 2);
             }
-            if (rt[i][j] & AXIOM_IF_3)
+            if (rt[i][j] & 0x08)
             {
                 if (comma == 1)
                     printf(",");
@@ -138,12 +138,12 @@ print_received_routing_table(axiom_sim_node_args_t *nodes, int num_nodes)
         for (j = 0; j < num_nodes; j++)
         {
             printf ("\t(");
-            if (nodes[index].final_routing_table[j] & AXIOM_IF_0)
+            if (nodes[index].final_routing_table[j] & 0x01)
             {
                 printf ("%d", 0);
                 comma = 1;
             }
-            if (nodes[index].final_routing_table[j] & AXIOM_IF_1)
+            if (nodes[index].final_routing_table[j] & 0x02)
             {
                 if (comma == 1)
                     printf(",");
@@ -151,7 +151,7 @@ print_received_routing_table(axiom_sim_node_args_t *nodes, int num_nodes)
                     comma = 1;
                 printf ("%d", 1);
             }
-            if (nodes[index].final_routing_table[j] & AXIOM_IF_2)
+            if (nodes[index].final_routing_table[j] & 0x04)
             {
                 if (comma == 1)
                     printf(",");
@@ -159,7 +159,7 @@ print_received_routing_table(axiom_sim_node_args_t *nodes, int num_nodes)
                     comma = 1;
                     printf ("%d", 2);
             }
-            if (nodes[index].final_routing_table[j] & AXIOM_IF_3)
+            if (nodes[index].final_routing_table[j] & 0x08)
             {
                 if (comma == 1)
                     printf(",");

@@ -34,7 +34,7 @@ static void init_my_routing_table (axiom_if_id_t final_routing_table[AXIOM_MAX_N
     {
         /* initialized the zero; it will be written with coded
            interface values:
-           (AXIOM_IF_0, AXIOM_IF_1, AXIOM_IF_2, AXIOM_IF_3) */
+           (0x01 -> IF0), (0x02 -> IF1), (0x04 -> IF2), (0x08 -> IF3) */
         final_routing_table[i] = AXIOM_NULL_RT_INTERFACE;
     }
 }
@@ -114,6 +114,7 @@ axiom_msg_id_t axiom_wait_rt_received(axiom_dev_t *dev,
                /* a 'new node' reply */
                reply_received[payload_node_id] = 1;
                reply_received_num++;
+               DPRINTF("MASTER, received reply of node %d", payload_node_id);
             }
         }
         else

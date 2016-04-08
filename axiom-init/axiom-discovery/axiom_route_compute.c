@@ -93,22 +93,7 @@ static uint8_t compute_first_level_neighbours(
             /* routing_tables[actual_node_id][neighbour_id] = interface_index; */
 
             interface_index_to_set = routing_tables[actual_node_id][neighbour_id];
-            switch (interface_index)
-            {
-                case 0:
-                    interface_index_to_set |= AXIOM_IF_0;
-                    break;
-                case 1:
-                    interface_index_to_set |= AXIOM_IF_1;
-                    break;
-                case 2:
-                    interface_index_to_set |= AXIOM_IF_2;
-                    break;
-                case 3:
-                    interface_index_to_set |= AXIOM_IF_3;
-                    break;
-
-            }
+            interface_index_to_set |= (axiom_if_id_t)(1 << interface_index);
             routing_tables[actual_node_id][neighbour_id] = interface_index_to_set;
 
             /* save node id of the neighbour */

@@ -29,30 +29,12 @@ static void set_my_routing_table(axiom_dev_t *dev,
                     axiom_if_id_t final_routing_table[AXIOM_MAX_NODES])
 {
 	axiom_node_id_t node_id_index;
-	axiom_if_id_t interface_index_to_set;
 
 	/* set final routing table */
     for (node_id_index = 0; node_id_index < AXIOM_MAX_NODES; node_id_index++)
 	{
         uint8_t enabled_mask = 0;
-        interface_index_to_set = final_routing_table[node_id_index];
-		
-		if (interface_index_to_set & AXIOM_IF_0)
-		{
-            enabled_mask |= (uint8_t)(1 << 0);
-		}
-		if (interface_index_to_set & AXIOM_IF_1)
-		{
-            enabled_mask |= (uint8_t)(1 << 1);
-		}
-		if (interface_index_to_set & AXIOM_IF_2)
-		{
-            enabled_mask |= (uint8_t)(1 << 2);
-		}
-		if (interface_index_to_set & AXIOM_IF_3)
-		{
-            enabled_mask |= (uint8_t)(1 << 3);
-		}
+        enabled_mask = final_routing_table[node_id_index];
         if (enabled_mask != 0)
         {
             /* only if the node is connected to me
