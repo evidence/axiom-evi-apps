@@ -335,6 +335,8 @@ send_from_slave_to_master(axiom_dev_t *dev, axiom_if_id_t dest_node_id,
                ((axiom_sim_node_args_t*)dev)->net->node_if_fd[if_index], message.header.tx.dst,
                (uint8_t)((message.payload & 0x00FF0000) >> 16), (uint8_t)((message.payload & 0x0000FF00) >> 8));
 
+            i = 0;
+
             while (((axiom_sim_node_args_t*)dev)->net->num_of_ended_rt < num_nodes_after_me)
             {
                 if (((axiom_sim_node_args_t*)dev)->net->num_recv_reply[i] != recv_if[i])
@@ -345,8 +347,7 @@ send_from_slave_to_master(axiom_dev_t *dev, axiom_if_id_t dest_node_id,
                     {
                      return AXIOM_RET_ERROR;
                     }
-                    else
-                    {
+
                     ((axiom_sim_node_args_t*)dev)->net->num_recv_reply[i]++;
                     ((axiom_sim_node_args_t*)dev)->net->num_of_ended_rt++;
 
@@ -355,8 +356,6 @@ send_from_slave_to_master(axiom_dev_t *dev, axiom_if_id_t dest_node_id,
                                                    message.header.rx.port_flag.field.port,
                                                    message.header.rx.port_flag.field.flag,
                                                    &(message.payload));
-
-                    }
                 }
                 else
                 {
