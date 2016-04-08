@@ -60,7 +60,7 @@ axiom_topology_from_file(axiom_topology_t *start_topology, char *filename) {
     }
 
     while ((read = getline(&line, &len, file)) != -1) {
-       printf("%s", line);
+       /* printf("%s", line); */
 
        line_count++;
        if (line_count > AXIOM_MAX_NODES) {
@@ -92,7 +92,6 @@ axiom_topology_from_file(axiom_topology_t *start_topology, char *filename) {
                        }
                        else {
                            start_topology->topology[line_count-1][if_index] = (uint8_t)val;
-                           printf ("logic->start_topology.topology[%d][%d] = %d\n", line_count-1, if_index, (uint8_t)val);
                            if_index++;
                        }
                    }
@@ -112,6 +111,44 @@ axiom_topology_from_file(axiom_topology_t *start_topology, char *filename) {
     return line_count;
 
 }
+
+/* functions for topology management */
+/* Initializes start_toplogy with no connected nodes */
+void
+axiom_init_topology(axiom_topology_t *start_topology) {
+    int i,j;
+
+    for (i = 0; i < AXIOM_MAX_NODES; i++) {
+        for (j = 0; j < AXIOM_MAX_INTERFACES; j++) {
+            start_topology->topology[i][j] = AXIOM_NULL_NODE;
+        }
+    }
+    start_topology->num_nodes =  AXIOM_MAX_NODES;
+    start_topology->num_interfaces =  AXIOM_MAX_INTERFACES;
+}
+
+/* Initialize a ring of 'num_nodes' nodes */
+void
+axiom_make_ring_toplogy(axiom_topology_t *start_topology, int num_nodes) {
+
+    int i;
+
+    /* first direction */
+    for (i = 0; i < num_nodes-1; i++) {
+        start_topology->topology[i][0] =  i+1;
+    }
+    start_topology->topology[num_nodes-1][0] = 0;
+
+    /* second direction */
+    start_topology->topology[0][1] = num_nodes-1;
+    for (i = 1; i < num_nodes; i++) {
+        start_topology->topology[i][1] =  i-1;
+    }
+
+    start_topology->num_nodes =  num_nodes;
+    start_topology->num_interfaces =  AXIOM_MAX_INTERFACES;
+}
+
 
 /* Given the start_topology it computes the intermediate expected topology */
 void axiom_compute_intermediate_final_topology(axiom_topology_t *start_topology,
@@ -210,15 +247,15 @@ void *slave(void *args)
 int main(int argc, char **argv)
 {
     int err, cmp;
-    int i, j;
-    int file_ok = 0;
+    int i, j, n;
+    int file_ok = 0, ring_ok = 0, n_ok = 0;
     int long_index =0;
     int opt = 0, num_nodes;
     uint8_t max_node_id = 0;
     uint8_t nodes_match[AXIOM_MAX_NODES];
     static struct option long_options[] = {
         {"file", required_argument, 0, 'f'},
-        {"topology", required_argument, 0, 't'},
+        {"ring", no_argument, 0, 'r'},
         {"n", required_argument, 0, 'n'},
         {"help", no_argument, 0, 'h'},
         {0, 0, 0, 0}
@@ -227,7 +264,7 @@ int main(int argc, char **argv)
     axiom_topology_t start_topology;
     axiom_topology_t end_test_topology, end_test_topology_copy;
 
-    while ((opt = getopt_long(argc, argv,"f:t:n:h",
+    while ((opt = getopt_long(argc, argv,"f:rn:h",
                          long_options, &long_index )) != -1) {
         switch (opt) {
             case 'f' :
@@ -239,6 +276,18 @@ int main(int argc, char **argv)
                     file_ok = 1;
                 }
                 break;
+            case 'r' :
+                ring_ok = 1;
+                break;
+
+            case 'n' :
+                if (sscanf(optarg, "%i", &n) != 1) {
+                    usage();
+                    exit(-1);
+                } else {
+                    n_ok = 1;
+                }
+                break;
 
             case 'h':
             default:
@@ -247,8 +296,11 @@ int main(int argc, char **argv)
         }
     }
 
+    axiom_init_topology(&start_topology);
     /* check file presence */
-    if (file_ok == 1) {
+    if (file_ok == 1)
+    {
+        //axiom_init_topology(&start_topology);
         /* init the topology structure */
         num_nodes = axiom_topology_from_file(&start_topology, filename);
         if (num_nodes < 0)
@@ -256,29 +308,58 @@ int main(int argc, char **argv)
             printf("Error in reading toplogy from file\n");
             exit(-1);
         }
-        else
+    }
+    else
+    {
+        /* check ring parameter */
+        if (ring_ok == 1)
         {
-            /* Initilaization of variable for ended toplogy computataion */
-            for (i = 0; i < AXIOM_MAX_NODES; i++)
+            /* make ring toplogy with the inserted nuber of nodes */
+            if (n_ok == 1)
             {
-                nodes_match[i] = AXIOM_NULL_NODE;
-                for (j = 0; j < AXIOM_MAX_INTERFACES; j++)
+                if ((n < 2) || (n > AXIOM_MAX_NODES))
                 {
-                    end_test_topology.topology[i][j] = AXIOM_NULL_NODE;
+                    printf("Please, for RING topology insert a simulation number between 2 and %d\n",
+                            AXIOM_MAX_NODES);
+                    exit (-1);
+                }
+                else
+                {
+                    num_nodes = n;
+
+                    /* init the selected topology */
+                    axiom_make_ring_toplogy(&start_topology, n);
                 }
             }
-            nodes_match[0] = 0;
-
-            /* *********** Expected final topology computation *************** */
-            axiom_compute_final_topology (&start_topology, &end_test_topology,
-                                          nodes_match, 0, &max_node_id, num_nodes,
-                                          &end_test_topology_copy);
+            else
+            {
+               usage();
+               exit(-1);
+            }
+        }
+        else
+        {
+           usage();
+           exit(-1);
         }
     }
-    else {
-       usage();
-       exit(-1);
+
+    /* Initilaization of variable for ended toplogy computataion */
+    for (i = 0; i < AXIOM_MAX_NODES; i++)
+    {
+        nodes_match[i] = AXIOM_NULL_NODE;
+        for (j = 0; j < AXIOM_MAX_INTERFACES; j++)
+        {
+            end_test_topology.topology[i][j] = AXIOM_NULL_NODE;
+        }
     }
+    nodes_match[0] = 0;
+
+    /* *********** Expected final topology computation *************** */
+    axiom_compute_final_topology (&start_topology, &end_test_topology,
+                                  nodes_match, 0, &max_node_id, num_nodes,
+                                  &end_test_topology_copy);
+
 
     printf("Start Topology\n");
     print_topology(&start_topology);
