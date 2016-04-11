@@ -94,8 +94,6 @@ int discover_phase(axiom_dev_t *dev, axiom_node_id_t *next_id,
 
         if ((if_features & AXIOM_IF_CONNECTED) != 0) /* the interface 'i' is physically connected to another board*/
         {
-            /*if ((my_node_id == 0) && (i > 0) && (topology[my_node_id][i] != AXIOM_NULL_NODE))
-            if ((i > 0) && (topology[my_node_id][i] != AXIOM_NULL_NODE)) */
             if (topology[my_node_id][i] != AXIOM_NULL_NODE)
             {
                 /*     The node has to poll the interface only if the topology table
@@ -134,7 +132,6 @@ int discover_phase(axiom_dev_t *dev, axiom_node_id_t *next_id,
                     else
                     {
                         /* message received form the 'i' interface and it is the exepected message */
-                        /* if ((src_interface == i) && ((msg_cmd == AXIOM_DSCV_CMD_RSP_NOID) || (msg_cmd == AXIOM_DSCV_CMD_RSP_ID))) */
                         if ((msg_cmd == AXIOM_DSCV_CMD_RSP_NOID) || (msg_cmd == AXIOM_DSCV_CMD_RSP_ID))
                         {
                             if (msg_cmd == AXIOM_DSCV_CMD_RSP_NOID)
@@ -256,10 +253,6 @@ int discover_phase(axiom_dev_t *dev, axiom_node_id_t *next_id,
                                 /* if the receiving side says 'I am node X, I'm on interface Y' */
 
                                 DPRINTF("Node:%d, Received from interface %d the message AXIOM_DSCV_CMD_RSP_ID", my_node_id, i);
-
-                                /* Immediately update my routing table: src_node_id is connceted to my 'i' interface */
-                                /* b_mask = axiom_codify_routing_mask(dev, src_node_id, i); */
-                                /* axiom_set_routing(dev, src_node_id, b_mask); */
 
                                 /* Update the topology data structure */
                                 topology[my_node_id][src_interface] = src_node_id;

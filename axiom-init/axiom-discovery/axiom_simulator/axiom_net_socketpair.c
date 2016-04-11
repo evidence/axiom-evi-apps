@@ -71,12 +71,9 @@ send_from_master_to_slave(axiom_dev_t *dev, axiom_if_id_t dest_node_id,
                 {
                     return AXIOM_RET_ERROR;
                 }
-                else
-                {
-                    DPRINTF("routing: send on socket = %d to node %d: (%d,%d)",
-                       ((axiom_sim_node_args_t*)dev)->net->node_if_fd[if_index], message.header.tx.dst,
-                       (uint8_t)((message.payload & 0x00FF0000) >> 16), (uint8_t)((message.payload & 0x0000FF00) >> 8));
-                }
+                DPRINTF("routing: send on socket = %d to node %d: (%d,%d)",
+                   ((axiom_sim_node_args_t*)dev)->net->node_if_fd[if_index], message.header.tx.dst,
+                   (uint8_t)((message.payload & 0x00FF0000) >> 16), (uint8_t)((message.payload & 0x0000FF00) >> 8));
                 break;
            }
         }
@@ -205,14 +202,11 @@ recv_from_master_to_slave(axiom_dev_t *dev, axiom_node_id_t *src_node_id,
                     *payload = message.payload;
                     return AXIOM_RET_OK;
                 }
-                else
-                {
-                    /* I have to forward this info to recipient node*/
-                    axiom_net_send_small(dev, message.header.tx.dst,
-                                                  message.header.rx.port_flag.field.port,
-                                                  message.header.rx.port_flag.field.flag,
-                                                  &(message.payload));
-                }
+                /* I have to forward this info to recipient node*/
+                axiom_net_send_small(dev, message.header.tx.dst,
+                                              message.header.rx.port_flag.field.port,
+                                              message.header.rx.port_flag.field.flag,
+                                              &(message.payload));
             }
             else if (rt_message.command == AXIOM_RT_CMD_END_INFO)
             {
@@ -328,38 +322,36 @@ send_from_slave_to_master(axiom_dev_t *dev, axiom_if_id_t dest_node_id,
         {
             return AXIOM_RET_ERROR;
         }
-        else
+
+        DPRINTF("reply: send on socket = %d to node %d: (%d,%d)",
+           ((axiom_sim_node_args_t*)dev)->net->node_if_fd[if_index], message.header.tx.dst,
+           (uint8_t)((message.payload & 0x00FF0000) >> 16), (uint8_t)((message.payload & 0x0000FF00) >> 8));
+
+        i = 0;
+
+        while (((axiom_sim_node_args_t*)dev)->net->num_of_ended_rt < num_nodes_after_me)
         {
-            DPRINTF("reply: send on socket = %d to node %d: (%d,%d)",
-               ((axiom_sim_node_args_t*)dev)->net->node_if_fd[if_index], message.header.tx.dst,
-               (uint8_t)((message.payload & 0x00FF0000) >> 16), (uint8_t)((message.payload & 0x0000FF00) >> 8));
-
-            i = 0;
-
-            while (((axiom_sim_node_args_t*)dev)->net->num_of_ended_rt < num_nodes_after_me)
+            if (((axiom_sim_node_args_t*)dev)->net->num_recv_reply[i] != recv_if[i])
             {
-                if (((axiom_sim_node_args_t*)dev)->net->num_recv_reply[i] != recv_if[i])
+                read_bytes = read(((axiom_sim_node_args_t*)dev)->net->node_if_fd[i], &message, sizeof(message));
+
+                if (read_bytes != sizeof(message))
                 {
-                    read_bytes = read(((axiom_sim_node_args_t*)dev)->net->node_if_fd[i], &message, sizeof(message));
-
-                    if (read_bytes != sizeof(message))
-                    {
-                     return AXIOM_RET_ERROR;
-                    }
-
-                    ((axiom_sim_node_args_t*)dev)->net->num_recv_reply[i]++;
-                    ((axiom_sim_node_args_t*)dev)->net->num_of_ended_rt++;
-
-                     /* I have to forward this back to the Master */
-                     axiom_net_send_small(dev, message.header.tx.dst,
-                                                   message.header.rx.port_flag.field.port,
-                                                   message.header.rx.port_flag.field.flag,
-                                                   &(message.payload));
+                 return AXIOM_RET_ERROR;
                 }
-                else
-                {
-                    i++;
-                }
+
+                ((axiom_sim_node_args_t*)dev)->net->num_recv_reply[i]++;
+                ((axiom_sim_node_args_t*)dev)->net->num_of_ended_rt++;
+
+                 /* I have to forward this back to the Master */
+                 axiom_net_send_small(dev, message.header.tx.dst,
+                                               message.header.rx.port_flag.field.port,
+                                               message.header.rx.port_flag.field.flag,
+                                               &(message.payload));
+            }
+            else
+            {
+                i++;
             }
         }
 
@@ -419,16 +411,11 @@ recv_from_slave_to_master (axiom_dev_t *dev, axiom_node_id_t *src_node_id,
     {
         return AXIOM_RET_ERROR;
     }
-    else
-    {
-        *port = message.header.rx.port_flag.field.port;
-        *src_node_id = message.header.tx.dst;
-        *payload = message.payload;
+    *port = message.header.rx.port_flag.field.port;
+    *src_node_id = message.header.tx.dst;
+    *payload = message.payload;
 
-        return AXIOM_RET_OK;
-    }
-
-
+    return AXIOM_RET_OK;
 }
 
 /*

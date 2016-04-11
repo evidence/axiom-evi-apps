@@ -74,28 +74,20 @@ axiom_topology_from_file(axiom_topology_t *start_topology, char *filename) {
            if (isdigit(*p)) {
                /* Upon finding a digit, read it */
                long val = strtol(p, &p, 10);
-               //printf("%ld\n", val);
                if ((val ==  LONG_MIN) || (val ==  LONG_MAX)) {
                    printf ("Error in converting nodes id read from file\n");
                    return -1;
                }
-               else
-               {
-                   if ((val < 0) || (val > AXIOM_MAX_NODES)) {
-                       printf ("The topology contains nodes with id greater than %d\n", AXIOM_MAX_NODES);
-                       return -1;
-                   }
-                   else {
-                       if (if_index >= AXIOM_MAX_INTERFACES) {
-                           printf ("The topology contains nodes with more than  than %d interfaces\n", AXIOM_MAX_INTERFACES);
-                           return -1;
-                       }
-                       else {
-                           start_topology->topology[line_count-1][if_index] = (uint8_t)val;
-                           if_index++;
-                       }
-                   }
+               if ((val < 0) || (val > AXIOM_MAX_NODES)) {
+                   printf ("The topology contains nodes with id greater than %d\n", AXIOM_MAX_NODES);
+                   return -1;
                }
+               if (if_index >= AXIOM_MAX_INTERFACES) {
+                   printf ("The topology contains nodes with more than  than %d interfaces\n", AXIOM_MAX_INTERFACES);
+                   return -1;
+               }
+               start_topology->topology[line_count-1][if_index] = (uint8_t)val;
+               if_index++;
            }
            else {
                /* move on to the next character of the line */

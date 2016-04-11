@@ -172,7 +172,6 @@ axiom_msg_id_t axiom_set_routing_table(axiom_dev_t *dev,
         while ((num_interface > 1) && (ret == AXIOM_RET_OK))
         {
             /* Wait answer */
-            //ret = axiom_recv_raw_set_routing(dev, &src_interface, &msg_type);
             ret = axiom_recv_small_set_routing(dev, &src_interface, &cmd);
             if (ret == AXIOM_RET_ERROR)
             {

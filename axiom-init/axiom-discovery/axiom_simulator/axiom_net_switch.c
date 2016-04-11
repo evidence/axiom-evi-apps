@@ -237,12 +237,9 @@ axiom_net_send_small(axiom_dev_t *dev, axiom_if_id_t dest_node_id,
         {
             return AXIOM_RET_ERROR;
         }
-        else
-        {
-            DPRINTF("routing: send on socket = %d to node %d: (%d,%d)",
-               ((axiom_sim_node_args_t*)dev)->net->switch_fd, message.header.tx.dst,
-                (uint8_t)((message.payload & 0x00FF0000) >> 16), (uint8_t)((message.payload & 0x0000FF00) >> 8));
-        }
+        DPRINTF("routing: send on socket = %d to node %d: (%d,%d)",
+           ((axiom_sim_node_args_t*)dev)->net->switch_fd, message.header.tx.dst,
+            (uint8_t)((message.payload & 0x00FF0000) >> 16), (uint8_t)((message.payload & 0x0000FF00) >> 8));
     }
 
     return AXIOM_RET_OK;
@@ -300,7 +297,6 @@ axiom_net_recv_small_neighbour(axiom_dev_t *dev, axiom_node_id_t *src_interface,
         retry = 0;
 
         /* Header */
-        //*src_interface = i; /* index of the interface from which I have received */
         *src_interface = small_eth.small_msg.header.rx.src; /* the switch puts the interface from which I have to receive */
         *port = small_eth.small_msg.header.rx.port_flag.field.port;
         *flag = small_eth.small_msg.header.rx.port_flag.field.flag;

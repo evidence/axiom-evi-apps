@@ -112,10 +112,7 @@ void axiom_discovery_master(axiom_dev_t *dev, axiom_node_id_t topology[][AXIOM_M
         }
         else
         {
-            /* sleep(2); */
-            /* XXX: maybe is better to add a new message from all nodes to
-             * node 0 to say: "ok, I'm node X and I received the routing table"
-             */
+
             IPRINTF(verbose, "MASTER: wait for all delivery reply");
             ret = axiom_wait_rt_received(dev, number_of_total_nodes);
             if (ret == AXIOM_RET_ERROR)
