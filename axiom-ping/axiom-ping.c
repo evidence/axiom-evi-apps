@@ -27,14 +27,14 @@
 
 static void usage(void)
 {
-    printf("usage: ./axiom-send-small [[-p port] | [-h]] -d dest \n");
+    printf("usage: ./axiom-ping [[-p port] | [-h]] -d dest \n");
     printf("AXIOM ping\n\n");
     printf("-p, --port      port     port used for sending\n");
     printf("-d, --dest      dest     dest node id or local if (TO_NEIGHBOUR) \n");
     printf("-h, --help               print this help\n\n");
 }
 
-/* Subtract the `struct timeval' values x and y,
+/*  This function subtracts the `struct timeval' values x and y,
     storing the result in diff.
     Return 1 if the difference is negative, otherwise 0.  */
  static int timeval_subtract (struct timeval *diff,
@@ -68,14 +68,14 @@ static void usage(void)
 int main(int argc, char **argv)
 {
     axiom_dev_t *dev = NULL;
-    axiom_msg_id_t send_ret, my_node_id;
+    axiom_msg_id_t send_ret, recv_ret, my_node_id;
     axiom_port_t port = 1, recv_port ;
     axiom_node_id_t dst_id, src_id;
     int port_ok = 0, dst_ok = 0;
     axiom_flag_t flag = 0;
     axiom_payload_t payload;
     struct timeval start_tv, end_tv, diff_tv;
-    int i, ret;
+    int ret;
 
 
     int long_index =0;
@@ -166,7 +166,7 @@ int main(int argc, char **argv)
     }
 #endif
 
-    while (1)
+    do
     {
         /* get actual time */
         ret = gettimeofday(&start_tv,NULL);
@@ -175,8 +175,8 @@ int main(int argc, char **argv)
             EPRINTF("gettimeofday error");
             goto err;
         }
-        printf("\n\n\New Message\n");
-        printf("timestamp: %d sec\t%d microsec\n", start_tv.tv_sec,
+        printf("\n\nNew Message\n");
+        printf("timestamp: %ld sec\t%ld microsec\n", start_tv.tv_sec,
                                                    start_tv.tv_usec);
         printf("[node %u] sending ping message...\n", my_node_id);
 
@@ -212,7 +212,7 @@ int main(int argc, char **argv)
         printf("[node %u] reply received on port %u\n", my_node_id, recv_port);
         printf("\t- source_node_id = %u\n", src_id);
         printf("\t- message index = %u\n", payload);
-        printf("timestamp: %d sec\t%d microsec\n", end_tv.tv_sec,
+        printf("timestamp: %ld sec\t%ld microsec\n", end_tv.tv_sec,
                                                    end_tv.tv_usec);
 
         ret = timeval_subtract (&diff_tv, &end_tv, &start_tv);
@@ -221,9 +221,9 @@ int main(int argc, char **argv)
             EPRINTF("negative rtt!");
             goto err;
         }
-        printf("RTT: %d sec\t%d microsec\n", diff_tv.tv_sec,
+        printf("RTT: %ld sec\t%ld microsec\n", diff_tv.tv_sec,
                                              diff_tv.tv_usec);
-    }
+    } while (1);
 
 err:
     axiom_close(dev);
