@@ -21,15 +21,15 @@ CC := ${CCPREFIX}gcc
 
 all: $(APPS)
 
-axsw_discovery_protocol_test: axiom_discovery_protocol_test.o $(AXIOM_SIM)/axiom_simulator.o $(AXIOM_SIM)/axiom_nic_simulator.o axiom_node_code.o axiom_discovery_protocol.o axiom_route_compute.o axiom_route_delivery.o axiom_route_set.o $(AXIOM_SIM)/axiom_net_switch.o
+axsw_discovery_protocol_test: axiom_discovery_protocol_test.o $(AXIOM_SIM)/axiom_simulator.o $(AXIOM_SIM)/axiom_nic_simulator.o axiom_discovery_node.o axiom_discovery_protocol.o axiom_route_compute.o axiom_route_delivery.o axiom_route_set.o $(AXIOM_SIM)/axiom_net_switch.o
 	$(CC) -o $@ $(CFLAGS) $^ $(LDFLAGS)
 
-axiom_discovery_protocol_test: axiom_discovery_protocol_test.o $(AXIOM_SIM)/axiom_simulator.o $(AXIOM_SIM)/axiom_nic_simulator.o axiom_node_code.o  axiom_discovery_protocol.o axiom_route_compute.o axiom_route_delivery.o axiom_route_set.o $(AXIOM_SIM)/axiom_net_socketpair.o
+axiom_discovery_protocol_test: axiom_discovery_protocol_test.o $(AXIOM_SIM)/axiom_simulator.o $(AXIOM_SIM)/axiom_nic_simulator.o axiom_discovery_node.o  axiom_discovery_protocol.o axiom_route_compute.o axiom_route_delivery.o axiom_route_set.o $(AXIOM_SIM)/axiom_net_socketpair.o
 
 
 axiom_discovery_protocol_test.o: axiom_discovery_protocol_test.c $(AXIOM_SIM)/axiom_simulator.h axiom_discovery_protocol.h $(HEADERS)
 
-axiom_node_code.o: axiom_node_code.c axiom_node_code.h axiom_route_compute.h axiom_route_delivery.h axiom_route_set.h axiom_discovery_protocol.h $(HEADERS)
+axiom_discovery_node.o: axiom_discovery_node.c axiom_discovery_node.h axiom_route_compute.h axiom_route_delivery.h axiom_route_set.h axiom_discovery_protocol.h $(HEADERS)
 
 axiom_discovery_protocol.o: axiom_discovery_protocol.c axiom_discovery_protocol.h $(HEADERS)
 

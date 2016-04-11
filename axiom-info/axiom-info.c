@@ -7,7 +7,7 @@
  * This file tests the AXIOM INIT implementation
  *
  */
-
+#include <getopt.h>
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -18,6 +18,33 @@
 #include "axiom_nic_types.h"
 #include "axiom_nic_api_user.h"
 #include "axiom_nic_regs.h"
+
+#define PRINT_NODEID            0x0001
+#define PRINT_IFNUMBER          0x0002
+#define PRINT_IFINFO            0x0004
+#define PRINT_ROUTING           0x0008
+#define PRINT_ROUTING_ALL       0x0010
+#define PRINT_STATUS            0x0020
+#define PRINT_CONTROL           0x0040
+
+#define PRINT_ALL               0xFFFF
+
+int verbose = 0;
+
+static void usage(void)
+{
+    printf("usage: axiom-info\n");
+    printf("Print information about the AXIOM NIC\n\n");
+    printf("-a, --all (default)         print all information\n");
+    printf("-n, --nodeid                print node id\n");
+    printf("-i, --ifnumber              print number of interfaces\n");
+    printf("-f, --ifinfo      if_id     print information of given interface (if_id)\n");
+    printf("-r, --routing               print routing table (only reachable nodes)\n");
+    printf("-R, --routing-all           print routing table (all nodes)\n");
+    printf("-s, --status                print status register\n");
+    printf("-c, --control               print control register\n");
+    printf("-h, --help                  print this help\n\n");
+}
 
 void print_nodeid(axiom_dev_t *dev)
 {
@@ -89,21 +116,28 @@ void print_ifinfo_all(axiom_dev_t *dev)
     }
 }
 
-void print_routing_table(axiom_dev_t *dev, int max_id)
+void print_routing_table(axiom_dev_t *dev, int all_nodes)
 {
     axiom_err_t err;
     uint8_t enabled_mask;
     int i, j;
 
-    printf("\trouting table [0-%d]\n", max_id);
-    printf("\t\tnode\tIF0\tIF1\tIF2\tIF3\n");
+    printf("\trouting table");
+    if (all_nodes) {
+        printf(" [all nodes]");
+    }
 
-    for (i = 0; i <= max_id; i++) {
+    printf("\n\t\tnode\tIF0\tIF1\tIF2\tIF3\n");
+
+    for (i = 0; i <= AXIOM_MAX_NODES; i++) {
         err = axiom_get_routing(dev, i, &enabled_mask);
         if (err) {
             EPRINTF("err: %x enabled_mask: %x", err, enabled_mask);
             break;
         }
+
+        if (!all_nodes && (enabled_mask == 0))
+            continue;
 
         printf("\t\t%d\t",i);
 
@@ -142,7 +176,7 @@ void print_ni_control(axiom_dev_t *dev)
     printf("\tcontrol register = 0x%08x\n", control);
 
     loopback =  ((control & AXIOMREG_CONTROL_LOOPBACK) != 0);
-    printf("\t\tLOOPBACK = %d\n\n", loopback);
+    printf("\t\tLOOPBACK = %d\n", loopback);
 
     printf("\n");
 }
@@ -150,6 +184,69 @@ void print_ni_control(axiom_dev_t *dev)
 int main(int argc, char **argv)
 {
     axiom_dev_t *dev = NULL;
+    uint16_t print_bitmap = 0;
+
+    int long_index =0;
+    int opt = 0;
+
+    static struct option long_options[] = {
+        {"all", no_argument, 0, 'a'},
+        {"nodeid", no_argument, 0, 'n'},
+        {"ifnumber", no_argument, 0, 'i'},
+        {"ifinfo", required_argument, 0, 'f'},
+        {"routing", no_argument, 0, 'r'},
+        {"routing-all", no_argument, 0, 'R'},
+        {"status", no_argument, 0, 's'},
+        {"control", no_argument, 0, 'c'},
+        {"help", no_argument, 0, 'h'},
+        {0, 0, 0, 0}
+    };
+
+    while ((opt = getopt_long(argc, argv, "anifrRsch",
+                    long_options, &long_index )) != -1) {
+        switch(opt) {
+            case 'a':
+                print_bitmap |= PRINT_ALL;
+                break;
+
+            case 'n':
+                print_bitmap |= PRINT_NODEID;
+                break;
+
+            case 'i':
+                print_bitmap |= PRINT_IFNUMBER;
+                break;
+
+            case 'f':
+                print_bitmap |= PRINT_IFINFO;
+                break;
+
+            case 'r':
+                print_bitmap |= PRINT_ROUTING;
+                break;
+
+            case 'R':
+                print_bitmap |= PRINT_ROUTING | PRINT_ROUTING_ALL;
+                break;
+
+            case 's':
+                print_bitmap |= PRINT_STATUS;
+                break;
+
+            case 'c':
+                print_bitmap |= PRINT_CONTROL;
+                break;
+
+            case 'h':
+            default:
+                usage();
+                exit(-1);
+        }
+    }
+
+    if (print_bitmap == 0) {
+        print_bitmap = PRINT_ALL;
+    }
 
     printf("AXIOM NIC informations\n");
     /* open the axiom device */
@@ -160,17 +257,23 @@ int main(int argc, char **argv)
         exit(-1);
     }
 
-    print_nodeid(dev);
+    if (print_bitmap & PRINT_NODEID)
+        print_nodeid(dev);
 
-    print_ifnumber(dev);
+    if (print_bitmap & PRINT_IFNUMBER)
+        print_ifnumber(dev);
 
-    print_ifinfo_all(dev);
+    if (print_bitmap & PRINT_IFINFO)
+        print_ifinfo_all(dev);
 
-    print_routing_table(dev, AXIOM_MAX_NODES);
+    if (print_bitmap & PRINT_ROUTING)
+        print_routing_table(dev, (print_bitmap & PRINT_ROUTING_ALL));
 
-    print_ni_status(dev);
+    if (print_bitmap & PRINT_STATUS)
+        print_ni_status(dev);
 
-    print_ni_control(dev);
+    if (print_bitmap & PRINT_CONTROL)
+        print_ni_control(dev);
 
     axiom_close(dev);
 

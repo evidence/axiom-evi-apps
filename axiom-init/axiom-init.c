@@ -21,10 +21,11 @@
 #include <sys/socket.h>
 
 #include "axiom_nic_types.h"
-#include "axiom_node_code.h"
+#include "axiom_discovery_node.h"
 
-#define SLAVE_PARAMETER     0
-#define MASTER_PARAMETER    1
+#define MS_INIT_PARAMETER      -1
+#define SLAVE_PARAMETER         0
+#define MASTER_PARAMETER        1
 
 int verbose = 0;
 
@@ -33,13 +34,40 @@ static void usage(void)
     printf("usage: axiom-init -n [master | slave]\n");
     printf("Start AXIOM discovery and routing algorithm in master or slaves mode\n\n");
     printf("-n, --node  [slave | master]   start node as master or as slave\n");
-    printf("-v, --verbose                  verbose output\n\n");
+    printf("-v, --verbose                  verbose output\n");
     printf("-h, --help                     print this help\n\n");
+}
+
+void run_discovery(axiom_dev_t *dev, int master_slave)
+{
+    axiom_node_id_t topology[AXIOM_MAX_NODES][AXIOM_MAX_INTERFACES];
+    axiom_if_id_t routing_tables[AXIOM_MAX_NODES][AXIOM_MAX_NODES];
+    axiom_if_id_t final_routing_table[AXIOM_MAX_NODES];
+
+    if (master_slave == MASTER_PARAMETER)
+    {
+        printf("Starting master node...\n");
+
+        /* Master code */
+        axiom_discovery_master(dev, topology, routing_tables, final_routing_table, verbose);
+
+        printf("\nMaster node end\n");
+    }
+    else if (master_slave ==  SLAVE_PARAMETER)
+    {
+        printf("Starting slave node...\n");
+
+        /* Slave code */
+        axiom_discovery_slave(dev, topology, final_routing_table, verbose);
+
+        printf("\nSlave node end\n");
+    }
+
 }
 
 int main(int argc, char **argv)
 {
-    int master_slave, ret;
+    int master_slave = MS_INIT_PARAMETER;
     char *s_master = "master";
     char *s_slave = "slave";
     char node_str[30];
@@ -47,9 +75,6 @@ int main(int argc, char **argv)
 
     int long_index =0;
     int opt = 0;
-    axiom_node_id_t topology[AXIOM_MAX_NODES][AXIOM_MAX_INTERFACES];
-    axiom_if_id_t routing_tables[AXIOM_MAX_NODES][AXIOM_MAX_NODES];
-    axiom_if_id_t final_routing_table[AXIOM_MAX_NODES];
     static struct option long_options[] = {
         {"node", required_argument, 0, 'n'},
         {"verbose", no_argument, 0, 'v'},
@@ -65,6 +90,14 @@ int main(int argc, char **argv)
         {
             case 'n':
                 sscanf(optarg, "%s", node_str);
+                if (strncmp(node_str, s_master, strlen(s_master)) == 0)
+                {
+                    master_slave = MASTER_PARAMETER;
+                }
+                else if (strncmp(node_str, s_slave, strlen(s_slave)) == 0)
+                {
+                    master_slave = SLAVE_PARAMETER;
+                }
                 break;
             case 'v':
                 verbose = 1;
@@ -76,34 +109,9 @@ int main(int argc, char **argv)
         }
     }
 
-    if (strlen(node_str) == strlen(s_master))
+    if (master_slave == MS_INIT_PARAMETER)
     {
-        ret = memcmp(node_str, s_master, strlen(node_str));
-        if (ret == 0)
-        {
-            master_slave = MASTER_PARAMETER;
-        }
-        else
-        {
-            usage();
-            exit(-1);
-        }
-    }
-    else if (strlen(node_str) == strlen(s_slave))
-    {
-        ret = memcmp(node_str, s_slave, strlen(node_str));
-        if (ret == 0)
-        {
-            master_slave = SLAVE_PARAMETER;
-        }
-        else
-        {
-            usage();
-            exit(-1);
-        }
-    }
-    else
-    {
+        EPRINTF("node must be \"master\" or \"slave\"");
         usage();
         exit(-1);
     }
@@ -116,27 +124,10 @@ int main(int argc, char **argv)
         exit(-1);
     }
 
-    /* bind the current process on port 0 */
+    /* TODO: bind the current process on port 0 */
     /* err = axiom_bind(dev, AXIOM_SMALL_PORT_DISCOVERY); */
 
-    if (master_slave == MASTER_PARAMETER)
-    {
-        printf("Starting master node...\n");
-
-        /* Master code */
-        axiom_master_node_code(dev, topology, routing_tables, final_routing_table, verbose);
-
-        printf("\nMaster node end\n");
-    }
-    else
-    {
-        printf("Starting slave node...\n");
-
-        /* Slave code */
-        axiom_slave_node_code(dev, topology, final_routing_table, verbose);
-
-        printf("\nSlave node end\n");
-    }
+    run_discovery(dev, master_slave);
 
     axiom_close(dev);
 

@@ -33,7 +33,7 @@ static void usage(void)
     printf("-d, --dest      dest     dest node id or local if (TO_NEIGHBOUR) \n");
     printf("-n, --neighbour          send to neighbour\n");
     printf("-l, --payload   payload  message to send (uint32_t)\n");
-    printf("-h, --help               print this help\n");
+    printf("-h, --help               print this help\n\n");
 }
 
 int main(int argc, char **argv)

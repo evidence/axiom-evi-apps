@@ -30,7 +30,7 @@ static void usage(void)
     printf("usage: axiom-recv-small [[-p port] [-o] | [-h]]\n");
     printf("Receive AXIOM small raw message\n\n");
     printf("-p, --port  port     port used for receiving\n");
-    printf("-o, --once           receive once\n\n");
+    printf("-o, --once           receive once\n");
     printf("-h, --help           print this help\n\n");
 }
 
