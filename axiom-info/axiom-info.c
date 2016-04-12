@@ -29,6 +29,8 @@
 
 #define PRINT_ALL               0xFFFF
 
+#define PRINT_ALL_RTSET         (PRINT_ALL & ~PRINT_ROUTING_ALL)
+
 int verbose = 0;
 
 static void usage(void)
@@ -125,6 +127,8 @@ void print_routing_table(axiom_dev_t *dev, int all_nodes)
     printf("\trouting table");
     if (all_nodes) {
         printf(" [all nodes]");
+    } else {
+        printf(" [only reachable nodes]");
     }
 
     printf("\n\t\tnode\tIF0\tIF1\tIF2\tIF3\n");
@@ -245,7 +249,7 @@ int main(int argc, char **argv)
     }
 
     if (print_bitmap == 0) {
-        print_bitmap = PRINT_ALL;
+        print_bitmap = PRINT_ALL_RTSET;
     }
 
     printf("AXIOM NIC informations\n");
