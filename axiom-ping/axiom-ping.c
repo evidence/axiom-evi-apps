@@ -26,6 +26,8 @@
 #include "axiom_nic_packets.h"
 #include "dprintf.h"
 
+#define AXIOM_NO_TX
+
 int verbose = 0;
 
 static volatile int sigint_received = 0;
@@ -195,7 +197,7 @@ int main(int argc, char **argv)
         usage();
         exit(-1);
     }
-#if 0
+#ifndef AXIOM_NO_TX
     /* open the axiom device */
     dev = axiom_open(NULL);
     if (dev == NULL)
@@ -225,7 +227,7 @@ int main(int argc, char **argv)
         IPRINTF(verbose,"timestamp: %ld sec\t%ld microsec\n", start_tv.tv_sec,
                                                               start_tv.tv_usec);
         IPRINTF(verbose,"[node %u] sending ping message...\n", my_node_id);
-#if 0
+#ifndef AXIOM_NO_TX
         /* send a small message*/
         payload = (axiom_payload_t)(payload + 1);
         send_ret =  axiom_send_small(dev, (axiom_node_id_t)dst_id,
@@ -238,7 +240,7 @@ int main(int argc, char **argv)
         }
 #endif
         sent_packets++;
-#if 0
+#ifndef AXIOM_NO_TX
         IPRINTF(verbose,"[node %u] message sent to port %u\n", my_node_id, port);
         IPRINTF(verbose,"\t- destination_node_id = %u\n", dst_id);
 
