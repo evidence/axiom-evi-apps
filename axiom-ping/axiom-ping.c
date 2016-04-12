@@ -26,7 +26,7 @@
 #include "axiom_nic_packets.h"
 #include "dprintf.h"
 
-#define AXIOM_NO_TX
+//#define AXIOM_NO_TX
 
 int verbose = 0;
 
@@ -51,6 +51,12 @@ static void sigint_h(int sig)
     sigint_received = 1;
 }
 
+/* TODO: allow the user to change the resolution */
+static double usec2msec(uint64_t usec)
+{
+    return ((double)(usec) / 1000);
+}
+
 
 int main(int argc, char **argv)
 {
@@ -58,19 +64,16 @@ int main(int argc, char **argv)
     axiom_msg_id_t send_ret, recv_ret, my_node_id;
     axiom_port_t port = 1, recv_port ;
     axiom_node_id_t dst_id, src_id;
+    axiom_flag_t flag = 0;
+    axiom_payload_t payload = 0, recv_payload;
     unsigned int interval = 500; /* default interval 500 ms */
     unsigned int num_ping = 1;
     int port_ok = 0, dst_ok = 0, num_ping_ok = 0;
-    axiom_flag_t flag = 0;
-    axiom_payload_t payload = 0, recv_payload;
     struct timeval start_tv, end_tv, diff_tv;
-    double diff_ms, diff_usec;
-    unsigned int max_sec = 0, min_sec = 0, avg_s;
-    double max_ms = 0.0, min_ms = 0.0, avg_ms;
-    double avg_sec = 0.0, avg_sec_temp1, avg_sec_temp2 ;
+    uint64_t diff_usec, sum_usec = 0, max_usec = 0, min_usec = -1;
+    double avg_usec;
     int sent_packets = 0, recv_packets = 0;
     int ret;
-
 
     int long_index =0;
     int opt = 0;
@@ -187,15 +190,6 @@ int main(int argc, char **argv)
     printf("PING node %d.\n", dst_id);
     while (!sigint_received &&  (num_ping > 0))
     {
-        /* get actual time */
-        ret = gettimeofday(&start_tv,NULL);
-        if (ret == -1)
-        {
-            EPRINTF("gettimeofday error");
-            goto err;
-        }
-        IPRINTF(verbose,"timestamp: %ld sec\t%ld microsec\n", start_tv.tv_sec,
-                                                              start_tv.tv_usec);
         IPRINTF(verbose,"[node %u] sending ping message...\n", my_node_id);
 #ifndef AXIOM_NO_TX
         /* send a small message*/
@@ -209,6 +203,15 @@ int main(int argc, char **argv)
                goto err;
         }
 #endif
+        /* get actual time */
+        ret = gettimeofday(&start_tv,NULL);
+        if (ret == -1)
+        {
+            EPRINTF("gettimeofday error");
+            goto err;
+        }
+        IPRINTF(verbose,"timestamp: %ld sec\t%ld microsec\n", start_tv.tv_sec,
+                                                              start_tv.tv_usec);
         sent_packets++;
 #ifndef AXIOM_NO_TX
         IPRINTF(verbose,"[node %u] message sent to port %u\n", my_node_id, port);
@@ -223,8 +226,11 @@ int main(int argc, char **argv)
             EPRINTF("receive error");
             break;
         }
-
+#else
+        usleep(1234000);
 #endif
+
+
         recv_packets++;
         /* get actual time */
         ret = gettimeofday(&end_tv,NULL);
@@ -238,73 +244,26 @@ int main(int argc, char **argv)
         IPRINTF(verbose,"\t- message index = %u\n", recv_payload);
         IPRINTF(verbose,"timestamp: %ld sec\t%ld microsec\n", end_tv.tv_sec,
                                                    end_tv.tv_usec);
+        /* TODO: check serial number? */
 
         timersub(&end_tv, &start_tv, &diff_tv);
 
-        /* ************************************************************* */
         /* ********************** statiscs ***************************** */
-        /* ************************************************************* */
-
         /* difference computation */
-        diff_ms = (double)(diff_tv.tv_usec / 1000);
-        diff_usec = (double)(diff_tv.tv_usec % 1000);
-        diff_ms = diff_ms + (diff_usec/1000);
-        /* sum computation for future average computation */
-        avg_sec_temp1 = (((diff_tv.tv_sec * 1000000) + diff_tv.tv_usec));
-        avg_sec_temp2 = (avg_sec_temp1 / 1000000) + (diff_tv.tv_usec / 1000000);
-        avg_sec = avg_sec + avg_sec_temp2;
+        diff_usec = diff_tv.tv_usec + (diff_tv.tv_sec * 1000000);
+        sum_usec += diff_usec;
 
-        if (diff_tv.tv_sec > 0)
-        {
-            /* the rtt is greater than 1 second */
-            printf("from node %d: seq_num=%d time=%d s %3.3f ms\n", src_id,
-                                                               recv_payload,
-                                                               diff_tv.tv_sec,
-                                                               diff_ms);
-        }
-        else
-        {
-            /* the rtt is smaller than 1 second */
-            printf("from node %d: seq_num=%d time=%3.3f ms\n", src_id,
-                                                               recv_payload,
-                                                               diff_ms);
-        }
+        printf("from node %d: seq_num=%d time=%3.3f ms\n", src_id,
+                recv_payload,
+                usec2msec(diff_usec));
 
-        if (recv_packets == 1)
+        if (diff_usec > max_usec)
         {
-            /* first rtt is the minimum and the maximum */
-            max_sec = min_sec = diff_tv.tv_sec;
-            max_ms =  min_ms = diff_ms;
+            max_usec = diff_usec;
         }
-        else
+        if (diff_usec < min_usec)
         {
-            /* compute maximum rtt */
-            if (diff_tv.tv_sec > max_sec)
-            {
-                max_sec = diff_tv.tv_sec;
-                max_ms =  diff_ms;
-            }
-            else if (diff_tv.tv_sec == max_sec)
-            {
-                if (diff_ms > max_ms)
-                {
-                    max_ms =  diff_ms;
-                }
-            }
-
-            /* compute minimum rtt */
-            if (diff_tv.tv_sec < min_sec)
-            {
-                min_sec = diff_tv.tv_sec;
-                min_ms =  diff_ms;
-            }
-            else if (diff_tv.tv_sec == min_sec)
-            {
-                if (diff_ms < min_ms)
-                {
-                    min_ms =  diff_ms;
-                }
-            }
+            min_usec = diff_usec;
         }
 
         usleep(interval * 1000);
@@ -316,23 +275,14 @@ int main(int argc, char **argv)
 
     }
 
-    /* average sec and ms computation */
-    avg_sec = (avg_sec / recv_packets);
-    avg_s = (unsigned int)(avg_sec);
-    avg_ms = (avg_sec - avg_s) * 1000;
+    /* average computation */
+    avg_usec = ((double)(sum_usec) / recv_packets);
 
     printf("\n--- node %d ping statistics ---\n", dst_id);
     printf("%d packets transmitted, %d received, %d packet loss\n",
            sent_packets, recv_packets, recv_packets - sent_packets);
-    if (max_sec > 0)
-    {
-        printf("rtt min/avg/max = %d s %3.3f ms/%d s %3.3f ms/%d s %3.3f ms\n",
-                                    min_sec, min_ms, avg_s, avg_ms, max_sec, max_ms);
-    }
-    else
-    {
-        printf("rtt min/avg/max = %3.3f/%3.3f/%3.3f ms\n", min_ms, avg_ms, max_ms);
-    }
+    printf("rtt min/avg/max = %3.3f/%3.3f/%3.3f ms\n", usec2msec(min_usec),
+            usec2msec(avg_usec), usec2msec(max_usec));
 
 err:
     axiom_close(dev);
