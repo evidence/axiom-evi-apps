@@ -8,6 +8,8 @@ axiom-init/axiom-discovery/axsw_discovery_protocol_test
 axiom-init/axiom-discovery/axiom_discovery_protocol_test
 axiom-init/axiom-init
 axiom-info/axiom-info
+axiom-ping-reply/axiom-ping-reply
+axiom-ping/axiom-ping
 
 #
 # Normal rules
