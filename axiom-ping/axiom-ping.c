@@ -30,7 +30,7 @@ static void usage(void)
     printf("usage: ./axiom-ping [[-p port] | [-h]] -d dest \n");
     printf("AXIOM ping\n\n");
     printf("-p, --port      port     port used for sending\n");
-    printf("-d, --dest      dest     dest node id or local if (TO_NEIGHBOUR) \n");
+    printf("-d, --dest      dest     dest node id \n");
     printf("-h, --help               print this help\n\n");
 }
 
