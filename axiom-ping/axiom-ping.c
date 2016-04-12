@@ -45,36 +45,6 @@ static void usage(void)
     printf("-h, --help               print this help\n\n");
 }
 
-/*  This function subtracts the `struct timeval' values x and y,
-    storing the result in diff.
-    Return 1 if the difference is negative, otherwise 0.  */
- static int timeval_subtract (struct timeval *diff,
-                              struct timeval *x, struct timeval *y)
- {
-    int nsec;
-
-    /* Perform the carry for the later subtraction by updating y. */
-    if (x->tv_usec < y->tv_usec)
-    {
-        nsec = (y->tv_usec - x->tv_usec) / 1000000 + 1;
-        y->tv_usec -= 1000000 * nsec;
-        y->tv_sec += nsec;
-    }
-    if (x->tv_usec - y->tv_usec > 1000000)
-    {
-        nsec = (x->tv_usec - y->tv_usec) / 1000000;
-        y->tv_usec += 1000000 * nsec;
-        y->tv_sec -= nsec;
-    }
-
-    /* Compute difference */
-    diff->tv_sec = x->tv_sec - y->tv_sec;
-    diff->tv_usec = x->tv_usec - y->tv_usec;
-
-    /* Return 1 if result is negative. */
-    return (x->tv_sec < y->tv_sec);
- }
-
 /* control-C handler */
 static void sigint_h(int sig)
 {
@@ -269,12 +239,7 @@ int main(int argc, char **argv)
         IPRINTF(verbose,"timestamp: %ld sec\t%ld microsec\n", end_tv.tv_sec,
                                                    end_tv.tv_usec);
 
-        ret = timeval_subtract (&diff_tv, &end_tv, &start_tv);
-        if (ret == 1)
-        {
-            EPRINTF("negative rtt!");
-            goto err;
-        }
+        timersub(&end_tv, &start_tv, &diff_tv);
 
         /* ************************************************************* */
         /* ********************** statiscs ***************************** */
