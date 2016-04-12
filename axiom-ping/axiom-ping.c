@@ -16,6 +16,7 @@
 #include <unistd.h>
 #include <getopt.h>
 #include <inttypes.h>
+#include <signal.h>
 
 #include <sys/types.h>
 #include <sys/time.h>
@@ -26,6 +27,8 @@
 #include "dprintf.h"
 
 int verbose = 0;
+
+static volatile int sigint_received = 0;
 
 static void usage(void)
 {
@@ -70,6 +73,12 @@ static void usage(void)
     return (x->tv_sec < y->tv_sec);
  }
 
+/* control-C handler */
+static void sigint_h(int sig)
+{
+    sigint_received = 1;
+}
+
 
 int main(int argc, char **argv)
 {
@@ -103,6 +112,7 @@ int main(int argc, char **argv)
         {0, 0, 0, 0}
     };
 
+    signal(SIGINT, sigint_h);
 
     while ((opt = getopt_long(argc, argv,"vhp:d:i:c:",
                          long_options, &long_index )) != -1)
@@ -203,7 +213,7 @@ int main(int argc, char **argv)
     }
 #endif
     printf("PING node %d.\n", dst_id);
-    do
+    while (!sigint_received &&  (num_ping > 0))
     {
         /* get actual time */
         ret = gettimeofday(&start_tv,NULL);
@@ -337,7 +347,7 @@ int main(int argc, char **argv)
             num_ping--;
         }
 
-    } while (num_ping > 0);
+    }
 
     /* average sec and ms computation */
     avg_sec = (avg_sec / recv_packets);
