@@ -73,7 +73,7 @@ int main(int argc, char **argv)
     axiom_node_id_t dst_id, src_id;
     int port_ok = 0, dst_ok = 0;
     axiom_flag_t flag = 0;
-    axiom_payload_t payload;
+    axiom_payload_t payload = 0, recv_payload;
     struct timeval start_tv, end_tv, diff_tv;
     int ret;
 
@@ -181,6 +181,7 @@ int main(int argc, char **argv)
         printf("[node %u] sending ping message...\n", my_node_id);
 
         /* send a small message*/
+        payload = (axiom_payload_t)(payload + 1);
         send_ret =  axiom_send_small(dev, (axiom_node_id_t)dst_id,
                                             (axiom_port_t)port, flag,
                                             (axiom_payload_t*)&payload);
@@ -195,7 +196,7 @@ int main(int argc, char **argv)
         /* ********************* receive the reply ************************ */
         /* receive a small message from port*/
         recv_ret =  axiom_recv_small(dev, &src_id, (axiom_port_t *)&recv_port,
-                                     &flag, &payload);
+                                     &flag, &recv_payload);
         if (recv_ret == AXIOM_RET_ERROR)
         {
             EPRINTF("receive error");
@@ -211,7 +212,7 @@ int main(int argc, char **argv)
         }
         printf("[node %u] reply received on port %u\n", my_node_id, recv_port);
         printf("\t- source_node_id = %u\n", src_id);
-        printf("\t- message index = %u\n", payload);
+        printf("\t- message index = %u\n", recv_payload);
         printf("timestamp: %ld sec\t%ld microsec\n", end_tv.tv_sec,
                                                    end_tv.tv_usec);
 
