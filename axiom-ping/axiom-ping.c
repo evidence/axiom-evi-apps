@@ -23,7 +23,7 @@
 
 #include "axiom_nic_types.h"
 #include "axiom_nic_api_user.h"
-#include "axiom_nic_packets.h"
+#include "axiom_nic_init.h"
 #include "dprintf.h"
 
 //#define AXIOM_NO_TX
@@ -65,7 +65,7 @@ int main(int argc, char **argv)
     axiom_port_t port = 1, recv_port ;
     axiom_node_id_t dst_id, src_id;
     axiom_flag_t flag = 0;
-    axiom_payload_t payload = 0, recv_payload;
+    axiom_ping_payload_t payload, recv_payload;
     unsigned int interval = 500; /* default interval 500 ms */
     unsigned int num_ping = 1;
     int port_ok = 0, dst_ok = 0, num_ping_ok = 0;
@@ -188,12 +188,15 @@ int main(int argc, char **argv)
     }
 #endif
     printf("PING node %d.\n", dst_id);
+
+    payload.packet_id = 0;
     while (!sigint_received &&  (num_ping > 0))
     {
         IPRINTF(verbose,"[node %u] sending ping message...\n", my_node_id);
 #ifndef AXIOM_NO_TX
         /* send a small message*/
-        payload = (axiom_payload_t)(payload + 1);
+        payload.command = AXIOM_PING;
+        payload.packet_id = (uint16_t)(payload.packet_id + 1);
         send_ret =  axiom_send_small(dev, (axiom_node_id_t)dst_id,
                                             (axiom_port_t)port, flag,
                                             (axiom_payload_t*)&payload);
@@ -220,7 +223,7 @@ int main(int argc, char **argv)
         /* ********************* receive the reply ************************ */
         /* receive a small message from port*/
         recv_ret =  axiom_recv_small(dev, &src_id, (axiom_port_t *)&recv_port,
-                                     &flag, &recv_payload);
+                                     &flag, (axiom_payload_t*)&recv_payload);
         if (recv_ret == AXIOM_RET_ERROR)
         {
             EPRINTF("receive error");
@@ -230,7 +233,11 @@ int main(int argc, char **argv)
         usleep(1234000);
 #endif
 
-
+        if (recv_payload.command != AXIOM_PONG)
+        {
+            EPRINTF("receive a no AXIOM-PONG message");
+            continue;
+        }
         recv_packets++;
         /* get actual time */
         ret = gettimeofday(&end_tv,NULL);
@@ -241,7 +248,7 @@ int main(int argc, char **argv)
         }
         IPRINTF(verbose,"[node %u] reply received on port %u\n", my_node_id, recv_port);
         IPRINTF(verbose,"\t- source_node_id = %u\n", src_id);
-        IPRINTF(verbose,"\t- message index = %u\n", recv_payload);
+        IPRINTF(verbose,"\t- message index = %u\n", recv_payload.packet_id);
         IPRINTF(verbose,"timestamp: %ld sec\t%ld microsec\n", end_tv.tv_sec,
                                                    end_tv.tv_usec);
         /* TODO: check serial number? */
@@ -254,7 +261,7 @@ int main(int argc, char **argv)
         sum_usec += diff_usec;
 
         printf("from node %d: seq_num=%d time=%3.3f ms\n", src_id,
-                recv_payload,
+                recv_payload.packet_id,
                 usec2msec(diff_usec));
 
         if (diff_usec > max_usec)

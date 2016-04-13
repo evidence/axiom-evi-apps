@@ -22,7 +22,7 @@
 
 #include "axiom_nic_types.h"
 #include "axiom_nic_api_user.h"
-#include "axiom_nic_packets.h"
+#include "axiom_nic_init.h"
 #include "dprintf.h"
 
 static void usage(void)
@@ -41,7 +41,7 @@ int main(int argc, char **argv)
     axiom_port_t port, recv_port;
     int port_ok = 0;
     axiom_flag_t flag;
-    axiom_payload_t payload;
+    axiom_ping_payload_t payload;
 
     int long_index =0;
     int opt = 0;
@@ -114,10 +114,15 @@ int main(int argc, char **argv)
 
         /* receive a small message from port */
         recv_ret =  axiom_recv_small(dev, &src_id, (axiom_port_t *)&recv_port,
-                &flag, &payload);
+                &flag, (axiom_payload_t*)&payload);
         if (recv_ret == AXIOM_RET_ERROR)
         {
             EPRINTF("receive error");
+            break;
+        }
+        if (payload.command != AXIOM_PING)
+        {
+            EPRINTF("receive a not AXIOM_PING message");
             break;
         }
         printf("[node %u] message received on port %u\n", my_node_id, recv_port);
@@ -125,6 +130,7 @@ int main(int argc, char **argv)
         printf("\t- flag = %u\n", flag);
 
         /* send back the message */
+        payload.command = AXIOM_PONG;
         send_ret =  axiom_send_small(dev, (axiom_node_id_t)src_id,
                                             (axiom_port_t)recv_port, flag,
                                             (axiom_payload_t*)&payload);
