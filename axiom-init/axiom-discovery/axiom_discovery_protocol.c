@@ -62,7 +62,7 @@ uint8_t axiom_codify_routing_mask(axiom_dev_t *dev, axiom_node_id_t node_id,
  *          network.
  *
  */
-int discover_phase(axiom_dev_t *dev, axiom_node_id_t *next_id,
+static int discover_phase(axiom_dev_t *dev, axiom_node_id_t *next_id,
         axiom_node_id_t topology[][AXIOM_MAX_INTERFACES])
 {
     axiom_if_id_t num_interface = 0;
