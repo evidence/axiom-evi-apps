@@ -17,6 +17,7 @@
 #include <getopt.h>
 #include <ctype.h>
 #include <limits.h>
+#include <math.h>
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -37,7 +38,11 @@ extern axiom_node_id_t topology[AXIOM_MAX_NODES][AXIOM_MAX_INTERFACES];
 static void usage(void)
 {
     printf("usage: ./axiom_discovery_protocol |  ./axsw_discovery_protocol \n");
-    printf ("                           [[-f file_name] | [-h]] \n\n");
+    printf("  [[-m -n number_of_nodes] | [[-r -n number_of_nodes] | [-h]] \n\n");
+    printf("                             [[-f file_name] | [-h]] \n\n");
+    printf("-r, --ring                          ring toplogy \n");
+    printf("-m, --mesh                          mesh toplogy \n");
+    printf("-n              number_of_nodes     number of nodes \n");
     printf("-f, --file      file_name           toplogy file \n");
     printf("-h, --help                          print this help\n");
 }
@@ -104,6 +109,26 @@ axiom_topology_from_file(axiom_topology_t *start_topology, char *filename) {
 
 }
 
+/* functions for checking if the inserted number of nodes */
+/* is ok for a mesh topology */
+static int
+check_mesh_number_of_nodes(int number_of_nodes, uint8_t* row, uint8_t* columns)
+{
+    int i;
+    int sq = (int)sqrt((double)number_of_nodes);
+
+    for (i = sq; i >= 2; i--)
+    {
+        if (number_of_nodes % i == 0)
+        {
+           *row = i;
+           *columns = number_of_nodes / (*row);
+           return 0;
+        }
+    }
+    return -1;
+}
+
 /* functions for topology management */
 /* Initializes start_toplogy with no connected nodes */
 void
@@ -121,8 +146,8 @@ axiom_init_topology(axiom_topology_t *start_topology) {
 
 /* Initialize a ring of 'num_nodes' nodes */
 void
-axiom_make_ring_toplogy(axiom_topology_t *start_topology, int num_nodes) {
-
+axiom_make_ring_toplogy(axiom_topology_t *start_topology, int num_nodes)
+{
     int i;
 
     /* first direction */
@@ -135,6 +160,80 @@ axiom_make_ring_toplogy(axiom_topology_t *start_topology, int num_nodes) {
     start_topology->topology[0][1] = num_nodes-1;
     for (i = 1; i < num_nodes; i++) {
         start_topology->topology[i][1] =  i-1;
+    }
+
+    start_topology->num_nodes =  num_nodes;
+    start_topology->num_interfaces =  AXIOM_MAX_INTERFACES;
+}
+
+/* Initialize a ring of 'num_nodes' nodes */
+/* The structure of the start topology is based on the
+ * following hypotesis: each node interfaces are numbered
+ * in the following way
+ *                      |IF1
+ *                      |
+ *           IF2 -------|------- IF0
+ *                      |
+ *                      |IF3
+ */
+void
+axiom_make_mesh_toplogy(axiom_topology_t *start_topology, int num_nodes,
+                        uint8_t row, uint8_t columns)
+{
+    int i, node_index;
+
+    for (node_index = 0; node_index < num_nodes; node_index++)
+    {
+        /* **************** IF0 of each node ******************/
+        /* general rule for IF0 */
+        start_topology->topology[node_index][0] =  node_index + 1;
+        for (i = 0; i < row; i++)
+        {
+            if (node_index == ((i*columns)+(columns-1)))
+            {
+                /* IF0 rule for nodes of the last column of the topology */
+                start_topology->topology[node_index][0] = (i*columns);
+            }
+        }
+
+        /* **************** IF1 of each node ******************/
+        if (node_index < columns)
+        {
+            /* IF1 rule for nodes of the first row of the topology */
+            start_topology->topology[node_index][1] = ((row-1)*columns)+node_index;
+        }
+        else
+        {
+            /* general rule for IF1 */
+            start_topology->topology[node_index][1] =  node_index - columns;
+        }
+
+        /* **************** IF2 of each node ******************/
+        if (node_index != 0)
+        {
+            /* general rule for IF2 */
+            start_topology->topology[node_index][2] =  node_index - 1;
+        }
+        for (i = 0; i < row; i++)
+        {
+            if (node_index == (i*columns))
+            {
+                /* IF2 rule for nodes of the first column of the topology */
+                start_topology->topology[node_index][2] = (node_index + columns -1);
+            }
+        }
+
+        /* **************** IF3 of each node ******************/
+        /* IF3 rule for nodes of the last row of the topology */
+        if ((node_index >= ((row-1)*columns)) && (node_index < num_nodes))
+        {
+            start_topology->topology[node_index][3] = node_index - ((row-1)*columns);
+        }
+        else
+        {
+            /* general rule for IF3 */
+            start_topology->topology[node_index][3] = node_index + columns;
+        }
     }
 
     start_topology->num_nodes =  num_nodes;
@@ -240,7 +339,7 @@ int main(int argc, char **argv)
 {
     int err, cmp;
     int i, j, n;
-    int file_ok = 0, ring_ok = 0, n_ok = 0;
+    int file_ok = 0, ring_ok = 0, mesh_ok = 0, n_ok = 0;
     int long_index =0;
     int opt = 0, num_nodes;
     uint8_t max_node_id = 0;
@@ -248,15 +347,17 @@ int main(int argc, char **argv)
     static struct option long_options[] = {
         {"file", required_argument, 0, 'f'},
         {"ring", no_argument, 0, 'r'},
+        {"mesh", no_argument, 0, 'm'},
         {"n", required_argument, 0, 'n'},
         {"help", no_argument, 0, 'h'},
         {0, 0, 0, 0}
     };
     char filename[100];
+    uint8_t row, columns;
     axiom_topology_t start_topology;
     axiom_topology_t end_test_topology, end_test_topology_copy;
 
-    while ((opt = getopt_long(argc, argv,"f:rn:h",
+    while ((opt = getopt_long(argc, argv,"f:rmn:h",
                          long_options, &long_index )) != -1) {
         switch (opt) {
             case 'f' :
@@ -270,6 +371,10 @@ int main(int argc, char **argv)
                 break;
             case 'r' :
                 ring_ok = 1;
+                break;
+
+            case 'm' :
+                mesh_ok = 1;
                 break;
 
             case 'n' :
@@ -322,6 +427,37 @@ int main(int argc, char **argv)
                     /* init the selected topology */
                     axiom_make_ring_toplogy(&start_topology, n);
                 }
+            }
+            else
+            {
+               usage();
+               exit(-1);
+            }
+        }
+        else if (mesh_ok == 1)
+        {
+            /* make mesh toplogy with the inserted nuber of nodes */
+            if (n_ok == 1)
+            {
+                if ((n < 4) || (n > AXIOM_MAX_NODES))
+                {
+                    printf("Please, for MESH topology insert a simulation number between 4 and %d\n",
+                            AXIOM_MAX_NODES);
+                    exit (-1);
+                }
+                err = check_mesh_number_of_nodes(n, &row, &columns);
+                if (err == -1)
+                {
+                    printf ("The inserted number of nodes is a prime number\n");
+                    printf ("MESH topology not possible \n");
+                    exit (-1);
+                }
+                printf ("row = %d columns = %d\n", row, columns);
+
+                num_nodes = n;
+                /* init the selected topology */
+                axiom_make_mesh_toplogy(&start_topology, n, row, columns);
+
             }
             else
             {
