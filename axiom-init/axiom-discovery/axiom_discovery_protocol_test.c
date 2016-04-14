@@ -353,8 +353,8 @@ void *slave(void *args)
                 msg_cmd, AXIOM_DSCV_CMD_REQ_ID);
     } while (msg_cmd != AXIOM_DSCV_CMD_REQ_ID);
 
-    axiom_discovery_slave(dev, axiom_args->node_topology,
-            axiom_args->final_routing_table, first_msg, first_interface, 1);
+    axiom_discovery_slave(dev, first_interface, first_msg, axiom_args->node_topology,
+            axiom_args->final_routing_table, 1);
 
     return 0;
 }

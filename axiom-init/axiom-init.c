@@ -24,7 +24,8 @@
 #include "axiom_nic_packets.h"
 #include "axiom_nic_api_user.h"
 #include "axiom_nic_init.h"
-#include "axiom_discovery_node.h"
+#include "axiom-discovery/axiom_discovery_node.h"
+#include "axiom-pong/axiom_pong.h"
 
 int verbose = 0;
 
@@ -102,8 +103,11 @@ int main(int argc, char **argv)
         }
         switch (cmd) {
             case AXIOM_DSCV_CMD_REQ_ID:
-                axiom_discovery_slave(dev, topology, final_routing_table,
-                        payload, src, verbose);
+                axiom_discovery_slave(dev, src, payload, topology,
+                        final_routing_table, verbose);
+
+            case AXIOM_PING:
+                axiom_pong(dev, src, payload, verbose);
 
             default:
                 EPRINTF("message discarded - cmd: %x", cmd);

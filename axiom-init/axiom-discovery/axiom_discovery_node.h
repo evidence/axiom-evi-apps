@@ -30,17 +30,17 @@ void axiom_discovery_master(axiom_dev_t *dev,
 /*
  * @brief This function implements the slaves node code.
  * @param dev                   The axiom device private data pointer
+ * @param first_src             interface where the first message is received
+ * @param first_message         first message received
  * @param topology              matrix memorizing the intermediate nodes
  *                              topology.
  * @param final_routing_table   final node routing table
- * @param first_message         first message received
- * @param first_interface       interface where the first message is received
  * @param verbose               enable verbose output
  */
 void axiom_discovery_slave(axiom_dev_t *dev,
+        axiom_node_id_t first_src, axiom_payload_t first_payload,
         axiom_node_id_t topology[][AXIOM_MAX_INTERFACES],
         axiom_if_id_t final_routing_table[AXIOM_MAX_NODES],
-        axiom_payload_t first_msg, axiom_if_id_t first_interface,
         int verbose);
 
 #endif /*! AXIOM_DISCOVERY_NODE_H*/

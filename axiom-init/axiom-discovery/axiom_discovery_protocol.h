@@ -52,12 +52,12 @@ int axiom_master_node_discovery(axiom_dev_t *dev,
  * @param dev              The axiom device private data pointer
  * @param topology         matrix memorizing the each node partial topology.
  * @param my_node_id       final id of the node
- * @param first_message    first message received
  * @param first_interface  interface where the first message is received
+ * @param first_message    first message received
  */
 int axiom_slave_node_discovery (axiom_dev_t *dev,
         axiom_node_id_t topology[][AXIOM_MAX_INTERFACES],
         axiom_node_id_t *my_node_id,
-        axiom_payload_t first_msg, axiom_if_id_t first_interface);
+        axiom_if_id_t first_interface, axiom_payload_t first_msg);
 
 #endif  /* !AXIOM_DSCV_PROTOCOL_H */

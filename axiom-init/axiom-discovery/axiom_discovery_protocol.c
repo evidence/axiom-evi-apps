@@ -299,7 +299,7 @@ int axiom_master_node_discovery(axiom_dev_t *dev,
 int axiom_slave_node_discovery (axiom_dev_t *dev,
         axiom_node_id_t topology[][AXIOM_MAX_INTERFACES],
         axiom_node_id_t *my_node_id,
-        axiom_payload_t first_msg, axiom_if_id_t first_interface)
+        axiom_if_id_t first_interface, axiom_payload_t first_msg)
 {
     axiom_node_id_t next_id;
     axiom_discovery_cmd_t msg_cmd ;
