@@ -25,6 +25,7 @@
 #include "axiom_discovery_node.h"
 #include "axiom_simulator.h"
 #include "axiom_net.h"
+#include "axiom_nic_discovery.h"
 
 axiom_sim_node_args_t axiom_nodes[AXIOM_MAX_NODES];
 
@@ -298,16 +299,16 @@ void axiom_compute_final_topology(axiom_topology_t *start_topology,
 void *master(void *args)
 {
     axiom_sim_node_args_t *axiom_args = (axiom_sim_node_args_t *) args;
-    axiom_dev_t *p_node_info;
+    axiom_dev_t *dev;
 
     set_node_info(axiom_args);
     sleep(1);
     NDPRINTF("axiom_args %p get_node_info %p", axiom_args, get_node_info());
 
     /* get the pointer to the running thread 'axiom_nodes' entry */
-    p_node_info = (axiom_dev_t *)get_node_info();
+    dev = (axiom_dev_t *)get_node_info();
 
-    axiom_discovery_master(p_node_info, axiom_args->node_topology, axiom_args->routing_tables,
+    axiom_discovery_master(dev, axiom_args->node_topology, axiom_args->routing_tables,
 					axiom_args->final_routing_table, 1);
 
     memcpy(final_topology.topology, axiom_args->node_topology, sizeof(axiom_args->node_topology));
@@ -321,16 +322,39 @@ void *master(void *args)
 void *slave(void *args)
 {
     axiom_sim_node_args_t *axiom_args = (axiom_sim_node_args_t *) args;
-    axiom_dev_t *p_node_info;
+    axiom_dev_t *dev;
+    axiom_discovery_cmd_t msg_cmd;
+    axiom_payload_t first_msg;
+    axiom_if_id_t first_interface;
 
     set_node_info(axiom_args);
     sleep(1);
     NDPRINTF("axiom_args %p get_node_info %p", axiom_args, get_node_info());
 
     /* get the pointer to the running thread 'axiom_nodes' entry */
-    p_node_info = (axiom_dev_t *)get_node_info();
-    axiom_discovery_slave(p_node_info, axiom_args->node_topology,
-            axiom_args->final_routing_table, 1);
+    dev = (axiom_dev_t *)get_node_info();
+
+    /* Wait for the neighbour AXIOM_DSCV_CMD_REQ_ID type message */
+    do {
+        axiom_flag_t flag = AXIOM_SMALL_FLAG_NEIGHBOUR;
+        axiom_port_t port;
+        axiom_err_t ret;
+
+        DPRINTF("Slave: Wait for AXIOM_DSCV_CMD_REQ_ID message");
+        ret = axiom_recv_small(dev, &first_interface, &port, &flag, &first_msg);
+        if (ret == AXIOM_RET_ERROR)
+        {
+            EPRINTF("Slave: Error receiving AXIOM_DSCV_CMD_REQ_ID message");
+        }
+
+        msg_cmd = ((axiom_discovery_payload_t *)(&first_msg))->command;
+
+        DPRINTF("Slave: message received - command: %x[expected %x]",
+                msg_cmd, AXIOM_DSCV_CMD_REQ_ID);
+    } while (msg_cmd != AXIOM_DSCV_CMD_REQ_ID);
+
+    axiom_discovery_slave(dev, axiom_args->node_topology,
+            axiom_args->final_routing_table, first_msg, first_interface, 1);
 
     return 0;
 }

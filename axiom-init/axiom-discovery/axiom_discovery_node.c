@@ -141,8 +141,11 @@ void axiom_discovery_master(axiom_dev_t *dev, axiom_node_id_t topology[][AXIOM_M
 }
 
 /* Slave node code*/
-void axiom_discovery_slave(axiom_dev_t *dev, axiom_node_id_t topology[][AXIOM_MAX_INTERFACES],
-                     axiom_if_id_t final_routing_table[AXIOM_MAX_NODES], int verbose)
+void axiom_discovery_slave(axiom_dev_t *dev,
+        axiom_node_id_t topology[][AXIOM_MAX_INTERFACES],
+        axiom_if_id_t final_routing_table[AXIOM_MAX_NODES],
+        axiom_payload_t first_msg, axiom_if_id_t first_interface,
+        int verbose)
 {
     axiom_node_id_t my_node_id, max_node_id = 0;
     axiom_msg_id_t ret;
@@ -150,7 +153,8 @@ void axiom_discovery_slave(axiom_dev_t *dev, axiom_node_id_t topology[][AXIOM_MA
     IPRINTF(verbose, "SLAVE: start discovery protocol");
 
     /* Discovery phase: discover the intermediate topology */
-    ret = axiom_slave_node_discovery (dev, topology, &my_node_id);
+    ret = axiom_slave_node_discovery(dev, topology, &my_node_id, first_msg,
+            first_interface);
 
     IPRINTF(verbose, "SLAVE: end discovery protocol - ID assegned: %u", my_node_id);
 

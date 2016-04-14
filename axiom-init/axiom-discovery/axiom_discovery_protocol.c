@@ -296,75 +296,39 @@ int axiom_master_node_discovery(axiom_dev_t *dev,
 }
 
 /* Other nodes Discovery Algorithm code */
-int axiom_slave_node_discovery (
-        axiom_dev_t *dev, axiom_node_id_t topology[][AXIOM_MAX_INTERFACES],
-                     axiom_node_id_t *my_node_id)
+int axiom_slave_node_discovery (axiom_dev_t *dev,
+        axiom_node_id_t topology[][AXIOM_MAX_INTERFACES],
+        axiom_node_id_t *my_node_id,
+        axiom_payload_t first_msg, axiom_if_id_t first_interface)
 {
     axiom_node_id_t next_id;
-
-    /* Initializ msg_cmd to a value not equalt to AXIOM_DSCV_CMD_REQ_ID */
-    axiom_discovery_cmd_t msg_cmd = AXIOM_DSCV_CMD_REQ_ID + 1;
+    axiom_discovery_cmd_t msg_cmd ;
     axiom_node_id_t src_node_id, dst_node_id;
     axiom_if_id_t src_interface, data_src_if, data_dst_if;
     int i, j, w;
     uint8_t b_mask;
     axiom_msg_id_t ret;
 
+    /* called when received the first AXIOM_DSCV_CMD_REQ_ID type message */
+    src_interface = first_interface;
+    src_node_id = ((axiom_discovery_payload_t *) &first_msg)->src_node;
+    msg_cmd = ((axiom_discovery_payload_t *) &first_msg)->command;
+
+    if (msg_cmd != AXIOM_DSCV_CMD_REQ_ID)
+    {
+        EPRINTF("Slave: Expected AXIOM_DSCV_CMD_REQ_ID message");
+        return AXIOM_RET_ERROR;
+    }
+
     /* init local topolgy structure */
     init_topology_structure(topology);
 
-    /* sets its id to zero */
+    /* reset id when discovery phase starts */
     *my_node_id = 0;
     axiom_set_node_id(dev, *my_node_id);
-    /* Reads its id */
     *my_node_id = axiom_get_node_id(dev);
 
     DPRINTF("Slave: my_node_id = %d", *my_node_id);
-
-    /* Wait for the neighbour AXIOM_DSCV_CMD_REQ_ID type message */
-    while (msg_cmd != AXIOM_DSCV_CMD_REQ_ID)
-    {
-        DPRINTF("Slave: Wait for AXIOM_DSCV_CMD_REQ_ID message");
-        ret = axiom_recv_small_discovery(dev, &msg_cmd,
-                                   &src_node_id, &dst_node_id,
-                                   &src_interface,
-                                   &data_src_if, &data_dst_if);
-        if (ret == AXIOM_RET_ERROR)
-        {
-            EPRINTF("Slave: Error receiving AXIOM_DSCV_CMD_REQ_ID message");
-        }
-        else
-        {
-            DPRINTF("Slave: Recevied from my interface %d:", src_interface);
-            switch (msg_cmd)
-            {
-            case AXIOM_DSCV_CMD_REQ_ID:
-                DPRINTF("msg type received = AXIOM_DSCV_CMD_REQ_ID");
-                break;
-            case AXIOM_DSCV_CMD_RSP_NOID:
-                DPRINTF("msg tye received = AXIOM_DSCV_CMD_RSP_NOID");
-                break;
-            case AXIOM_DSCV_CMD_RSP_ID:
-                DPRINTF("msg tye received = AXIOM_DSCV_CMD_RSP_ID");
-                break;
-            case AXIOM_DSCV_CMD_SETID:
-                DPRINTF("msg tye received = AXIOM_DSCV_CMD_SETID");
-                break;
-            case AXIOM_DSCV_CMD_START:
-                DPRINTF("msg tye received = AXIOM_DSCV_CMD_START");
-                break;
-            case AXIOM_DSCV_CMD_TOPOLOGY:
-                DPRINTF("Recevied msg tye = AXIOM_DSCV_CMD_TOPOLOGY");
-                break;
-            case AXIOM_DSCV_CMD_END_TOPOLOGY:
-                DPRINTF("msg tye received = AXIOM_DSCV_CMD_END_TOPOLOGY");
-                break;
-             default:
-                DPRINTF("msg tye received = Unknown message type!!!");
-                break;
-            }
-        }
-    }
 
     /* Immediately update my routing table: src_node_id node is connceted to my 'src_interface' interface */
     b_mask = axiom_codify_routing_mask(dev, src_node_id, src_interface);
