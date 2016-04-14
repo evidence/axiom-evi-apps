@@ -120,9 +120,9 @@ int main(int argc, char **argv)
             EPRINTF("receive error");
             break;
         }
-        if (payload.command != AXIOM_PING)
+        if (payload.command != AXIOM_CMD_PING)
         {
-            EPRINTF("receive a not AXIOM_PING message");
+            EPRINTF("receive a not AXIOM__CMD_PING message");
             break;
         }
         printf("[node %u] message received on port %u\n", my_node_id, recv_port);
@@ -130,7 +130,7 @@ int main(int argc, char **argv)
         printf("\t- flag = %u\n", flag);
 
         /* send back the message */
-        payload.command = AXIOM_PONG;
+        payload.command = AXIOM_CMD_PONG;
         send_ret =  axiom_send_small(dev, (axiom_node_id_t)src_id,
                                             (axiom_port_t)recv_port, flag,
                                             (axiom_payload_t*)&payload);

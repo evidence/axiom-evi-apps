@@ -195,7 +195,7 @@ int main(int argc, char **argv)
         IPRINTF(verbose,"[node %u] sending ping message...\n", my_node_id);
 #ifndef AXIOM_NO_TX
         /* send a small message*/
-        payload.command = AXIOM_PING;
+        payload.command = AXIOM_CMD_PING;
         payload.packet_id = (uint16_t)(payload.packet_id + 1);
         send_ret =  axiom_send_small(dev, (axiom_node_id_t)dst_id,
                                             (axiom_port_t)port, flag,
@@ -233,7 +233,7 @@ int main(int argc, char **argv)
         usleep(1234000);
 #endif
 
-        if (recv_payload.command != AXIOM_PONG)
+        if (recv_payload.command != AXIOM_CMD_PONG)
         {
             EPRINTF("receive a no AXIOM-PONG message");
             continue;

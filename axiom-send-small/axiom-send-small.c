@@ -40,7 +40,7 @@ int main(int argc, char **argv)
 {
     axiom_dev_t *dev = NULL;
     axiom_msg_id_t recv_ret, my_node_id;
-    axiom_port_t port =1 ;
+    axiom_port_t port = 1;
     axiom_node_id_t dst_id;
     int port_ok = 0, dst_ok = 0, payload_ok = 0, to_neighbour = 0;
     axiom_flag_t flag = 0;
