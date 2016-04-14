@@ -4,7 +4,7 @@
  * Version:     v0.3.1
  * Last update: 2016-03-23
  *
- * This file tests the AXIOM INIT implementation
+ * This file tests the AXIOM discovery-routing implementation
  *
  */
 
@@ -18,6 +18,7 @@
 #include <ctype.h>
 #include <limits.h>
 #include <math.h>
+#include <inttypes.h>
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -38,10 +39,12 @@ extern axiom_node_id_t topology[AXIOM_MAX_NODES][AXIOM_MAX_INTERFACES];
 static void usage(void)
 {
     printf("usage: ./axiom_discovery_protocol |  ./axsw_discovery_protocol \n");
-    printf("  [[-m -n number_of_nodes] | [[-r -n number_of_nodes] | [-h]] \n\n");
-    printf("                             [[-f file_name] | [-h]] \n\n");
+    printf("  [[-m -n number_of_nodes] | [[-m -x number_of_row -y number_of_columns] \n");
+    printf("  [[-r -n number_of_nodes] | [[-f file_name] | [-h]] \n\n");
     printf("-r, --ring                          ring toplogy \n");
     printf("-m, --mesh                          mesh toplogy \n");
+    printf("-x              number_of_rows      number of rows \n");
+    printf("-y              number_of_columns   number of columns \n");
     printf("-n              number_of_nodes     number of nodes \n");
     printf("-f, --file      file_name           toplogy file \n");
     printf("-h, --help                          print this help\n");
@@ -340,6 +343,7 @@ int main(int argc, char **argv)
     int err, cmp;
     int i, j, n;
     int file_ok = 0, ring_ok = 0, mesh_ok = 0, n_ok = 0;
+    int row_ok = 0, columns_ok = 0;
     int long_index =0;
     int opt = 0, num_nodes;
     uint8_t max_node_id = 0;
@@ -348,6 +352,8 @@ int main(int argc, char **argv)
         {"file", required_argument, 0, 'f'},
         {"ring", no_argument, 0, 'r'},
         {"mesh", no_argument, 0, 'm'},
+        {"x", required_argument, 0, 'x'},
+        {"y", required_argument, 0, 'y'},
         {"n", required_argument, 0, 'n'},
         {"help", no_argument, 0, 'h'},
         {0, 0, 0, 0}
@@ -357,7 +363,7 @@ int main(int argc, char **argv)
     axiom_topology_t start_topology;
     axiom_topology_t end_test_topology, end_test_topology_copy;
 
-    while ((opt = getopt_long(argc, argv,"f:rmn:h",
+    while ((opt = getopt_long(argc, argv,"f:rmn:x:y:h",
                          long_options, &long_index )) != -1) {
         switch (opt) {
             case 'f' :
@@ -369,6 +375,7 @@ int main(int argc, char **argv)
                     file_ok = 1;
                 }
                 break;
+
             case 'r' :
                 ring_ok = 1;
                 break;
@@ -386,6 +393,24 @@ int main(int argc, char **argv)
                 }
                 break;
 
+            case 'x' :
+                if (sscanf(optarg, "%" SCNu8, &row) != 1) {
+                    usage();
+                    exit(-1);
+                } else {
+                    row_ok = 1;
+                }
+                break;
+
+            case 'y' :
+                if (sscanf(optarg, "%" SCNu8, &columns) != 1) {
+                    usage();
+                    exit(-1);
+                } else {
+                    columns_ok = 1;
+                }
+                break;
+
             case 'h':
             default:
                 usage();
@@ -397,7 +422,6 @@ int main(int argc, char **argv)
     /* check file presence */
     if (file_ok == 1)
     {
-        //axiom_init_topology(&start_topology);
         /* init the topology structure */
         num_nodes = axiom_topology_from_file(&start_topology, filename);
         if (num_nodes < 0)
@@ -411,12 +435,17 @@ int main(int argc, char **argv)
         /* check ring parameter */
         if (ring_ok == 1)
         {
+            if ((row_ok == 1) || (columns_ok == 1))
+            {
+                printf("Please, for RING topology insert only -n option\n");
+                exit (-1);
+            }
             /* make ring toplogy with the inserted nuber of nodes */
             if (n_ok == 1)
             {
                 if ((n < 2) || (n > AXIOM_MAX_NODES))
                 {
-                    printf("Please, for RING topology insert a simulation number between 2 and %d\n",
+                    printf("Please, for RING topology insert number between 2 and %d\n",
                             AXIOM_MAX_NODES);
                     exit (-1);
                 }
@@ -437,6 +466,12 @@ int main(int argc, char **argv)
         else if (mesh_ok == 1)
         {
             /* make mesh toplogy with the inserted nuber of nodes */
+            if ((n_ok == 1) && ((row_ok == 1) || (columns_ok == 1)))
+            {
+                printf("Too many options inserted for MESH topology \n");
+                exit(-1);
+            }
+
             if (n_ok == 1)
             {
                 if ((n < 4) || (n > AXIOM_MAX_NODES))
@@ -458,6 +493,11 @@ int main(int argc, char **argv)
                 /* init the selected topology */
                 axiom_make_mesh_toplogy(&start_topology, n, row, columns);
 
+            }
+            else if ((row_ok == 1) && (columns_ok == 1)) {
+                num_nodes = row*columns;
+                /* init the selected topology */
+                axiom_make_mesh_toplogy(&start_topology, num_nodes, row, columns);
             }
             else
             {
