@@ -32,7 +32,7 @@
 
 int verbose = 0;
 
-static volatile int sigint_received = 0;
+static volatile sig_atomic_t sigint_received = 0;
 
 static void usage(void)
 {
@@ -47,10 +47,9 @@ static void usage(void)
 }
 
 /* control-C handler */
-static void sigint_h(int sig)
+static void sigint_handler(int sig)
 {
     sigint_received = 1;
-    signal(SIGINT, SIG_DFL);
 }
 
 /* TODO: allow the user to change the resolution */
@@ -69,12 +68,13 @@ int main(int argc, char **argv)
     axiom_node_id_t dst_id, src_id;
     axiom_flag_t flag = 0;
     axiom_ping_payload_t payload, recv_payload;
+    struct sigaction sig;
     unsigned int interval = 500; /* default interval 500 ms */
     unsigned int num_ping = 1;
     int dst_ok = 0, num_ping_ok = 0;
     struct timeval start_tv, end_tv, diff_tv;
     uint64_t diff_usec, sum_usec = 0, max_usec = 0, min_usec = -1;
-    double avg_usec;
+    double avg_usec, packet_loss;
     int sent_packets = 0, recv_packets = 0;
     int ret;
 
@@ -89,7 +89,10 @@ int main(int argc, char **argv)
         {0, 0, 0, 0}
     };
 
-    signal(SIGINT, sigint_h);
+    /* set my_hanlder for signal SIGINT */
+    memset(&sig, 0, sizeof(sig));
+    sig.sa_handler = sigint_handler;
+    sigaction(SIGINT, &sig, NULL);
 
     while ((opt = getopt_long(argc, argv,"vhd:i:c:",
                          long_options, &long_index )) != -1)
@@ -181,14 +184,13 @@ int main(int argc, char **argv)
         send_ret =  axiom_send_small(dev, (axiom_node_id_t)dst_id,
                                             remote_port, flag,
                                             (axiom_payload_t*)&payload);
+        if (sigint_received) {
+            break;
+        }
         if (send_ret == AXIOM_RET_ERROR)
         {
                EPRINTF("send error");
                goto err;
-        }
-
-        if (sigint_received) {
-            break;
         }
 #endif
         /* get actual time */
@@ -209,6 +211,17 @@ int main(int argc, char **argv)
         /* receive a small message from port*/
         recv_ret =  axiom_recv_small(dev, &src_id, (axiom_port_t *)&recv_port,
                                      &flag, (axiom_payload_t*)&recv_payload);
+        /* get actual time */
+        ret = gettimeofday(&end_tv,NULL);
+        if (ret == -1)
+        {
+            EPRINTF("gettimeofday error");
+            goto err;
+        }
+
+        if (sigint_received) {
+            break;
+        }
         if (recv_ret == AXIOM_RET_ERROR)
         {
             EPRINTF("receive error");
@@ -223,14 +236,8 @@ int main(int argc, char **argv)
             EPRINTF("receive a no AXIOM-PONG message");
             continue;
         }
+
         recv_packets++;
-        /* get actual time */
-        ret = gettimeofday(&end_tv,NULL);
-        if (ret == -1)
-        {
-            EPRINTF("gettimeofday error");
-            goto err;
-        }
         IPRINTF(verbose,"[node %u] reply received on port %u\n", my_node_id, recv_port);
         IPRINTF(verbose,"\t- source_node_id = %u\n", src_id);
         IPRINTF(verbose,"\t- message index = %u\n", recv_payload.packet_id);
@@ -269,12 +276,15 @@ int main(int argc, char **argv)
 
     /* average computation */
     avg_usec = ((double)(sum_usec) / recv_packets);
+    packet_loss = (1 - ((double)(recv_packets) / sent_packets)) * 100;
 
     printf("\n--- node %d ping statistics ---\n", dst_id);
-    printf("%d packets transmitted, %d received, %d packet loss\n",
-           sent_packets, recv_packets, recv_packets - sent_packets);
-    printf("rtt min/avg/max = %3.3f/%3.3f/%3.3f ms\n", usec2msec(min_usec),
-            usec2msec(avg_usec), usec2msec(max_usec));
+    printf("%d packets transmitted, %d received, %2.2f%% packet loss\n",
+           sent_packets, recv_packets, packet_loss);
+    if (recv_packets) {
+        printf("rtt min/avg/max = %3.3f/%3.3f/%3.3f ms\n", usec2msec(min_usec),
+                usec2msec(avg_usec), usec2msec(max_usec));
+    }
 
 err:
     axiom_close(dev);
