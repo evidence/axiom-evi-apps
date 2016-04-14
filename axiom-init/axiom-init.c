@@ -21,83 +21,46 @@
 #include <sys/socket.h>
 
 #include "axiom_nic_types.h"
-#include "axiom_discovery_node.h"
-
-#define MS_INIT_PARAMETER      -1
-#define SLAVE_PARAMETER         0
-#define MASTER_PARAMETER        1
+#include "axiom_nic_packets.h"
+#include "axiom_nic_api_user.h"
+#include "axiom_nic_init.h"
+#include "axiom-discovery/axiom_discovery_node.h"
+#include "axiom-pong/axiom_pong.h"
 
 int verbose = 0;
 
 static void usage(void)
 {
     printf("usage: axiom-init -n [master | slave]\n");
-    printf("Start AXIOM discovery and routing algorithm in master or slaves mode\n\n");
-    printf("-n, --node  [slave | master]   start node as master or as slave\n");
-    printf("-v, --verbose                  verbose output\n");
-    printf("-h, --help                     print this help\n\n");
+    printf("Start AXIOM node in slaves mode (or master if it is specified)\n\n");
+    printf("-m, --master        start node as master\n");
+    printf("-v, --verbose       verbose output\n");
+    printf("-h, --help          print this help\n\n");
 }
 
-void run_discovery(axiom_dev_t *dev, int master_slave)
-{
-    axiom_node_id_t topology[AXIOM_MAX_NODES][AXIOM_MAX_INTERFACES];
-    axiom_if_id_t routing_tables[AXIOM_MAX_NODES][AXIOM_MAX_NODES];
-    axiom_if_id_t final_routing_table[AXIOM_MAX_NODES];
-
-    if (master_slave == MASTER_PARAMETER)
-    {
-        printf("Starting master node...\n");
-
-        /* Master code */
-        axiom_discovery_master(dev, topology, routing_tables, final_routing_table, verbose);
-
-        printf("\nMaster node end\n");
-    }
-    else if (master_slave ==  SLAVE_PARAMETER)
-    {
-        printf("Starting slave node...\n");
-
-        /* Slave code */
-        axiom_discovery_slave(dev, topology, final_routing_table, verbose);
-
-        printf("\nSlave node end\n");
-    }
-
-}
 
 int main(int argc, char **argv)
 {
-    int master_slave = MS_INIT_PARAMETER;
-    char *s_master = "master";
-    char *s_slave = "slave";
-    char node_str[30];
+    int master = 0, run = 1;
     axiom_dev_t *dev = NULL;
+    axiom_node_id_t topology[AXIOM_MAX_NODES][AXIOM_MAX_INTERFACES];
+    axiom_if_id_t final_routing_table[AXIOM_MAX_NODES];
 
     int long_index =0;
     int opt = 0;
     static struct option long_options[] = {
-        {"node", required_argument, 0, 'n'},
+        {"master", no_argument, 0, 'm'},
         {"verbose", no_argument, 0, 'v'},
         {"help", no_argument, 0, 'h'},
         {0, 0, 0, 0}
     };
 
 
-    while ((opt = getopt_long(argc, argv,"hvn:",
-                         long_options, &long_index )) != -1)
-    {
-        switch (opt)
-        {
-            case 'n':
-                sscanf(optarg, "%s", node_str);
-                if (strncmp(node_str, s_master, strlen(s_master)) == 0)
-                {
-                    master_slave = MASTER_PARAMETER;
-                }
-                else if (strncmp(node_str, s_slave, strlen(s_slave)) == 0)
-                {
-                    master_slave = SLAVE_PARAMETER;
-                }
+    while ((opt = getopt_long(argc, argv,"hvm",
+                         long_options, &long_index )) != -1) {
+        switch (opt) {
+            case 'm':
+                master = 1;
                 break;
             case 'v':
                 verbose = 1;
@@ -109,25 +72,47 @@ int main(int argc, char **argv)
         }
     }
 
-    if (master_slave == MS_INIT_PARAMETER)
-    {
-        EPRINTF("node must be \"master\" or \"slave\"");
-        usage();
-        exit(-1);
-    }
-
     /* open the axiom device */
     dev = axiom_open(NULL);
-    if (dev == NULL)
-    {
+    if (dev == NULL) {
         perror("axiom_open()");
         exit(-1);
     }
 
     /* TODO: bind the current process on port 0 */
-    /* err = axiom_bind(dev, AXIOM_SMALL_PORT_DISCOVERY); */
+    /* err = axiom_bind(dev, AXIOM_SMALL_PORT_INIT); */
 
-    run_discovery(dev, master_slave);
+    if (master) {
+        axiom_discovery_master(dev, topology, final_routing_table, verbose);
+    }
+
+    while(run) {
+        axiom_node_id_t src;
+        axiom_flag_t flag;
+        axiom_init_cmd_t cmd;
+        axiom_payload_t payload;
+        axiom_err_t ret;
+
+        ret = axiom_recv_small_init(dev, &src, &flag, &cmd, &payload);
+        if (ret == AXIOM_RET_ERROR)
+        {
+            EPRINTF("error receiving message");
+            break;
+        }
+        switch (cmd) {
+            case AXIOM_DSCV_CMD_REQ_ID:
+                axiom_discovery_slave(dev, src, payload, topology,
+                        final_routing_table, verbose);
+                break;
+
+            case AXIOM_CMD_PING:
+                axiom_pong(dev, src, payload, verbose);
+                break;
+
+            default:
+                EPRINTF("message discarded - cmd: %x", cmd);
+        }
+    }
 
     axiom_close(dev);
 

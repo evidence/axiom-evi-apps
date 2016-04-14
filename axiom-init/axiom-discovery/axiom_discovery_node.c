@@ -80,12 +80,13 @@ void print_my_routing_table(axiom_dev_t *dev,
 }
 
 /* Master node code */
-void axiom_discovery_master(axiom_dev_t *dev, axiom_node_id_t topology[][AXIOM_MAX_INTERFACES],
-                      axiom_if_id_t routing_tables[][AXIOM_MAX_NODES],
-                      axiom_if_id_t final_routing_table[AXIOM_MAX_NODES], int verbose)
+void axiom_discovery_master(axiom_dev_t *dev,
+        axiom_node_id_t topology[][AXIOM_MAX_INTERFACES],
+        axiom_if_id_t final_routing_table[AXIOM_MAX_NODES], int verbose)
 {
     axiom_msg_id_t ret;
     axiom_node_id_t number_of_total_nodes = 0;
+    axiom_if_id_t routing_tables[AXIOM_MAX_NODES][AXIOM_MAX_NODES];
 
     IPRINTF(verbose, "MASTER: start discovery protocol");
 
@@ -104,6 +105,7 @@ void axiom_discovery_master(axiom_dev_t *dev, axiom_node_id_t topology[][AXIOM_M
         memcpy(final_routing_table, routing_tables[0], sizeof(axiom_if_id_t)*AXIOM_MAX_NODES);
 
         IPRINTF(verbose, "MASTER: delivery routing tables");
+
         /* delivery of each node routing tables */
         ret = axiom_delivery_routing_tables(dev, routing_tables, number_of_total_nodes);
         if (ret == AXIOM_RET_ERROR)
@@ -141,8 +143,11 @@ void axiom_discovery_master(axiom_dev_t *dev, axiom_node_id_t topology[][AXIOM_M
 }
 
 /* Slave node code*/
-void axiom_discovery_slave(axiom_dev_t *dev, axiom_node_id_t topology[][AXIOM_MAX_INTERFACES],
-                     axiom_if_id_t final_routing_table[AXIOM_MAX_NODES], int verbose)
+void axiom_discovery_slave(axiom_dev_t *dev,
+        axiom_node_id_t first_src, axiom_payload_t first_payload,
+        axiom_node_id_t topology[][AXIOM_MAX_INTERFACES],
+        axiom_if_id_t final_routing_table[AXIOM_MAX_NODES],
+        int verbose)
 {
     axiom_node_id_t my_node_id, max_node_id = 0;
     axiom_msg_id_t ret;
@@ -150,7 +155,8 @@ void axiom_discovery_slave(axiom_dev_t *dev, axiom_node_id_t topology[][AXIOM_MA
     IPRINTF(verbose, "SLAVE: start discovery protocol");
 
     /* Discovery phase: discover the intermediate topology */
-    ret = axiom_slave_node_discovery (dev, topology, &my_node_id);
+    ret = axiom_slave_node_discovery(dev, topology, &my_node_id, first_src,
+            first_payload);
 
     IPRINTF(verbose, "SLAVE: end discovery protocol - ID assegned: %u", my_node_id);
 
