@@ -1,11 +1,12 @@
 AXIOM_INCLUDE := ../../axiom-evi-nic/include
 AXIOM_DISC := ./axiom-discovery
 AXIOM_PONG := ./axiom-pong
+AXIOM_TR_REPLY := ./axiom-traceroute-reply
 AXIOM_NIC_UL := ../../axiom-evi-nic/axiom_user_library
 
 APPS := axiom-init
 HEADERS := $(AXIOM_INCLUDE)/*.h
-CLEANFILES = $(APPS) *.o $(AXIOM_PONG)/*.o
+CLEANFILES = $(APPS) *.o $(AXIOM_PONG)/*.o $(AXIOM_TR_REPLY)/*.o
 
 PWD := $(shell pwd)
 #MKFILE_DIR := $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
@@ -21,9 +22,9 @@ CFLAGS += -Wall $(DFLAGS) -I$(PWD)/$(AXIOM_INCLUDE)
 
 all: $(APPS)
 
-axiom-init: axiom-init.o $(AXIOM_DISC)/axiom_discovery_node.o $(AXIOM_DISC)/axiom_discovery_protocol.o $(AXIOM_DISC)/axiom_route_compute.o $(AXIOM_DISC)/axiom_route_delivery.o $(AXIOM_DISC)/axiom_route_set.o $(AXIOM_PONG)/axiom_pong.o $(AXIOM_NIC_UL)/axiom_user_api.a
+axiom-init: axiom-init.o $(AXIOM_DISC)/axiom_discovery_node.o $(AXIOM_DISC)/axiom_discovery_protocol.o $(AXIOM_DISC)/axiom_route_compute.o $(AXIOM_DISC)/axiom_route_delivery.o $(AXIOM_DISC)/axiom_route_set.o $(AXIOM_PONG)/axiom_pong.o $(AXIOM_TR_REPLY)/axiom_traceroute_reply.o $(AXIOM_NIC_UL)/axiom_user_api.a
 
-axiom-init.o: axiom-init.c $(AXIOM_DISC)/axiom_discovery_node.h $(AXIOM_PONG)/axiom_pong.h $(HEADERS)
+axiom-init.o: axiom-init.c $(AXIOM_DISC)/axiom_discovery_node.h $(AXIOM_PONG)/axiom_pong.h $(AXIOM_TR_REPLY)/axiom_traceroute_reply.h $(HEADERS)
 
 $(AXIOM_NIC_UL)/%:
 	cd $(AXIOM_NIC_UL) && make CCPREFIX=$(CCPREFIX) DFLAGS="$(DFLAGS)"

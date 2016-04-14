@@ -26,6 +26,7 @@
 #include "axiom_nic_init.h"
 #include "axiom-discovery/axiom_discovery_node.h"
 #include "axiom-pong/axiom_pong.h"
+#include "axiom-traceroute-reply/axiom_traceroute_reply.h"
 
 int verbose = 0;
 
@@ -107,6 +108,10 @@ int main(int argc, char **argv)
 
             case AXIOM_CMD_PING:
                 axiom_pong(dev, src, payload, verbose);
+                break;
+
+            case AXIOM_CMD_TRACEROUTE:
+                axiom_traceroute_reply(dev, src, payload, verbose);
                 break;
 
             default:
