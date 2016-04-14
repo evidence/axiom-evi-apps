@@ -80,12 +80,13 @@ void print_my_routing_table(axiom_dev_t *dev,
 }
 
 /* Master node code */
-void axiom_discovery_master(axiom_dev_t *dev, axiom_node_id_t topology[][AXIOM_MAX_INTERFACES],
-                      axiom_if_id_t routing_tables[][AXIOM_MAX_NODES],
-                      axiom_if_id_t final_routing_table[AXIOM_MAX_NODES], int verbose)
+void axiom_discovery_master(axiom_dev_t *dev,
+        axiom_node_id_t topology[][AXIOM_MAX_INTERFACES],
+        axiom_if_id_t final_routing_table[AXIOM_MAX_NODES], int verbose)
 {
     axiom_msg_id_t ret;
     axiom_node_id_t number_of_total_nodes = 0;
+    axiom_if_id_t routing_tables[AXIOM_MAX_NODES][AXIOM_MAX_NODES];
 
     IPRINTF(verbose, "MASTER: start discovery protocol");
 
@@ -104,6 +105,7 @@ void axiom_discovery_master(axiom_dev_t *dev, axiom_node_id_t topology[][AXIOM_M
         memcpy(final_routing_table, routing_tables[0], sizeof(axiom_if_id_t)*AXIOM_MAX_NODES);
 
         IPRINTF(verbose, "MASTER: delivery routing tables");
+
         /* delivery of each node routing tables */
         ret = axiom_delivery_routing_tables(dev, routing_tables, number_of_total_nodes);
         if (ret == AXIOM_RET_ERROR)

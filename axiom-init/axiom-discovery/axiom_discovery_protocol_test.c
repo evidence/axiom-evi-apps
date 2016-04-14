@@ -308,10 +308,11 @@ void *master(void *args)
     /* get the pointer to the running thread 'axiom_nodes' entry */
     dev = (axiom_dev_t *)get_node_info();
 
-    axiom_discovery_master(dev, axiom_args->node_topology, axiom_args->routing_tables,
-					axiom_args->final_routing_table, 1);
+    axiom_discovery_master(dev, axiom_args->node_topology,
+            axiom_args->final_routing_table, 1);
 
-    memcpy(final_topology.topology, axiom_args->node_topology, sizeof(axiom_args->node_topology));
+    memcpy(final_topology.topology, axiom_args->node_topology,
+            sizeof(axiom_args->node_topology));
 
     DPRINTF("END");
 

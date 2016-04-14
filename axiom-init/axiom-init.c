@@ -44,7 +44,6 @@ int main(int argc, char **argv)
     int master = 0, run = 1;
     axiom_dev_t *dev = NULL;
     axiom_node_id_t topology[AXIOM_MAX_NODES][AXIOM_MAX_INTERFACES];
-    axiom_if_id_t routing_tables[AXIOM_MAX_NODES][AXIOM_MAX_NODES];
     axiom_if_id_t final_routing_table[AXIOM_MAX_NODES];
 
     int long_index =0;
@@ -84,8 +83,7 @@ int main(int argc, char **argv)
     /* err = axiom_bind(dev, AXIOM_SMALL_PORT_INIT); */
 
     if (master) {
-        axiom_discovery_master(dev, topology, routing_tables,
-                final_routing_table, verbose);
+        axiom_discovery_master(dev, topology, final_routing_table, verbose);
     }
 
     while(run) {
