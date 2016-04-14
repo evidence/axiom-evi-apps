@@ -4,7 +4,7 @@
  * Version:     v0.2
  * Last update: 2016-03-23
  *
- * This file tests the AXIOM INIT implementation
+ * This file implementats the axiom-onfo application
  *
  */
 #include <getopt.h>

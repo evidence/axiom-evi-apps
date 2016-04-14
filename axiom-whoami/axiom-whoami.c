@@ -4,7 +4,7 @@
  * Version:     v0.3.1
  * Last update: 2016-03-23
  *
- * This file tests the AXIOM INIT implementation
+ * This file implements the axiom-whoami application
  *
  */
 
