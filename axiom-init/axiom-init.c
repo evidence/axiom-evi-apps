@@ -103,16 +103,15 @@ int main(int argc, char **argv)
             case AXIOM_DSCV_CMD_REQ_ID:
                 axiom_discovery_slave(dev, src, payload, topology,
                         final_routing_table, verbose);
+                break;
 
             case AXIOM_PING:
                 axiom_pong(dev, src, payload, verbose);
+                break;
 
             default:
                 EPRINTF("message discarded - cmd: %x", cmd);
         }
-
-
-
     }
 
     axiom_close(dev);

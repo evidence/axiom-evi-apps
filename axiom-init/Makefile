@@ -5,7 +5,7 @@ AXIOM_NIC_UL := ../../axiom-evi-nic/axiom_user_library
 
 APPS := axiom-init
 HEADERS := $(AXIOM_INCLUDE)/*.h
-CLEANFILES = $(APPS) *.o
+CLEANFILES = $(APPS) *.o $(AXIOM_PONG)/*.o
 
 PWD := $(shell pwd)
 #MKFILE_DIR := $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
