@@ -2,7 +2,7 @@
  * axiom_discovery_protocol_test.c
  *
  * Version:     v0.3.1
- * Last update: 2016-03-23
+ * Last update: 2016-04-15
  *
  * This file implementas the axiom-traceroute application
  *
