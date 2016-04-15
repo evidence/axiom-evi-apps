@@ -150,8 +150,11 @@ int main(int argc, char **argv)
 
         /* bind the current process on port */
 #if 0
-        if (port_ok == 1) {
-            err = axiom_bind(dev, AXIOM_SMALL_PORT_NETUTILS);
+        err = axiom_bind(dev, AXIOM_SMALL_PORT_NETUTILS);
+        if (err == AXIOM_RET_ERROR)
+        {
+            EPRINTF("axiom_bind error");
+            exit(-1);
         }
 #endif
 
