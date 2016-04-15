@@ -20,13 +20,29 @@
 
 #include "axiom_traceroute_reply.h"
 
+axiom_err_t
+axiom_next_hop(axiom_dev_t *dev, axiom_node_id_t dest_node_id,
+               axiom_if_id_t *my_if) {
+    axiom_err_t ret;
+    int i;
+
+    ret = axiom_get_routing(dev, dest_node_id, my_if);
+    for (i = 0; i < 4; i++)
+    {
+        if (*my_if & (axiom_node_id_t)(1<<i))
+        {
+            *my_if = i;
+            break;
+        }
+    }
+    return ret;
+}
+
 void axiom_traceroute_reply(axiom_dev_t *dev, axiom_if_id_t src,
         axiom_payload_t payload, int verbose) {
     axiom_err_t err;
     axiom_err_t ret;
     axiom_if_id_t my_if;
-    axiom_port_t port;
-    axiom_flag_t flag;
     axiom_msg_id_t msg_err;
     axiom_msg_id_t my_node_id;
     axiom_traceroute_payload_t *recv_payload =
@@ -43,7 +59,7 @@ void axiom_traceroute_reply(axiom_dev_t *dev, axiom_if_id_t src,
     /* send reply to the node who has started the traceroute */
     recv_payload->command = AXIOM_CMD_TRACEROUTE_REPLY;
     recv_payload->step++;
-    ret = axiom_send_small_init(dev, src, 0,
+    ret = axiom_send_small_init(dev, recv_payload->src_id, 0,
                                     (axiom_payload_t *)recv_payload);
     if (ret == AXIOM_RET_ERROR)
     {
@@ -64,17 +80,13 @@ void axiom_traceroute_reply(axiom_dev_t *dev, axiom_if_id_t src,
             EPRINTF("axiom_next_hop error");
             return;
         }
-
-        /* send reply to the node who has started the traceroute */
-        flag = AXIOM_SMALL_FLAG_NEIGHBOUR;
-        port = AXIOM_SMALL_PORT_INIT;
         /* send small neighbour traceroute message */
-        msg_err = axiom_send_small(dev, my_if, port, flag,
-                                   (axiom_payload_t *)&payload);
+        msg_err = axiom_send_small_init(dev, my_if, AXIOM_SMALL_FLAG_NEIGHBOUR,
+                                        (axiom_payload_t *)&payload);
 
         if (msg_err == AXIOM_RET_ERROR)
         {
-            EPRINTF("send error");
+            EPRINTF("send small init error");
             return;
         }
     }

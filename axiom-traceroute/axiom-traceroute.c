@@ -56,7 +56,7 @@ recv_tracereoute_reply(axiom_dev_t *dev, axiom_node_id_t *recv_node,
         EPRINTF("receive AXIOM_SMALL_FLAG_NEIGHBOUR message");
         return -1;
     }
-    if (*port != AXIOM_SMALL_PORT_NET_UTILS)
+    if (*port != AXIOM_SMALL_PORT_NETUTILS)
     {
         EPRINTF("port not equal to AXIOM_SMALL_PORT_INIT");
         return -1;
@@ -68,6 +68,24 @@ recv_tracereoute_reply(axiom_dev_t *dev, axiom_node_id_t *recv_node,
     }
 
     return 0;
+}
+
+axiom_err_t
+axiom_next_hop(axiom_dev_t *dev, axiom_node_id_t dest_node_id,
+               axiom_if_id_t *my_if) {
+    axiom_err_t ret;
+    int i;
+
+    ret = axiom_get_routing(dev, dest_node_id, my_if);
+    for (i = 0; i < 4; i++)
+    {
+        if (*my_if & (axiom_node_id_t)(1<<i))
+        {
+            *my_if = i;
+            break;
+        }
+    }
+    return ret;
 }
 
 int main(int argc, char **argv)
@@ -92,7 +110,7 @@ int main(int argc, char **argv)
         {0, 0, 0, 0}
     };
 
-    while ((opt = getopt_long(argc, argv,"vhp:d:i:c:",
+    while ((opt = getopt_long(argc, argv,"vhn:",
                          long_options, &long_index )) != -1)
     {
         switch (opt)
@@ -133,7 +151,7 @@ int main(int argc, char **argv)
         /* bind the current process on port */
 #if 0
         if (port_ok == 1) {
-            err = axiom_bind(dev, port);
+            err = axiom_bind(dev, AXIOM_SMALL_PORT_NETUTILS);
         }
 #endif
 
@@ -149,7 +167,7 @@ int main(int argc, char **argv)
                my_node_id, dest_node);
 
         flag = AXIOM_SMALL_FLAG_NEIGHBOUR;
-        port = AXIOM_SMALL_PORT_INIT;
+        port = AXIOM_SMALL_PORT_NETUTILS;
         payload.command = AXIOM_CMD_TRACEROUTE;
         payload.src_id = my_node_id;
         payload.dst_id = dest_node;
