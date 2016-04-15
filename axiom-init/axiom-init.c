@@ -27,6 +27,7 @@
 #include "axiom-discovery/axiom_discovery_node.h"
 #include "axiom-pong/axiom_pong.h"
 #include "axiom-traceroute-reply/axiom_traceroute_reply.h"
+#include "axiom-netperf-reply/axiom_netperf_reply.h"
 
 int verbose = 0;
 
@@ -116,6 +117,9 @@ int main(int argc, char **argv)
             case AXIOM_CMD_TRACEROUTE:
                 axiom_traceroute_reply(dev, src, payload, verbose);
                 break;
+
+            case AXIOM_CMD_NETPERF:
+                axiom_netperf_reply(dev, src, payload, verbose);
 
             default:
                 EPRINTF("message discarded - cmd: 0x%x", cmd);

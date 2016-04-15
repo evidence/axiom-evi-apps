@@ -1,5 +1,5 @@
 /*
- * axiom_pong.h
+ * axiom_traceroute_reply.h
  *
  * Version:     v0.3.1
  * Last update: 2016-04-14
