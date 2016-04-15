@@ -93,37 +93,3 @@ void axiom_traceroute_reply(axiom_dev_t *dev, axiom_if_id_t src,
 
     return;
 }
-
-
-
-
-
-
-
-#if 0
-void axiom_pong(axiom_dev_t *dev, axiom_if_id_t first_src,
-        axiom_payload_t first_payload, int verbose)
-{
-    axiom_err_t ret;
-    axiom_ping_payload_t *payload = ((axiom_ping_payload_t *) &first_payload);
-
-    if (payload->command != AXIOM_CMD_PING) {
-        EPRINTF("receive a not AXIOM_CD*MD_PING message");
-        return;
-    }
-
-    IPRINTF(verbose, "PING message received - src_node: %u packet_id: %u",
-            first_src, payload->packet_id);
-
-    /* send back the message */
-    payload->command = AXIOM_CMD_PONG;
-    ret =  axiom_send_small_init(dev, first_src, 0, (axiom_payload_t *)payload);
-    if (ret == AXIOM_RET_ERROR) {
-        EPRINTF("receive error");
-        return;
-    }
-
-    IPRINTF(verbose, "PONG message sent - dst_node: %u packet_id: %u",
-            first_src, payload->packet_id);
-}
-#endif
