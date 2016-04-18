@@ -1,7 +1,7 @@
 AXIOM_INCLUDE := ../../axiom-evi-nic/include
 AXIOM_NIC_UL := ../../axiom-evi-nic/axiom_user_library
 
-APPS := axiom-traceroute
+APPS := axiom-netperf
 HEADERS := $(AXIOM_INCLUDE)/*.h
 CLEANFILES = $(APPS) *.o
 
