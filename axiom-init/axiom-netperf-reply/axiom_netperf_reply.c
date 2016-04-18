@@ -109,6 +109,6 @@ void axiom_netperf_reply(axiom_dev_t *dev, axiom_node_id_t src,
             EPRINTF("send back time error");
             return;
         }
-
+        rx_bytes = 0;
     }
 }
