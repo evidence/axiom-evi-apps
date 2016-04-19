@@ -27,15 +27,18 @@ axiom_next_hop(axiom_dev_t *dev, axiom_node_id_t dest_node_id,
     int i;
 
     ret = axiom_get_routing(dev, dest_node_id, my_if);
+    if (ret == AXIOM_RET_ERROR)
+        return ret;
+
     for (i = 0; i < 4; i++)
     {
         if (*my_if & (axiom_node_id_t)(1<<i))
         {
             *my_if = i;
-            break;
+            return AXIOM_RET_OK;
         }
     }
-    return ret;
+    return AXIOM_RET_ERROR;
 }
 
 void axiom_traceroute_reply(axiom_dev_t *dev, axiom_if_id_t src,
@@ -45,6 +48,7 @@ void axiom_traceroute_reply(axiom_dev_t *dev, axiom_if_id_t src,
     axiom_if_id_t my_if;
     axiom_msg_id_t msg_err;
     axiom_msg_id_t my_node_id;
+    axiom_payload_t send_payload;
     axiom_traceroute_payload_t *recv_payload =
             ((axiom_traceroute_payload_t *) &payload);
 
@@ -56,10 +60,12 @@ void axiom_traceroute_reply(axiom_dev_t *dev, axiom_if_id_t src,
     IPRINTF(verbose, "TRACEROUTE message received from: %u node step: %u",
             recv_payload->src_id, recv_payload->step);
 
+    recv_payload->step++;
+    send_payload = payload;
+
     /* send reply to the node who has started the traceroute */
     recv_payload->command = AXIOM_CMD_TRACEROUTE_REPLY;
-    recv_payload->step++;
-    ret = axiom_send_small_init(dev, recv_payload->src_id, 0,
+    ret = axiom_send_small(dev, recv_payload->src_id, AXIOM_SMALL_PORT_NETUTILS, 0,
                                     (axiom_payload_t *)recv_payload);
     if (ret == AXIOM_RET_ERROR)
     {
@@ -82,7 +88,7 @@ void axiom_traceroute_reply(axiom_dev_t *dev, axiom_if_id_t src,
         }
         /* send small neighbour traceroute message */
         msg_err = axiom_send_small_init(dev, my_if, AXIOM_SMALL_FLAG_NEIGHBOUR,
-                                        (axiom_payload_t *)&payload);
+                                        (axiom_payload_t *)&send_payload);
 
         if (msg_err == AXIOM_RET_ERROR)
         {

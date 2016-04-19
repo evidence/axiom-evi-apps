@@ -118,7 +118,7 @@ int main(int argc, char **argv)
                 break;
 
             default:
-                EPRINTF("message discarded - cmd: %x", cmd);
+                EPRINTF("message discarded - cmd: 0x%x", cmd);
         }
     }
 

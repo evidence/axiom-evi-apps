@@ -70,6 +70,7 @@ recv_tracereoute_reply(axiom_dev_t *dev, axiom_node_id_t *recv_node,
     return 0;
 }
 
+/* XXX: move this code in the routing table */
 axiom_err_t
 axiom_next_hop(axiom_dev_t *dev, axiom_node_id_t dest_node_id,
                axiom_if_id_t *my_if) {
@@ -77,15 +78,18 @@ axiom_next_hop(axiom_dev_t *dev, axiom_node_id_t dest_node_id,
     int i;
 
     ret = axiom_get_routing(dev, dest_node_id, my_if);
+    if (ret == AXIOM_RET_ERROR)
+        return ret;
+
     for (i = 0; i < 4; i++)
     {
         if (*my_if & (axiom_node_id_t)(1<<i))
         {
             *my_if = i;
-            break;
+            return AXIOM_RET_OK;
         }
     }
-    return ret;
+    return AXIOM_RET_ERROR;
 }
 
 int main(int argc, char **argv)
@@ -160,7 +164,7 @@ int main(int argc, char **argv)
         err = axiom_next_hop(dev, dest_node, &my_if);
         if (err == AXIOM_RET_ERROR)
         {
-            EPRINTF("axiom_next_hop error");
+            EPRINTF("node[%u] is unreachable", dest_node);
             exit(-1);
         }
 
@@ -168,7 +172,7 @@ int main(int argc, char **argv)
                my_node_id, dest_node);
 
         flag = AXIOM_SMALL_FLAG_NEIGHBOUR;
-        port = AXIOM_SMALL_PORT_NETUTILS;
+        port = AXIOM_SMALL_PORT_INIT;
         payload.command = AXIOM_CMD_TRACEROUTE;
         payload.src_id = my_node_id;
         payload.dst_id = dest_node;
