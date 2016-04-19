@@ -10,6 +10,7 @@ axiom-init/axiom-init
 axiom-info/axiom-info
 axiom-ping-reply/axiom-ping-reply
 axiom-ping/axiom-ping
+axiom-traceroute/axiom-traceroute
 
 #
 # Normal rules

@@ -45,20 +45,12 @@ recv_tracereoute_reply(axiom_dev_t *dev, axiom_node_id_t *recv_node,
 {
     axiom_msg_id_t msg_err;
 
-    msg_err =  axiom_recv_small(dev, recv_node, port, flag, (axiom_payload_t*)recv_payload);
+    msg_err =  axiom_recv_small(dev, recv_node, port, flag,
+            (axiom_payload_t*)recv_payload);
+
     if (msg_err == AXIOM_RET_ERROR)
     {
         EPRINTF("receive error");
-        return -1;
-    }
-    if (*flag == AXIOM_SMALL_FLAG_NEIGHBOUR)
-    {
-        EPRINTF("receive AXIOM_SMALL_FLAG_NEIGHBOUR message");
-        return -1;
-    }
-    if (*port != AXIOM_SMALL_PORT_NETUTILS)
-    {
-        EPRINTF("port not equal to AXIOM_SMALL_PORT_INIT");
         return -1;
     }
     if (recv_payload->command != AXIOM_CMD_TRACEROUTE_REPLY)
@@ -141,98 +133,77 @@ int main(int argc, char **argv)
     }
 
     /* check if dest_node parameter has been inserted */
-    if (dest_node_ok == 1)
-    {
-        /* open the axiom device */
-        dev = axiom_open(NULL);
-        if (dev == NULL) {
-            perror("axiom_open()");
-            exit(-1);
-        }
-
-        my_node_id = axiom_get_node_id(dev);
-
-        /* bind the current process on port */
-        err = axiom_bind(dev, AXIOM_SMALL_PORT_NETUTILS);
-        if (err == AXIOM_RET_ERROR)
-        {
-            EPRINTF("axiom_bind error");
-            exit(-1);
-        }
-
-        /* get interface to reach next hop for dest_node */
-        err = axiom_next_hop(dev, dest_node, &my_if);
-        if (err == AXIOM_RET_ERROR)
-        {
-            EPRINTF("node[%u] is unreachable", dest_node);
-            exit(-1);
-        }
-
-        printf("Node %u, start traceroute of node = %u\n\n",
-               my_node_id, dest_node);
-
-        flag = AXIOM_SMALL_FLAG_NEIGHBOUR;
-        port = AXIOM_SMALL_PORT_INIT;
-        payload.command = AXIOM_CMD_TRACEROUTE;
-        payload.src_id = my_node_id;
-        payload.dst_id = dest_node;
-        payload.step = 0;
-        /* send small neighbour traceroute message */
-        msg_err = axiom_send_small(dev, my_if, port, flag,
-                                   (axiom_payload_t *)&payload);
-
-        if (msg_err == AXIOM_RET_ERROR)
-        {
-            EPRINTF("send error");
-            goto err;
-        }
-        memset (&recv_payload, 0, sizeof(recv_payload));
-        do
-        {
-            recv_err = recv_tracereoute_reply(dev, &recv_node, &port,
-                                              &flag, &recv_payload);
-            if (recv_err == -1)
-            {
-                goto err;
-            }
-            received_reply++;
-            printf("[hop %u] \n", recv_payload.step);
-            printf("\t- node_id = %u\n\n", recv_node);
-
-            /* wait for traceroute destination node reply*/
-        } while (recv_node != dest_node);
-
-        if (received_reply == recv_payload.step)
-        {
-            /* the number of steps present into the traceroute
-             * destination node reply is equal to the number of
-             * the already received messages: end of traceroute */
-            printf("End traceroute\n");
-        }
-        else
-        {
-            /* I have to receive other messages */
-            expected_reply = recv_payload.step;
-            while (received_reply != expected_reply)
-            {
-                recv_err = recv_tracereoute_reply(dev, &recv_node, &port,
-                                                  &flag, &recv_payload);
-                if (recv_err == -1)
-                {
-                    goto err;
-                }
-                received_reply++;
-                printf("[hop %u] \n", recv_payload.step);
-                printf("\t- node_id = %u\n\n", recv_node);
-            }
-            printf("End traceroute\n");
-        }
-    }
-    else
+    if (dest_node_ok != 1)
     {
         usage();
         exit(-1);
     }
+
+    /* open the axiom device */
+    dev = axiom_open(NULL);
+    if (dev == NULL) {
+        perror("axiom_open()");
+        exit(-1);
+    }
+
+    my_node_id = axiom_get_node_id(dev);
+
+    /* bind the current process on port */
+    err = axiom_bind(dev, AXIOM_SMALL_PORT_NETUTILS);
+    if (err == AXIOM_RET_ERROR)
+    {
+        EPRINTF("axiom_bind error");
+        exit(-1);
+    }
+
+    /* get interface to reach next hop for dest_node */
+    err = axiom_next_hop(dev, dest_node, &my_if);
+    if (err == AXIOM_RET_ERROR)
+    {
+        EPRINTF("node[%u] is unreachable", dest_node);
+        exit(-1);
+    }
+
+    printf("Node %u, start traceroute to node %u, %d hops max\n", my_node_id,
+            dest_node, AXIOM_MAX_NODES);
+
+    flag = AXIOM_SMALL_FLAG_NEIGHBOUR;
+    port = AXIOM_SMALL_PORT_INIT;
+    payload.command = AXIOM_CMD_TRACEROUTE;
+    payload.src_id = my_node_id;
+    payload.dst_id = dest_node;
+    payload.step = 0;
+
+    /* send initial small neighbour traceroute message */
+    msg_err = axiom_send_small(dev, my_if, port, flag,
+            (axiom_payload_t *)&payload);
+
+    if (msg_err == AXIOM_RET_ERROR)
+    {
+        EPRINTF("send error");
+        goto err;
+    }
+
+    expected_reply = AXIOM_MAX_NODES;
+    do
+    {
+        recv_err = recv_tracereoute_reply(dev, &recv_node, &port,
+                &flag, &recv_payload);
+        if (recv_err == -1)
+        {
+            goto err;
+        }
+        received_reply++;
+        printf("%u  -  node %u\n", recv_payload.step, recv_node);
+
+        /* last node reply contains the number of steps */
+        if (recv_node == dest_node) {
+            expected_reply = recv_payload.step;
+        }
+
+    } while (received_reply < expected_reply);
+
+    printf("\n--- %u hops to reach node %u ---\n", received_reply, dest_node);
 
 err:
     axiom_close(dev);
