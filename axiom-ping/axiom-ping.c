@@ -68,6 +68,7 @@ int main(int argc, char **argv)
     axiom_node_id_t dst_id, src_id;
     axiom_flag_t flag = 0;
     axiom_ping_payload_t payload, recv_payload;
+    axiom_err_t err;
     struct sigaction sig;
     unsigned int interval = 500; /* default interval 500 ms */
     unsigned int num_ping = 1;
@@ -166,11 +167,15 @@ int main(int argc, char **argv)
     my_node_id = axiom_get_node_id(dev);
 #endif
     /* bind the current process on my port */
-#if 0
-    if (port_ok == 1) {
-        err = axiom_bind(dev, my_port);
+    err = axiom_bind(dev, my_port);
+    if (err == AXIOM_RET_ERROR)
+    {
+        EPRINTF("send error");
+        goto err;
     }
-#endif
+
+
+
     printf("PING node %d.\n", dst_id);
 
     payload.packet_id = 0;

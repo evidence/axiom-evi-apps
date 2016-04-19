@@ -149,14 +149,12 @@ int main(int argc, char **argv)
         my_node_id = axiom_get_node_id(dev);
 
         /* bind the current process on port */
-#if 0
         err = axiom_bind(dev, AXIOM_SMALL_PORT_NETUTILS);
         if (err == AXIOM_RET_ERROR)
         {
             EPRINTF("axiom_bind error");
             exit(-1);
         }
-#endif
 
         /* get interface to reach next hop for dest_node */
         err = axiom_next_hop(dev, dest_node, &my_if);

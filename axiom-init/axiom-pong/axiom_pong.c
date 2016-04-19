@@ -36,7 +36,8 @@ void axiom_pong(axiom_dev_t *dev, axiom_if_id_t first_src,
 
     /* send back the message */
     payload->command = AXIOM_CMD_PONG;
-    ret =  axiom_send_small_init(dev, first_src, 0, (axiom_payload_t *)payload);
+    ret =  axiom_send_small(dev, first_src, AXIOM_SMALL_PORT_NETUTILS,
+            0, (axiom_payload_t *)payload);
     if (ret == AXIOM_RET_ERROR) {
         EPRINTF("receive error");
         return;

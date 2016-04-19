@@ -370,12 +370,12 @@ int axiom_slave_node_discovery (axiom_dev_t *dev,
                 axiom_set_node_id(dev, dst_node_id);
                 *my_node_id = dst_node_id;
 
-                DPRINTF("Slave: Wait for AXIOM_DSCV_CMD_START message");
-
                 /* Wait for the neighbour AXIOM_DSCV_CMD_START type message */
                 ret = AXIOM_RET_OK;
                 while ((msg_cmd != AXIOM_DSCV_CMD_START) && (ret == AXIOM_RET_OK))
                 {
+                    DPRINTF("Slave: Wait for AXIOM_DSCV_CMD_START message - msg_cmd: %x", msg_cmd);
+
                     ret = axiom_recv_small_discovery(dev, &msg_cmd,
                                                &src_node_id, &dst_node_id,
                                                &src_interface,

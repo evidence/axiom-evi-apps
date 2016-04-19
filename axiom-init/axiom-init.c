@@ -46,6 +46,7 @@ int main(int argc, char **argv)
     axiom_dev_t *dev = NULL;
     axiom_node_id_t topology[AXIOM_MAX_NODES][AXIOM_MAX_INTERFACES];
     axiom_if_id_t final_routing_table[AXIOM_MAX_NODES];
+    axiom_err_t ret;
 
     int long_index =0;
     int opt = 0;
@@ -81,7 +82,11 @@ int main(int argc, char **argv)
     }
 
     /* TODO: bind the current process on port 0 */
-    /* err = axiom_bind(dev, AXIOM_SMALL_PORT_INIT); */
+    ret = axiom_bind(dev, AXIOM_SMALL_PORT_INIT);
+    if (ret == AXIOM_RET_ERROR) {
+        EPRINTF("error binding port");
+        exit(-1);
+    }
 
     if (master) {
         axiom_discovery_master(dev, topology, final_routing_table, verbose);
@@ -92,11 +97,9 @@ int main(int argc, char **argv)
         axiom_flag_t flag;
         axiom_init_cmd_t cmd;
         axiom_payload_t payload;
-        axiom_err_t ret;
 
         ret = axiom_recv_small_init(dev, &src, &flag, &cmd, &payload);
-        if (ret == AXIOM_RET_ERROR)
-        {
+        if (ret == AXIOM_RET_ERROR) {
             EPRINTF("error receiving message");
             break;
         }

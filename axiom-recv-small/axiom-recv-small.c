@@ -39,10 +39,11 @@ int main(int argc, char **argv)
     axiom_dev_t *dev = NULL;
     axiom_msg_id_t recv_ret;
     axiom_node_id_t src_id, my_node_id;
-    axiom_port_t port, recv_port;
+    axiom_port_t port = 1, recv_port;
     int port_ok = 0, once = 0;
     axiom_flag_t flag;
     axiom_payload_t payload;
+    axiom_err_t err;
 
     int long_index =0;
     int opt = 0;
@@ -82,7 +83,7 @@ int main(int argc, char **argv)
     if (port_ok == 1)
     {
         /* port arameter inserted */
-        if ((port <= 0) || (port > 255))
+        if ((port < 0) || (port > 255))
         {
             printf("Port not allowed [%u]; [0 < port < 256]\n", port);
             exit(-1);
@@ -100,20 +101,17 @@ int main(int argc, char **argv)
     my_node_id = axiom_get_node_id(dev);
 
     /* bind the current process on port */
-#if 0
-    if (port_ok == 1) {
-        err = axiom_bind(dev, port);
+    err = axiom_bind(dev, port);
+    if (err == AXIOM_RET_ERROR)
+    {
+        EPRINTF("bind error");
+        exit(-1);
     }
-#endif
 
     do {
-        if (port_ok == 1) {
-            printf("[node %u] receiving small message on port %u...\n",
-                    my_node_id, port);
-        } else {
-            printf("[node %u] receiving small message on all port...\n",
-                    my_node_id);
-        }
+        printf("[node %u] receiving small message on port %u...\n",
+                my_node_id, port);
+
         /* receive a small message from port*/
         recv_ret =  axiom_recv_small(dev, &src_id, (axiom_port_t *)&recv_port,
                 &flag, &payload);

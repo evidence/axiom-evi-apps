@@ -108,7 +108,7 @@ int main(int argc, char **argv)
     if (port_ok == 1)
     {
         /* port arameter inserted */
-        if ((port <= 0) || (port > 255))
+        if ((port < 0) || (port > 255))
         {
             printf("Port not allowed [%u]; [0 < port < 256]\n", port);
             exit(-1);
