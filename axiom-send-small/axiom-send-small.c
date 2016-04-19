@@ -43,7 +43,7 @@ int main(int argc, char **argv)
     axiom_port_t port = 1;
     axiom_node_id_t dst_id;
     int port_ok = 0, dst_ok = 0, payload_ok = 0, to_neighbour = 0;
-    axiom_flag_t flag = 0;
+    axiom_flag_t flag = AXIOM_SMALL_FLAG_DATA;
     axiom_payload_t payload;
 
     int long_index =0;
@@ -178,9 +178,9 @@ int main(int argc, char **argv)
     if (flag & AXIOM_SMALL_FLAG_NEIGHBOUR) {
         printf("\t- local_interface = %u\n", dst_id);
         printf("\t- flag = %s\n", "NEIGHBOUR");
-    } else {
+    } else if (flag & AXIOM_SMALL_FLAG_DATA) {
         printf("\t- destination_node_id = %u\n", dst_id);
-        printf("\t- flag = %u\n", flag);
+        printf("\t- flag = %s\n", "DATA");
     }
     printf("\t- payload = %u\n", payload);
 

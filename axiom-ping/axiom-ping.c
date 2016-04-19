@@ -66,7 +66,6 @@ int main(int argc, char **argv)
     axiom_port_t remote_port = AXIOM_SMALL_PORT_INIT, recv_port;
     axiom_port_t my_port = AXIOM_SMALL_PORT_NETUTILS;
     axiom_node_id_t dst_id, src_id;
-    axiom_flag_t flag = 0;
     axiom_ping_payload_t payload, recv_payload;
     axiom_err_t err;
     struct sigaction sig;
@@ -181,6 +180,8 @@ int main(int argc, char **argv)
     payload.packet_id = 0;
     while (!sigint_received &&  (num_ping > 0))
     {
+        axiom_flag_t flag = AXIOM_SMALL_FLAG_DATA;
+
         IPRINTF(verbose,"[node %u] sending ping message...\n", my_node_id);
 #ifndef AXIOM_NO_TX
         /* send a small message*/

@@ -211,7 +211,7 @@ axiom_net_send_small(axiom_dev_t *dev, axiom_if_id_t dest_node_id,
     uint32_t axiom_msg_length = sizeof(axiom_small_eth_t);
     int ret;
 
-    if (port == AXIOM_SMALL_PORT_ROUTING)
+    if (port == AXIOM_SMALL_PORT_INIT)
     {
         /* Header message */
         message.header.tx.port_flag.field.port = port;
@@ -359,7 +359,7 @@ axiom_net_recv_small(axiom_dev_t *dev, axiom_node_id_t *src_node_id,
         }
         retry = 0;
 
-        if (small_eth.small_msg.header.rx.port_flag.field.port == AXIOM_SMALL_PORT_ROUTING)
+        if (small_eth.small_msg.header.rx.port_flag.field.port == AXIOM_SMALL_PORT_INIT)
         {
             memcpy(&rt_message, &small_eth.small_msg.payload, sizeof(rt_message));
 

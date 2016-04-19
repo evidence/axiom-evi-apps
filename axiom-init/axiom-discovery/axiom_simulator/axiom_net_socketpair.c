@@ -49,7 +49,7 @@ send_from_master_to_slave(axiom_dev_t *dev, axiom_if_id_t dest_node_id,
     uint8_t if_i;
     axiom_routing_payload_t rt_payload;
 
-    if (port == AXIOM_SMALL_PORT_DISCOVERY)
+    if (port == AXIOM_SMALL_PORT_INIT)
     {
         uint8_t if_index;
 
@@ -182,7 +182,7 @@ recv_from_master_to_slave(axiom_dev_t *dev, axiom_node_id_t *src_node_id,
         {
             return AXIOM_RET_ERROR;
         }
-        if (message.header.rx.port_flag.field.port == AXIOM_SMALL_PORT_ROUTING)
+        if (message.header.rx.port_flag.field.port == AXIOM_SMALL_PORT_INIT)
         {
             memcpy(&rt_message, &message.payload, sizeof(rt_message));
 
@@ -258,7 +258,7 @@ send_from_slave_to_master(axiom_dev_t *dev, axiom_if_id_t dest_node_id,
     axiom_small_msg_t message;
     ssize_t write_ret;
 
-    if (port == AXIOM_SMALL_PORT_DISCOVERY)
+    if (port == AXIOM_SMALL_PORT_INIT)
     {
         uint8_t if_index;
         uint8_t recv_if[AXIOM_MAX_INTERFACES];

@@ -125,9 +125,9 @@ int main(int argc, char **argv)
         if (flag & AXIOM_SMALL_FLAG_NEIGHBOUR) {
             printf("\t- local_interface = %u\n", src_id);
             printf("\t- flag = %s\n", "NEIGHBOUR");
-        } else {
+        } else if (flag & AXIOM_SMALL_FLAG_DATA) {
             printf("\t- source_node_id = %u\n", src_id);
-            printf("\t- flag = %u\n", flag);
+            printf("\t- flag = %s\n", "DATA");
         }
         printf("\t- payload = %u\n", payload);
 
