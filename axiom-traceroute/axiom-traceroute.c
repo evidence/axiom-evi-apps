@@ -62,27 +62,6 @@ recv_tracereoute_reply(axiom_dev_t *dev, axiom_node_id_t *recv_node,
     return 0;
 }
 
-/* XXX: move this code in the routing table */
-axiom_err_t
-axiom_next_hop(axiom_dev_t *dev, axiom_node_id_t dest_node_id,
-               axiom_if_id_t *my_if) {
-    axiom_err_t ret;
-    int i;
-
-    ret = axiom_get_routing(dev, dest_node_id, my_if);
-    if (ret == AXIOM_RET_ERROR)
-        return ret;
-
-    for (i = 0; i < 4; i++)
-    {
-        if (*my_if & (axiom_node_id_t)(1<<i))
-        {
-            *my_if = i;
-            return AXIOM_RET_OK;
-        }
-    }
-    return AXIOM_RET_ERROR;
-}
 
 int main(int argc, char **argv)
 {
