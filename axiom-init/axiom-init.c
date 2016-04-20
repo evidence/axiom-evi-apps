@@ -120,6 +120,7 @@ int main(int argc, char **argv)
 
             case AXIOM_CMD_NETPERF:
                 axiom_netperf_reply(dev, src, payload, verbose);
+                break;
 
             default:
                 EPRINTF("message discarded - cmd: 0x%x", cmd);

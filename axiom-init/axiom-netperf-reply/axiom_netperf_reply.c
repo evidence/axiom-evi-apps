@@ -31,6 +31,11 @@ static struct timeval start_tv = {
 static struct timeval end_tv, elapsed_tv;
 static uint16_t rx_bytes = 0;
 
+static double usec2sec(uint64_t usec)
+{
+    return ((double)(usec) / 1000000);
+}
+
 static int send_elapsed_time(axiom_dev_t *dev, axiom_node_id_t src,
                              uint64_t elapsed_usec) {
 
@@ -45,8 +50,8 @@ static int send_elapsed_time(axiom_dev_t *dev, axiom_node_id_t src,
         payload.time = (uint16_t)(elapsed_usec >> (i*16));
 
         /* send small neighbour traceroute message */
-        msg_err = axiom_send_small(dev, src, AXIOM_SMALL_PORT_NETUTILS, 0,
-                                   (axiom_payload_t *)&payload);
+        msg_err = axiom_send_small(dev, src, AXIOM_SMALL_PORT_NETUTILS,
+                AXIOM_SMALL_FLAG_DATA, (axiom_payload_t *)&payload);
         if (msg_err == AXIOM_RET_ERROR)
         {
             return -1;
@@ -78,16 +83,17 @@ void axiom_netperf_reply(axiom_dev_t *dev, axiom_node_id_t src,
             EPRINTF("gettimeofday error");
             return;
         }
-        IPRINTF(verbose,"Start timestamp: %ld sec\t%ld microsec\n", start_tv.tv_sec,
-                                                              start_tv.tv_usec);
+        IPRINTF(verbose,"Start timestamp: %ld sec\t%ld microsec\n",
+                start_tv.tv_sec, start_tv.tv_usec);
     }
     IPRINTF(verbose, "NETPERF message received from: %u ", src);
 
     /* XXX tbv: does all 8 bytes of small messagge arrive? */
     rx_bytes += (uint16_t)sizeof(axiom_small_msg_t);
 
-    if (recv_payload->total_bytes == rx_bytes)
+    if (rx_bytes >= recv_payload->total_bytes)
     {
+        double rx_th;
         /* get time of the last netperf message received */
         ret = gettimeofday(&end_tv, NULL);
         if (ret == -1)
@@ -97,10 +103,12 @@ void axiom_netperf_reply(axiom_dev_t *dev, axiom_node_id_t src,
         }
         IPRINTF(verbose,"End timestamp: %ld sec\t%ld microsec\n", end_tv.tv_sec,
                                                               end_tv.tv_usec);
-        /* compute time elapsed ms */
+        /* compute time elapsed */
         timersub(&end_tv, &start_tv, &elapsed_tv);
         elapsed_usec = elapsed_tv.tv_usec + (elapsed_tv.tv_sec * 1000000);
-        memset(&start_tv, 0, sizeof(start_tv)); /* reset start time */
+        rx_th = (double)(rx_bytes / usec2sec(elapsed_usec));
+        IPRINTF(verbose, "Rx throughput = %3.3f bytes/s - elapsed_usec = %llu",
+                rx_th, elapsed_usec);
 
         /* send elapsed time to netperf application */
         err = send_elapsed_time(dev, src, elapsed_usec);
@@ -109,6 +117,7 @@ void axiom_netperf_reply(axiom_dev_t *dev, axiom_node_id_t src,
             EPRINTF("send back time error");
             return;
         }
+        memset(&start_tv, 0, sizeof(start_tv)); /* reset start time */
         rx_bytes = 0;
     }
 }
