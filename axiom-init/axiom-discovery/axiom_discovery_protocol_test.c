@@ -1,13 +1,6 @@
 /*
- * axiom_discovery_protocol_test.c
- *
- * Version:     v0.3.1
- * Last update: 2016-03-23
- *
  * This file tests the AXIOM discovery-routing implementation
- *
  */
-
 #include <pthread.h>
 #include <stdio.h>
 #include <stdint.h>
@@ -37,7 +30,8 @@ axiom_sim_topology_t final_topology = {
 
 extern axiom_node_id_t topology[AXIOM_MAX_NODES][AXIOM_MAX_INTERFACES];
 
-static void usage(void)
+static void
+usage(void)
 {
     printf("usage: ./axiom_discovery_protocol |  ./axsw_discovery_protocol \n");
     printf("  [[-m -n number_of_nodes] | [[-m -x number_of_row -y number_of_columns] \n");
@@ -182,7 +176,7 @@ axiom_make_ring_toplogy(axiom_topology_t *start_topology, int num_nodes)
  */
 void
 axiom_make_mesh_toplogy(axiom_topology_t *start_topology, int num_nodes,
-                        uint8_t row, uint8_t columns)
+        uint8_t row, uint8_t columns)
 {
     int i, node_index;
 
@@ -246,9 +240,10 @@ axiom_make_mesh_toplogy(axiom_topology_t *start_topology, int num_nodes,
 
 
 /* Given the start_topology it computes the intermediate expected topology */
-void axiom_compute_intermediate_final_topology(axiom_topology_t *start_topology,
-                                 axiom_topology_t *end_test_topology, uint8_t *nodes_match,
-                                 uint8_t start_node_id, uint8_t *max_node_id, int num_nodes)
+void
+axiom_compute_intermediate_final_topology(axiom_topology_t *start_topology,
+        axiom_topology_t *end_test_topology, uint8_t *nodes_match,
+        uint8_t start_node_id, uint8_t *max_node_id, int num_nodes)
 {
     int iface;
     uint8_t node, old_id;
@@ -270,18 +265,19 @@ void axiom_compute_intermediate_final_topology(axiom_topology_t *start_topology,
                 nodes_match[old_id] = *max_node_id;
                 end_test_topology->topology[start_node_id][iface] = *max_node_id;
                 axiom_compute_intermediate_final_topology(start_topology, end_test_topology,
-                                                          nodes_match,
-                                                          old_id,  max_node_id, num_nodes);
+                        nodes_match,
+                        old_id,  max_node_id, num_nodes);
             }
         }
     }
 }
 
 /* Given the start_topology it computes the final expected topology */
-void axiom_compute_final_topology(axiom_topology_t *start_topology,
-                                 axiom_topology_t *end_test_topology, uint8_t *nodes_match,
-                                 uint8_t start_node_id, uint8_t *max_node_id, int num_nodes,
-                                 axiom_topology_t *end_test_topology_copy)
+void
+axiom_compute_final_topology(axiom_topology_t *start_topology,
+        axiom_topology_t *end_test_topology, uint8_t *nodes_match,
+        uint8_t start_node_id, uint8_t *max_node_id, int num_nodes,
+        axiom_topology_t *end_test_topology_copy)
 {
     int i;
 
@@ -299,7 +295,8 @@ void axiom_compute_final_topology(axiom_topology_t *start_topology,
     }
 }
 
-void *master(void *args)
+void
+*master(void *args)
 {
     axiom_sim_node_args_t *axiom_args = (axiom_sim_node_args_t *) args;
     axiom_dev_t *dev;
@@ -323,7 +320,8 @@ void *master(void *args)
     return 0;
 }
 
-void *slave(void *args)
+void
+*slave(void *args)
 {
     axiom_sim_node_args_t *axiom_args = (axiom_sim_node_args_t *) args;
     axiom_dev_t *dev;
@@ -363,7 +361,8 @@ void *slave(void *args)
     return 0;
 }
 
-int main(int argc, char **argv)
+int
+main(int argc, char **argv)
 {
     int err, cmp;
     int i, j, n;

@@ -1,12 +1,6 @@
 /*
- * axiom_route_compute.h
- *
- * Version:     v0.3.1
- * Last update: 2016-03-22
- *
  * This file contains defines and prototypes for Master node
  * routing table computation for all AXIOM nodes
- *
  */
 #ifndef ROUTE_COMPUTE_H
 #define ROUTE_COMPUTE_H

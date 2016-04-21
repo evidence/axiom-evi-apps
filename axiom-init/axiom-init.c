@@ -1,13 +1,3 @@
-/*
- * axiom_discovery_protocol_test.c
- *
- * Version:     v0.3.1
- * Last update: 2016-03-23
- *
- * This file implements the AXIOM INIT application
- *
- */
-
 #include <pthread.h>
 #include <ctype.h>
 #include <stdio.h>
@@ -31,7 +21,8 @@
 
 int verbose = 0;
 
-static void usage(void)
+static void
+usage(void)
 {
     printf("usage: axiom-init [arguments]\n");
     printf("Start AXIOM node in slaves mode (or master if it is specified)\n\n");
@@ -41,7 +32,8 @@ static void usage(void)
     printf("-h, --help          print this help\n\n");
 }
 
-int main(int argc, char **argv)
+int
+main(int argc, char **argv)
 {
     int master = 0, run = 1;
     axiom_dev_t *dev = NULL;

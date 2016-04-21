@@ -1,15 +1,9 @@
+/*
+ * This file contains AXIOM node network simulation structure and prototypes
+ */
 #ifndef AXIOM_SIMULATOR_h
 #define AXIOM_SIMULATOR_h
-/*
- * axiom_simulator.h
- *
- * Version:     v0.3.1
- * Last update: 2016-03-22
- *
- * This file contains AXIOM node network simulation structure
- * and prototypes
- *
- */
+
 #include "../axiom_discovery_protocol.h"
 
 typedef struct axiom_net axiom_net_t;

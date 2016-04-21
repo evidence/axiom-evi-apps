@@ -1,14 +1,7 @@
 /*
- * axiom_discovery_node.c
- *
- * Version:     v0.3.1
- * Last update: 2016-03-22
- *
- * This file implements AXIOM NIC init phase of
- * Master and Slaves nodes
- *
+ * This file implements AXIOM discovery and routing phase of
+ * Master and Slaves nodes.
  */
-
 #include <stdio.h>
 #include <stdint.h>
 #include <string.h>
@@ -21,9 +14,8 @@
 #include "axiom_route_delivery.h"
 #include "axiom_route_set.h"
 
-static
-void print_topology(axiom_node_id_t tpl[][AXIOM_MAX_INTERFACES],
-                           axiom_node_id_t number_of_total_nodes)
+static void print_topology(axiom_node_id_t tpl[][AXIOM_MAX_INTERFACES],
+        axiom_node_id_t number_of_total_nodes)
 {
     int i, j;
 
@@ -43,10 +35,9 @@ void print_topology(axiom_node_id_t tpl[][AXIOM_MAX_INTERFACES],
     }
 }
 
-static
-void print_my_routing_table(axiom_dev_t *dev,
-                            axiom_node_id_t my_node_id,
-                            axiom_node_id_t max_node_id)
+static void
+print_my_routing_table(axiom_dev_t *dev, axiom_node_id_t my_node_id,
+        axiom_node_id_t max_node_id)
 {
     int i, j;
     uint8_t enabled_mask;
@@ -80,7 +71,8 @@ void print_my_routing_table(axiom_dev_t *dev,
 }
 
 /* Master node code */
-void axiom_discovery_master(axiom_dev_t *dev,
+void
+axiom_discovery_master(axiom_dev_t *dev,
         axiom_node_id_t topology[][AXIOM_MAX_INTERFACES],
         axiom_if_id_t final_routing_table[AXIOM_MAX_NODES], int verbose)
 {
@@ -143,11 +135,11 @@ void axiom_discovery_master(axiom_dev_t *dev,
 }
 
 /* Slave node code*/
-void axiom_discovery_slave(axiom_dev_t *dev,
+void
+axiom_discovery_slave(axiom_dev_t *dev,
         axiom_node_id_t first_src, axiom_payload_t first_payload,
         axiom_node_id_t topology[][AXIOM_MAX_INTERFACES],
-        axiom_if_id_t final_routing_table[AXIOM_MAX_NODES],
-        int verbose)
+        axiom_if_id_t final_routing_table[AXIOM_MAX_NODES], int verbose)
 {
     axiom_node_id_t my_node_id, max_node_id = 0;
     axiom_msg_id_t ret;

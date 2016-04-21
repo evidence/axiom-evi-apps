@@ -1,11 +1,5 @@
 /*
- * axiom_neteperf_reply.c
- *
- * Version:     v0.3.1
- * Last update: 2016-04-15
- *
  * This file implements the axiom-netperf-reply application
- *
  */
 #include <stdio.h>
 #include <stdint.h>
@@ -60,13 +54,15 @@ axiom_send_uint64_small(axiom_dev_t *dev, axiom_node_id_t dst,
         if (msg_err == AXIOM_RET_ERROR) {
             return msg_err;
         }
-        DPRINTF("payload - offset: 0x%x data: 0x%x", payload.offset, payload.data);
+        DPRINTF("payload - offset: 0x%x data: 0x%x", payload.offset,
+                payload.data);
     }
 
     return AXIOM_RET_OK;
 }
 
-void axiom_netperf_reply(axiom_dev_t *dev, axiom_node_id_t src,
+void
+axiom_netperf_reply(axiom_dev_t *dev, axiom_node_id_t src,
         axiom_payload_t payload, int verbose)
 {
     axiom_netperf_payload_t *recv_payload =

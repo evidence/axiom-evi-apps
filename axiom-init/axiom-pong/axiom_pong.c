@@ -1,11 +1,5 @@
 /*
- * axiom_discovery_protocol_test.c
- *
- * Version:     v0.3.1
- * Last update: 2016-03-23
- *
- * This file tests the AXIOM INIT implementation
- *
+ * This file implements AXIOM ping replay
  */
 #include <stdio.h>
 #include <stdint.h>
@@ -20,7 +14,8 @@
 
 #include "axiom_pong.h"
 
-void axiom_pong(axiom_dev_t *dev, axiom_if_id_t first_src,
+void
+axiom_pong(axiom_dev_t *dev, axiom_if_id_t first_src,
         axiom_payload_t first_payload, int verbose)
 {
     axiom_err_t ret;

@@ -1,13 +1,6 @@
 /*
- * axiom_nic_emulator.c
- *
- * Version:     v0.3.1
- * Last update: 2016-03-22
- *
  * This file contains the AXIOM NIC API simulation
- *
  */
-
 #include <stdio.h>
 #include <stdint.h>
 #include <unistd.h>
@@ -24,8 +17,6 @@
 #include "axiom_simulator.h"
 #include "axiom_net.h"
 
-
-/* Exported functions */
 
 /*
  * @brief This function returns the local node id.
@@ -72,19 +63,18 @@ axiom_get_if_number(axiom_dev_t *dev, axiom_if_id_t* if_number)
  * return Returns ...
  */
 axiom_err_t
-axiom_get_if_info(axiom_dev_t *dev, axiom_if_id_t if_number, uint8_t* if_features)
+axiom_get_if_info(axiom_dev_t *dev, axiom_if_id_t if_number,
+        uint8_t* if_features)
 {
-    if (if_number >= AXIOM_MAX_INTERFACES)
-    {
+    if (if_number >= AXIOM_MAX_INTERFACES) {
         return AXIOM_RET_ERROR;
     }
 
     *if_features = 0;
 
-    if (axiom_net_connect_status(dev, if_number))
-    {
-        /* Exist a connection (a socket descriptor) on the 'if_number' interface of the
-         *  node managed by the running thread */
+    if (axiom_net_connect_status(dev, if_number)) {
+        /* Exist a connection (a socket descriptor) on the 'if_number'
+         * interface of the node managed by the running thread */
         *if_features = AXIOM_IF_CONNECTED;
     }
 
@@ -98,18 +88,15 @@ axiom_get_if_info(axiom_dev_t *dev, axiom_if_id_t if_number, uint8_t* if_feature
  * @param enabled_mask bit mask interface
  */
 axiom_err_t
-axiom_set_routing(axiom_dev_t *dev, axiom_node_id_t node_id, uint8_t enabled_mask)
+axiom_set_routing(axiom_dev_t *dev, axiom_node_id_t node_id,
+        uint8_t enabled_mask)
 {
     uint8_t i;
 
-    for (i = 0; i < AXIOM_MAX_INTERFACES; i++)
-    {
-        if (enabled_mask & (uint8_t)(1 << i))
-        {
+    for (i = 0; i < AXIOM_MAX_INTERFACES; i++) {
+        if (enabled_mask & (uint8_t)(1 << i)) {
             ((axiom_sim_node_args_t*)dev)->local_routing[node_id][i] = 1;
-        }
-        else
-        {
+        } else {
             ((axiom_sim_node_args_t*)dev)->local_routing[node_id][i] = 0;
         }
     }
@@ -123,16 +110,16 @@ axiom_set_routing(axiom_dev_t *dev, axiom_node_id_t node_id, uint8_t enabled_mas
  * @param node_id Remote connected node id
  * @param enabled_mask bit mask interface
  */
-axiom_err_t axiom_get_routing(axiom_dev_t *dev, axiom_node_id_t node_id, uint8_t *enabled_mask)
+axiom_err_t
+axiom_get_routing(axiom_dev_t *dev, axiom_node_id_t node_id,
+        uint8_t *enabled_mask)
 {
     uint8_t i;
 
     *enabled_mask = 0;
 
-    for (i = 0; i < AXIOM_MAX_INTERFACES; i++)
-    {
-        if (((axiom_sim_node_args_t*)dev)->local_routing[node_id][i] == 1)
-        {
+    for (i = 0; i < AXIOM_MAX_INTERFACES; i++) {
+        if (((axiom_sim_node_args_t*)dev)->local_routing[node_id][i] == 1) {
             *enabled_mask |= (uint8_t)(1 << i);
         }
     }
@@ -158,13 +145,10 @@ axiom_send_small(axiom_dev_t *dev, axiom_node_id_t dst_id,
 {
     axiom_msg_id_t ret = AXIOM_RET_ERROR;
 
-    if (flag & AXIOM_SMALL_FLAG_NEIGHBOUR)
-    {
+    if (flag & AXIOM_SMALL_FLAG_NEIGHBOUR) {
         ret = axiom_net_send_small_neighbour(dev, (axiom_if_id_t)dst_id, port,
                 flag, payload);
-    }
-    else
-    {
+    } else {
         ret = axiom_net_send_small(dev, dst_id, port, flag, payload);
     }
 
@@ -188,13 +172,10 @@ axiom_recv_small(axiom_dev_t *dev, axiom_node_id_t *src_id,
 {
     axiom_msg_id_t ret = AXIOM_RET_ERROR;
 
-    if (*flag & AXIOM_SMALL_FLAG_NEIGHBOUR)
-    {
+    if (*flag & AXIOM_SMALL_FLAG_NEIGHBOUR) {
         /* discovery and set routing neighbour messages management */
         ret = axiom_net_recv_small_neighbour(dev, src_id, port, flag, payload);
-    }
-    else
-    {
+    } else {
         /* delivery small messages management */
         ret = axiom_net_recv_small(dev, src_id, port, flag, payload);
     }

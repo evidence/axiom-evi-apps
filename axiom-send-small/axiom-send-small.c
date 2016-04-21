@@ -1,13 +1,3 @@
-/*
- * axiom_discovery_protocol_test.c
- *
- * Version:     v0.3.1
- * Last update: 2016-03-23
- *
- * This file implements the axiom-send-small application
- *
- */
-
 #include <ctype.h>
 #include <stdio.h>
 #include <stdint.h>
@@ -25,7 +15,8 @@
 #include "axiom_nic_packets.h"
 #include "dprintf.h"
 
-static void usage(void)
+static void
+usage(void)
 {
     printf("usage: axiom-send-small [arguments] -d dest -l payload\n");
     printf("Send AXIOM small raw message to specified dest (dest can be remote node\n");
@@ -39,7 +30,8 @@ static void usage(void)
     printf("-h, --help               print this help\n\n");
 }
 
-int main(int argc, char **argv)
+int
+main(int argc, char **argv)
 {
     axiom_dev_t *dev = NULL;
     axiom_msg_id_t recv_ret, my_node_id;

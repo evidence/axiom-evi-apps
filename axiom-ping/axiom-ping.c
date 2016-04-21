@@ -1,13 +1,3 @@
-/*
- * axiom_discovery_protocol_test.c
- *
- * Version:     v0.3.1
- * Last update: 2016-03-23
- *
- * This file implementas the AXIOM PING application
- *
- */
-
 #include <ctype.h>
 #include <stdio.h>
 #include <stdint.h>
@@ -32,7 +22,8 @@
 
 int verbose = 0;
 
-static void usage(void)
+static void
+usage(void)
 {
     printf("usage: axiom-ping [arguments] -d dest_node \n");
     printf("AXIOM ping: estimate the round trip time (RTT) between this node\n");
@@ -48,19 +39,22 @@ static void usage(void)
 static volatile sig_atomic_t sigint_received = 0;
 
 /* control-C handler */
-static void sigint_handler(int sig)
+static void
+sigint_handler(int sig)
 {
     sigint_received = 1;
 }
 
 /* TODO: allow the user to change the resolution */
-static double usec2msec(uint64_t usec)
+static double
+usec2msec(uint64_t usec)
 {
     return ((double)(usec) / 1000);
 }
 
 
-int main(int argc, char **argv)
+int
+main(int argc, char **argv)
 {
     axiom_dev_t *dev = NULL;
     axiom_msg_id_t send_ret, recv_ret, my_node_id;
@@ -96,13 +90,10 @@ int main(int argc, char **argv)
     sigaction(SIGINT, &sig, NULL);
 
     while ((opt = getopt_long(argc, argv,"vhd:i:c:",
-                         long_options, &long_index )) != -1)
-    {
-        switch (opt)
-        {
+                         long_options, &long_index )) != -1) {
+        switch (opt) {
             case 'd' :
-                if (sscanf(optarg, "%" SCNu8, &dst_id) != 1)
-                {
+                if (sscanf(optarg, "%" SCNu8, &dst_id) != 1) {
                     EPRINTF("wrong destination");
                     usage();
                     exit(-1);
@@ -111,8 +102,7 @@ int main(int argc, char **argv)
                 break;
 
             case 'i':
-                if (sscanf(optarg, "%" SCNu32, &interval) != 1)
-                {
+                if (sscanf(optarg, "%" SCNu32, &interval) != 1) {
                     EPRINTF("wrong interval");
                     usage();
                     exit(-1);
@@ -120,8 +110,7 @@ int main(int argc, char **argv)
                 break;
 
             case 'c':
-                if (sscanf(optarg, "%" SCNu32, &num_ping) != 1)
-                {
+                if (sscanf(optarg, "%" SCNu32, &num_ping) != 1) {
                     EPRINTF("wrong count");
                     usage();
                     exit(-1);
@@ -141,25 +130,21 @@ int main(int argc, char **argv)
     }
 
     /* check destination node parameter */
-    if (dst_ok == 1)
-    {
+    if (dst_ok == 1) {
         /* destination node inserted */
-        if ((dst_id < 0) || (dst_id > 254))
-        {
-            printf("Destination node id not allowed [%u]; [0 <= dst_id < 255]\n", dst_id);
+        if ((dst_id < 0) || (dst_id > 254)) {
+            printf("Destination node id not allowed [%u]; [0 <= dst_id < 255]\n",
+                    dst_id);
             exit(-1);
         }
-    }
-    else
-    {
+    } else {
         usage();
         exit(-1);
     }
 #ifndef AXIOM_NO_TX
     /* open the axiom device */
     dev = axiom_open(NULL);
-    if (dev == NULL)
-    {
+    if (dev == NULL) {
         perror("axiom_open()");
         exit(-1);
     }
@@ -168,19 +153,14 @@ int main(int argc, char **argv)
 #endif
     /* bind the current process on my port */
     err = axiom_bind(dev, my_port);
-    if (err == AXIOM_RET_ERROR)
-    {
+    if (err == AXIOM_RET_ERROR) {
         EPRINTF("send error");
         goto err;
     }
-
-
-
     printf("PING node %d.\n", dst_id);
 
     payload.packet_id = 0;
-    while (!sigint_received &&  (num_ping > 0))
-    {
+    while (!sigint_received &&  (num_ping > 0)) {
         axiom_flag_t flag = AXIOM_SMALL_FLAG_DATA;
 
         IPRINTF(verbose,"[node %u] sending ping message...\n", my_node_id);
@@ -189,29 +169,28 @@ int main(int argc, char **argv)
         payload.command = AXIOM_CMD_PING;
         payload.packet_id = (uint16_t)(payload.packet_id + 1);
         send_ret =  axiom_send_small(dev, (axiom_node_id_t)dst_id,
-                                            remote_port, flag,
-                                            (axiom_payload_t*)&payload);
+                remote_port, flag, (axiom_payload_t*)&payload);
+
         if (sigint_received) {
             break;
         }
-        if (send_ret == AXIOM_RET_ERROR)
-        {
+        if (send_ret == AXIOM_RET_ERROR) {
                EPRINTF("send error");
                goto err;
         }
 #endif
         /* get actual time */
         ret = gettimeofday(&start_tv,NULL);
-        if (ret == -1)
-        {
+        if (ret == -1) {
             EPRINTF("gettimeofday error");
             goto err;
         }
         IPRINTF(verbose,"timestamp: %ld sec\t%ld microsec\n", start_tv.tv_sec,
-                                                              start_tv.tv_usec);
+                start_tv.tv_usec);
         sent_packets++;
 #ifndef AXIOM_NO_TX
-        IPRINTF(verbose,"[node %u] message sent to port %u\n", my_node_id, remote_port);
+        IPRINTF(verbose,"[node %u] message sent to port %u\n", my_node_id,
+                remote_port);
         IPRINTF(verbose,"\t- destination_node_id = %u\n", dst_id);
 
         /* ********************* receive the reply ************************ */
@@ -220,8 +199,7 @@ int main(int argc, char **argv)
                                      &flag, (axiom_payload_t*)&recv_payload);
         /* get actual time */
         ret = gettimeofday(&end_tv,NULL);
-        if (ret == -1)
-        {
+        if (ret == -1) {
             EPRINTF("gettimeofday error");
             goto err;
         }
@@ -229,8 +207,8 @@ int main(int argc, char **argv)
         if (sigint_received) {
             break;
         }
-        if (recv_ret == AXIOM_RET_ERROR)
-        {
+
+        if (recv_ret == AXIOM_RET_ERROR) {
             EPRINTF("receive error");
             break;
         }
@@ -238,14 +216,14 @@ int main(int argc, char **argv)
         usleep(1234000);
 #endif
 
-        if (recv_payload.command != AXIOM_CMD_PONG)
-        {
+        if (recv_payload.command != AXIOM_CMD_PONG) {
             EPRINTF("receive a no AXIOM-PONG message");
             continue;
         }
 
         recv_packets++;
-        IPRINTF(verbose,"[node %u] reply received on port %u\n", my_node_id, recv_port);
+        IPRINTF(verbose,"[node %u] reply received on port %u\n", my_node_id,
+                recv_port);
         IPRINTF(verbose,"\t- source_node_id = %u\n", src_id);
         IPRINTF(verbose,"\t- message index = %u\n", recv_payload.packet_id);
         IPRINTF(verbose,"timestamp: %ld sec\t%ld microsec\n", end_tv.tv_sec,
@@ -263,19 +241,16 @@ int main(int argc, char **argv)
                 recv_payload.packet_id,
                 usec2msec(diff_usec));
 
-        if (diff_usec > max_usec)
-        {
+        if (diff_usec > max_usec) {
             max_usec = diff_usec;
         }
-        if (diff_usec < min_usec)
-        {
+        if (diff_usec < min_usec) {
             min_usec = diff_usec;
         }
 
         usleep(interval * 1000);
 
-        if (num_ping_ok == 1)
-        {
+        if (num_ping_ok == 1) {
             num_ping--;
         }
 

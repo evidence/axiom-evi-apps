@@ -11,7 +11,8 @@ typedef struct axiom_net axiom_net_t;
  * return Returns -1 in case of error
  *                 0 otherwise
  */
-int axiom_net_setup(axiom_sim_node_args_t *nodes, axiom_sim_topology_t *tpl);
+int
+axiom_net_setup(axiom_sim_node_args_t *nodes, axiom_sim_topology_t *tpl);
 
 /*
  * @brief This function frees the memory allocated during the start
@@ -20,7 +21,8 @@ int axiom_net_setup(axiom_sim_node_args_t *nodes, axiom_sim_topology_t *tpl);
  * @param tpl simulated initial topology
  * return Returns none
  */
-void axiom_net_free(axiom_sim_node_args_t *nodes, axiom_sim_topology_t *tpl);
+void
+axiom_net_free(axiom_sim_node_args_t *nodes, axiom_sim_topology_t *tpl);
 
 /*
  * @brief This function returns the connected status of the input
@@ -30,7 +32,8 @@ void axiom_net_free(axiom_sim_node_args_t *nodes, axiom_sim_topology_t *tpl);
  * return Returns 1 interface connected
  *                0 otherwise
  */
-int axiom_net_connect_status(axiom_dev_t *dev, axiom_if_id_t if_number);
+int
+axiom_net_connect_status(axiom_dev_t *dev, axiom_if_id_t if_number);
 
 /*
  * @brief This function sends a small message to a neighbour on a specific
@@ -41,7 +44,8 @@ int axiom_net_connect_status(axiom_dev_t *dev, axiom_if_id_t if_number);
  * @param data Data to send
  * return Returns ...
  */
-axiom_msg_id_t axiom_net_send_small_neighbour(axiom_dev_t *dev,
+axiom_msg_id_t
+axiom_net_send_small_neighbour(axiom_dev_t *dev,
         axiom_if_id_t src_interface, axiom_port_t port, axiom_flag_t flag,
         axiom_payload_t *payload);
 
@@ -54,9 +58,9 @@ axiom_msg_id_t axiom_net_send_small_neighbour(axiom_dev_t *dev,
  * @param payload Data to receive
  * return Returns ...
  */
-axiom_msg_id_t axiom_net_send_small(axiom_dev_t *dev, axiom_if_id_t dest_node_id,
-                              axiom_port_t port, axiom_flag_t flag,
-                              axiom_payload_t *payload);
+axiom_msg_id_t
+axiom_net_send_small(axiom_dev_t *dev, axiom_if_id_t dest_node_id,
+        axiom_port_t port, axiom_flag_t flag, axiom_payload_t *payload);
 
 /*
  * @brief This function receives small neighbour data.
@@ -67,9 +71,9 @@ axiom_msg_id_t axiom_net_send_small(axiom_dev_t *dev, axiom_if_id_t dest_node_id
  * @param payload data received
  * @return Returns -1 on error!
  */
-axiom_msg_id_t axiom_net_recv_small_neighbour(axiom_dev_t *dev,
-        axiom_node_id_t *src_interface, axiom_port_t *port, axiom_flag_t *flag,
-        axiom_payload_t *payload);
+axiom_msg_id_t
+axiom_net_recv_small_neighbour(axiom_dev_t *dev, axiom_node_id_t *src_interface,
+        axiom_port_t *port, axiom_flag_t *flag, axiom_payload_t *payload);
 
 /*
  * @brief This function receives small data.
@@ -80,8 +84,8 @@ axiom_msg_id_t axiom_net_recv_small_neighbour(axiom_dev_t *dev,
  * @param payload data received
  * @return Returns -1 on error!
  */
-axiom_msg_id_t axiom_net_recv_small(axiom_dev_t *dev,
-        axiom_node_id_t *src_node_id, axiom_port_t *port, axiom_flag_t *flag,
-        axiom_payload_t *payload);
+axiom_msg_id_t
+axiom_net_recv_small(axiom_dev_t *dev, axiom_node_id_t *src_node_id,
+        axiom_port_t *port, axiom_flag_t *flag, axiom_payload_t *payload);
 
 #endif /* !AXIOM_NET_h */

@@ -21,7 +21,6 @@ typedef struct axiom_net {
     int connected_if[AXIOM_MAX_INTERFACES];
 } axiom_net_t;
 
-
 #define AXSW_PORT_START         33300   /* first port to listen */
 
 /*
@@ -67,7 +66,7 @@ allocate_socket_node(uint8_t nodeA, axiom_sim_node_args_t *nodes,
     /* Connect to the Axiom-Switch ports */
     memset(&addr, 0, sizeof(addr));
     addr.sin_family      = AF_INET;
-    addr.sin_addr.s_addr = inet_addr("127.0.0.1"); // XXX: collegarsi all'IP della virtual machine
+    addr.sin_addr.s_addr = inet_addr("127.0.0.1");
     addr.sin_port        = htons(AXSW_PORT_START + nodeA);
 
     ret = connect(socket_d, (struct sockaddr *)&addr, sizeof(addr));
@@ -142,7 +141,8 @@ axiom_net_free(axiom_sim_node_args_t *nodes, axiom_sim_topology_t *tpl)
 int
 axiom_net_connect_status(axiom_dev_t *dev, axiom_if_id_t if_number)
 {
-    return (((axiom_sim_node_args_t*)dev)->net->connected_if[if_number] != AXIOM_NULL_INTERFACE);
+    return (((axiom_sim_node_args_t*)dev)->net->connected_if[if_number]
+            != AXIOM_NULL_INTERFACE);
 }
 
 /*
@@ -173,7 +173,8 @@ axiom_net_send_small_neighbour(axiom_dev_t *dev, axiom_if_id_t src_interface,
 
     /* ethernet packet management */
     axiom_msg_length = htonl(axiom_msg_length);
-    ret = send(((axiom_sim_node_args_t*)dev)->net->switch_fd, &axiom_msg_length, sizeof(axiom_msg_length), 0);
+    ret = send(((axiom_sim_node_args_t*)dev)->net->switch_fd, &axiom_msg_length,
+            sizeof(axiom_msg_length), 0);
     if (ret != sizeof(axiom_msg_length)) {
         EPRINTF("axiom_msg_length send error - return: %d", ret);
         return AXIOM_RET_ERROR;
@@ -183,10 +184,10 @@ axiom_net_send_small_neighbour(axiom_dev_t *dev, axiom_if_id_t src_interface,
 
     /* send the ethernet packet */
     axiom_msg_length = ntohl(axiom_msg_length);
-    ret = send( ((axiom_sim_node_args_t*)dev)->net->switch_fd, &small_eth, axiom_msg_length, 0);
+    ret = send( ((axiom_sim_node_args_t*)dev)->net->switch_fd, &small_eth,
+            axiom_msg_length, 0);
 
-    if ((ret == -1) || (ret == 0))
-    {
+    if (ret <= 0) {
         return AXIOM_RET_ERROR;
     }
     return AXIOM_RET_OK;
@@ -203,44 +204,47 @@ axiom_net_send_small_neighbour(axiom_dev_t *dev, axiom_if_id_t src_interface,
  */
 axiom_msg_id_t
 axiom_net_send_small(axiom_dev_t *dev, axiom_if_id_t dest_node_id,
-                              axiom_port_t port, axiom_flag_t flag,
-                              axiom_payload_t *payload)
+        axiom_port_t port, axiom_flag_t flag, axiom_payload_t *payload)
 {
     axiom_small_msg_t message;
     axiom_small_eth_t small_eth;
     uint32_t axiom_msg_length = sizeof(axiom_small_eth_t);
     int ret;
 
-    if (port == AXIOM_SMALL_PORT_INIT)
+    if (port != AXIOM_SMALL_PORT_INIT)
     {
-        /* Header message */
-        message.header.tx.port_flag.field.port = port;
-        message.header.tx.port_flag.field.flag = flag;
-        message.header.tx.dst = dest_node_id;
-        /* Payload */
-        message.payload= *payload;
-
-        /* Ethernet packet management */
-        axiom_msg_length = htonl(axiom_msg_length);
-        ret = send(((axiom_sim_node_args_t*)dev)->net->switch_fd, &axiom_msg_length, sizeof(axiom_msg_length), 0);
-        if (ret != sizeof(axiom_msg_length)) {
-            EPRINTF("axiom_msg_length send error - return: %d", ret);
-            return AXIOM_RET_ERROR;
-        }
-        small_eth.eth_hdr.type = htons(AXIOM_ETH_TYPE_SMALL);
-        memcpy(&small_eth.small_msg, &message, sizeof(message));
-
-        /* Send the ethernet packet */
-        axiom_msg_length = ntohl(axiom_msg_length);
-        ret = send( ((axiom_sim_node_args_t*)dev)->net->switch_fd, &small_eth, axiom_msg_length, 0);
-        if ((ret == -1) || (ret == 0))
-        {
-            return AXIOM_RET_ERROR;
-        }
-        DPRINTF("routing: send on socket = %d to node %d: (%d,%d)",
-           ((axiom_sim_node_args_t*)dev)->net->switch_fd, message.header.tx.dst,
-            (uint8_t)((message.payload & 0x00FF0000) >> 16), (uint8_t)((message.payload & 0x0000FF00) >> 8));
+        return AXIOM_RET_ERROR;
     }
+
+    /* Header message */
+    message.header.tx.port_flag.field.port = port;
+    message.header.tx.port_flag.field.flag = flag;
+    message.header.tx.dst = dest_node_id;
+    /* Payload */
+    message.payload= *payload;
+
+    /* Ethernet packet management */
+    axiom_msg_length = htonl(axiom_msg_length);
+    ret = send(((axiom_sim_node_args_t*)dev)->net->switch_fd, &axiom_msg_length,
+            sizeof(axiom_msg_length), 0);
+    if (ret != sizeof(axiom_msg_length)) {
+        EPRINTF("axiom_msg_length send error - return: %d", ret);
+        return AXIOM_RET_ERROR;
+    }
+    small_eth.eth_hdr.type = htons(AXIOM_ETH_TYPE_SMALL);
+    memcpy(&small_eth.small_msg, &message, sizeof(message));
+
+    /* Send the ethernet packet */
+    axiom_msg_length = ntohl(axiom_msg_length);
+    ret = send( ((axiom_sim_node_args_t*)dev)->net->switch_fd, &small_eth,
+            axiom_msg_length, 0);
+    if (ret <= 0) {
+        return AXIOM_RET_ERROR;
+    }
+    DPRINTF("routing: send on socket = %d to node %d: (%d,%d)",
+            ((axiom_sim_node_args_t*)dev)->net->switch_fd, message.header.tx.dst,
+            (uint8_t)((message.payload & 0x00FF0000) >> 16),
+            (uint8_t)((message.payload & 0x0000FF00) >> 8));
 
     return AXIOM_RET_OK;
 }
@@ -266,28 +270,29 @@ axiom_net_recv_small_neighbour(axiom_dev_t *dev, axiom_node_id_t *src_interface,
 
     while (retry) {
         /* receive the length of the ethernet packet */
-        ret = recv(((axiom_sim_node_args_t*)dev)->net->switch_fd, &axiom_msg_length, sizeof(axiom_msg_length), MSG_WAITALL);
-        if (ret < 0)
-        {
+        ret = recv(((axiom_sim_node_args_t*)dev)->net->switch_fd,
+                &axiom_msg_length, sizeof(axiom_msg_length), MSG_WAITALL);
+        if (ret < 0) {
             return AXIOM_RET_ERROR;
         }
 
         axiom_msg_length = ntohl(axiom_msg_length);
-        if (axiom_msg_length > sizeof(small_eth))
-        {
+        if (axiom_msg_length > sizeof(small_eth)) {
             EPRINTF("too long message - len: %d", axiom_msg_length);
             return AXIOM_RET_ERROR;
         }
 
         /* receive ethernet packet */
-        ret = recv(((axiom_sim_node_args_t*)dev)->net->switch_fd, &small_eth, axiom_msg_length, MSG_WAITALL);
-        if (ret != axiom_msg_length)
-        {
-            EPRINTF("unexpected length - expected: %d received: %d", axiom_msg_length, ret);
+        ret = recv(((axiom_sim_node_args_t*)dev)->net->switch_fd, &small_eth,
+                axiom_msg_length, MSG_WAITALL);
+        if (ret != axiom_msg_length) {
+            EPRINTF("unexpected length - expected: %d received: %d",
+                    axiom_msg_length, ret);
             return AXIOM_RET_ERROR;
         }
 
-        NDPRINTF("Receive from socket number = %d", ((axiom_sim_node_args_t*)dev)->net->switch_fd);
+        NDPRINTF("Receive from socket number = %d",
+                ((axiom_sim_node_args_t*)dev)->net->switch_fd);
 
         if (small_eth.eth_hdr.type != htons(AXIOM_ETH_TYPE_SMALL)) {
             retry = 1;
@@ -296,8 +301,8 @@ axiom_net_recv_small_neighbour(axiom_dev_t *dev, axiom_node_id_t *src_interface,
         }
         retry = 0;
 
-        /* Header */
-        *src_interface = small_eth.small_msg.header.rx.src; /* the switch puts the interface from which I have to receive */
+        /* the switch puts the interface from which I have to receive */
+        *src_interface = small_eth.small_msg.header.rx.src;
         *port = small_eth.small_msg.header.rx.port_flag.field.port;
         *flag = small_eth.small_msg.header.rx.port_flag.field.flag;
         /* payload */
@@ -321,34 +326,31 @@ axiom_net_recv_small(axiom_dev_t *dev, axiom_node_id_t *src_node_id,
         axiom_port_t *port, axiom_flag_t *flag, axiom_payload_t *payload)
 {
     axiom_routing_payload_t rt_message;
-    axiom_node_id_t my_id, node_id;
-    axiom_if_id_t if_id;
     axiom_small_eth_t small_eth;
     uint32_t axiom_msg_length;
     int ret, retry = 1;
 
-    my_id = axiom_get_node_id(dev);
-
     while (retry) {
         /* receive the length of the ethernet packet */
-        ret = recv(((axiom_sim_node_args_t*)dev)->net->switch_fd, &axiom_msg_length, sizeof(axiom_msg_length), MSG_WAITALL);
-        if (ret < 0)
-        {
+        ret = recv(((axiom_sim_node_args_t*)dev)->net->switch_fd,
+                &axiom_msg_length, sizeof(axiom_msg_length), MSG_WAITALL);
+        if (ret < 0) {
             return AXIOM_RET_ERROR;
         }
 
         axiom_msg_length = ntohl(axiom_msg_length);
-        if (axiom_msg_length > sizeof(small_eth))
-        {
+        if (axiom_msg_length > sizeof(small_eth)) {
             EPRINTF("too long message - len: %d", axiom_msg_length);
             return AXIOM_RET_ERROR;
         }
 
         /* receive ethernet packet */
-        ret = recv(((axiom_sim_node_args_t*)dev)->net->switch_fd, &small_eth, axiom_msg_length, MSG_WAITALL);
+        ret = recv(((axiom_sim_node_args_t*)dev)->net->switch_fd, &small_eth,
+                axiom_msg_length, MSG_WAITALL);
         if (ret != axiom_msg_length)
         {
-            EPRINTF("unexpected length - expected: %d received: %d", axiom_msg_length, ret);
+            EPRINTF("unexpected length - expected: %d received: %d",
+                    axiom_msg_length, ret);
             return AXIOM_RET_ERROR;
         }
 
@@ -359,31 +361,33 @@ axiom_net_recv_small(axiom_dev_t *dev, axiom_node_id_t *src_node_id,
         }
         retry = 0;
 
-        if (small_eth.small_msg.header.rx.port_flag.field.port == AXIOM_SMALL_PORT_INIT)
+        if (small_eth.small_msg.header.rx.port_flag.field.port !=
+                AXIOM_SMALL_PORT_INIT)
         {
-            memcpy(&rt_message, &small_eth.small_msg.payload, sizeof(rt_message));
+            continue;
+        }
 
-            *port = small_eth.small_msg.header.rx.port_flag.field.port;
-            node_id = rt_message.node_id;
-            if_id = rt_message.if_id;
-            DPRINTF("routing: received on socket = %d for node %d: (%d,%d) [I'm node %d]",
-                    ((axiom_sim_node_args_t*)dev)->net->switch_fd, small_eth.small_msg.header.tx.dst,
-                    node_id, if_id, my_id);
+        memcpy(&rt_message, &small_eth.small_msg.payload, sizeof(rt_message));
 
-            if (rt_message.command ==  AXIOM_RT_CMD_INFO)
-            {
-                /* it is my routing table, return the info to the caller */
-                *src_node_id = small_eth.small_msg.header.rx.src;
-                *payload = small_eth.small_msg.payload;
-            }
-            else if (rt_message.command == AXIOM_RT_CMD_END_INFO)
-            {
-                *payload = small_eth.small_msg.payload;
-            }
-            else if (rt_message.command ==  AXIOM_RT_CMD_RT_REPLY)
-            {
-                *payload = small_eth.small_msg.payload;
-            }
+        *port = small_eth.small_msg.header.rx.port_flag.field.port;
+        DPRINTF("routing: received on socket = %d for node %d: (%d,%d) [I'm node %d]",
+                ((axiom_sim_node_args_t*)dev)->net->switch_fd,
+                small_eth.small_msg.header.tx.dst, rt_message.node_id,
+                rt_message.if_id, axiom_get_node_id(dev));
+
+        if (rt_message.command ==  AXIOM_RT_CMD_INFO)
+        {
+            /* it is my routing table, return the info to the caller */
+            *src_node_id = small_eth.small_msg.header.rx.src;
+            *payload = small_eth.small_msg.payload;
+        }
+        else if (rt_message.command == AXIOM_RT_CMD_END_INFO)
+        {
+            *payload = small_eth.small_msg.payload;
+        }
+        else if (rt_message.command ==  AXIOM_RT_CMD_RT_REPLY)
+        {
+            *payload = small_eth.small_msg.payload;
         }
     }
 

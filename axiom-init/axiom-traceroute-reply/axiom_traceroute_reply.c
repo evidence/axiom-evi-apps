@@ -1,11 +1,5 @@
 /*
- * axiom_discovery_protocol_test.c
- *
- * Version:     v0.3.1
- * Last update: 2016-04-15
- *
  * This file implements the axiom-traceroute-reply application
- *
  */
 #include <stdio.h>
 #include <stdint.h>
@@ -20,7 +14,8 @@
 
 #include "axiom_traceroute_reply.h"
 
-void axiom_traceroute_reply(axiom_dev_t *dev, axiom_if_id_t src,
+void
+axiom_traceroute_reply(axiom_dev_t *dev, axiom_if_id_t src,
         axiom_payload_t payload, int verbose) {
     axiom_err_t err;
     axiom_err_t ret;
@@ -46,8 +41,7 @@ void axiom_traceroute_reply(axiom_dev_t *dev, axiom_if_id_t src,
     recv_payload->command = AXIOM_CMD_TRACEROUTE_REPLY;
     ret = axiom_send_small(dev, recv_payload->src_id, AXIOM_SMALL_PORT_NETUTILS,
             AXIOM_SMALL_FLAG_DATA, (axiom_payload_t *)recv_payload);
-    if (ret == AXIOM_RET_ERROR)
-    {
+    if (ret == AXIOM_RET_ERROR) {
         EPRINTF("send error");
         return;
     }
@@ -56,12 +50,10 @@ void axiom_traceroute_reply(axiom_dev_t *dev, axiom_if_id_t src,
 
 
     my_node_id = axiom_get_node_id(dev);
-    if (my_node_id != recv_payload->dst_id)
-    {
+    if (my_node_id != recv_payload->dst_id) {
         /* get interface to reach next hop for recv_payload->dst_id node */
         err = axiom_next_hop(dev, recv_payload->dst_id, &my_if);
-        if (err == AXIOM_RET_ERROR)
-        {
+        if (err == AXIOM_RET_ERROR) {
             EPRINTF("axiom_next_hop error");
             return;
         }
@@ -69,8 +61,7 @@ void axiom_traceroute_reply(axiom_dev_t *dev, axiom_if_id_t src,
         msg_err = axiom_send_small_init(dev, my_if, AXIOM_SMALL_FLAG_NEIGHBOUR,
                                         (axiom_payload_t *)&send_payload);
 
-        if (msg_err == AXIOM_RET_ERROR)
-        {
+        if (msg_err == AXIOM_RET_ERROR) {
             EPRINTF("send small init error");
             return;
         }

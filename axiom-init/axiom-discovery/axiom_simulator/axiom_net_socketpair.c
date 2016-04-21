@@ -18,12 +18,10 @@ typedef struct axiom_net {
     int node_if_fd[AXIOM_MAX_INTERFACES];
     int num_of_ended_rt;
     /* If send_recv_small_sim == 0 , axiom_net_send_small() and
-     * axiom_net_send_small() must manage the flow of the message
-     * from MASTER to the Slave (AXIOM_RT_CMD_INFO and
-     * AXIOM_RT_CMD_END_INFO messages) .
-     * If send_recv_small_sim == 0, axiom_net_send_small() and
-     * axiom_net_send_small() must manage the flow of the message
-     * from Slaves to MASTER (AXIOM_RT_CMD_RT_REPLY messages) */
+     * axiom_net_send_small() must manage the flow of the message from MASTER to
+     * the Slave (AXIOM_RT_CMD_INFO and AXIOM_RT_CMD_END_INFO messages),
+     * otherwise it must manage the flow of the message from Slaves to MASTER
+     * (AXIOM_RT_CMD_RT_REPLY messages) */
     int send_recv_small_sim;
     int num_recv_reply[AXIOM_MAX_INTERFACES];
 } axiom_net_t;
@@ -40,8 +38,7 @@ typedef struct axiom_net {
  */
 static axiom_msg_id_t
 send_from_master_to_slave(axiom_dev_t *dev, axiom_if_id_t dest_node_id,
-                              axiom_port_t port, axiom_flag_t flag,
-                              axiom_payload_t *payload)
+        axiom_port_t port, axiom_flag_t flag, axiom_payload_t *payload)
 {
     axiom_small_msg_t message;
     ssize_t write_ret;
@@ -49,69 +46,70 @@ send_from_master_to_slave(axiom_dev_t *dev, axiom_if_id_t dest_node_id,
     uint8_t if_i;
     axiom_routing_payload_t rt_payload;
 
-    if (port == AXIOM_SMALL_PORT_INIT)
+    if (port != AXIOM_SMALL_PORT_INIT)
     {
-        uint8_t if_index;
+        return AXIOM_RET_ERROR;
+    }
+    uint8_t if_index;
 
-        /* Header message */
-        message.header.tx.port_flag.field.port = port;
-        message.header.tx.port_flag.field.flag = flag;
-        message.header.tx.dst = dest_node_id;
+    /* Header message */
+    message.header.tx.port_flag.field.port = port;
+    message.header.tx.port_flag.field.flag = flag;
+    message.header.tx.dst = dest_node_id;
 
-        /* Payload */
-        message.payload= *payload;
+    /* Payload */
+    message.payload= *payload;
 
-        for (if_index = 0; if_index < AXIOM_MAX_INTERFACES; if_index ++)
+    for (if_index = 0; if_index < AXIOM_MAX_INTERFACES; if_index ++)
+    {
+        if (((axiom_sim_node_args_t*)dev)->local_routing[dest_node_id][if_index] == 1)
         {
-           if (((axiom_sim_node_args_t*)dev)->local_routing[dest_node_id][if_index] == 1)
-           {
-                write_ret = write( ((axiom_sim_node_args_t*)dev)->net->node_if_fd[if_index], &message, sizeof(message));
+            write_ret = write(((axiom_sim_node_args_t*)dev)->net->node_if_fd[if_index],
+                    &message, sizeof(message));
 
-                if ((write_ret == -1) || (write_ret == 0))
-                {
-                    return AXIOM_RET_ERROR;
-                }
-                DPRINTF("routing: send on socket = %d to node %d: (%d,%d)",
-                   ((axiom_sim_node_args_t*)dev)->net->node_if_fd[if_index], message.header.tx.dst,
-                   (uint8_t)((message.payload & 0x00FF0000) >> 16), (uint8_t)((message.payload & 0x0000FF00) >> 8));
-                break;
-           }
-        }
-
-
-        /* MASTER changing of axiom_net_send_small() simulation mode */
-        if (((axiom_sim_node_args_t*)dev)->node_id == AXIOM_MASTER_ID)
-        {
-            rt_payload = *(axiom_routing_payload_t*)payload;
-            if (rt_payload.command == AXIOM_RT_CMD_END_INFO)
+            if ((write_ret == -1) || (write_ret == 0))
             {
-                /* check if the node is the last into the topology */
-                if (dest_node_id != (AXIOM_MAX_NODES -1))
-                {
-                    for (if_i = 0; if_i < AXIOM_MAX_INTERFACES; if_i ++)
-                    {
-                       if (((axiom_sim_node_args_t*)dev)->local_routing[dest_node_id+1][if_i] == 1)
-                       {
-                          /* Exist 'dest_node_id+1', so dest_node_id it is not the last node*/
-                           last_node = 0;
-                       }
-                    }
-                }
+                return AXIOM_RET_ERROR;
+            }
+            DPRINTF("routing: send on socket = %d to node %d: (%d,%d)",
+                    ((axiom_sim_node_args_t*)dev)->net->node_if_fd[if_index],
+                    message.header.tx.dst, (uint8_t)((message.payload &
+                            0x00FF0000) >> 16), (uint8_t)((message.payload &
+                                0x0000FF00) >> 8));
+            break;
+        }
+    }
 
-                if ((last_node == 1) || (dest_node_id == (AXIOM_MAX_NODES -1)))
+
+    /* MASTER changing of axiom_net_send_small() simulation mode */
+    if (((axiom_sim_node_args_t*)dev)->node_id != AXIOM_MASTER_ID)
+    {
+        return AXIOM_RET_OK;
+    }
+    rt_payload = *(axiom_routing_payload_t*)payload;
+    if (rt_payload.command == AXIOM_RT_CMD_END_INFO)
+    {
+        /* check if the node is the last into the topology */
+        if (dest_node_id != (AXIOM_MAX_NODES -1))
+        {
+            for (if_i = 0; if_i < AXIOM_MAX_INTERFACES; if_i ++)
+            {
+                if (((axiom_sim_node_args_t*)dev)->local_routing[dest_node_id+1][if_i] == 1)
                 {
-                    /* the next axiom_net_recv_small() simulation has to be different
-                        (AXIO_RT_CMD_RT_REPLY) */
-                    ((axiom_sim_node_args_t*)dev)->net->send_recv_small_sim = 1;
+                    /* Exist 'dest_node_id+1', so dest_node_id it is not the last node*/
+                    last_node = 0;
                 }
             }
         }
-        return AXIOM_RET_OK;
+
+        if ((last_node == 1) || (dest_node_id == (AXIOM_MAX_NODES -1)))
+        {
+            /* the next axiom_net_recv_small() simulation has to be different
+               (AXIO_RT_CMD_RT_REPLY) */
+            ((axiom_sim_node_args_t*)dev)->net->send_recv_small_sim = 1;
+        }
     }
-    else
-    {
-       return AXIOM_RET_ERROR;
-    }
+    return AXIOM_RET_OK;
 }
 
 /*
@@ -132,8 +130,8 @@ recv_from_master_to_slave(axiom_dev_t *dev, axiom_node_id_t *src_node_id,
     axiom_routing_payload_t rt_message;
     ssize_t read_bytes;
 
-    axiom_node_id_t my_id, node_index, node_id;
-    axiom_if_id_t if_index, if_id;
+    axiom_node_id_t my_id, node_index;
+    axiom_if_id_t if_index;
     int do_flag, num_nodes_after_me;
 
     my_id = axiom_get_node_id(dev);
@@ -159,7 +157,8 @@ recv_from_master_to_slave(axiom_dev_t *dev, axiom_node_id_t *src_node_id,
     do_flag = 1;
     for (node_index = 0; (node_index < my_id) && (do_flag == 1); node_index++)
     {
-        for (if_index = 0; (if_index < AXIOM_MAX_INTERFACES) && (do_flag == 1); if_index ++)
+        for (if_index = 0; (if_index < AXIOM_MAX_INTERFACES) && (do_flag == 1);
+                if_index ++)
         {
             if (((axiom_sim_node_args_t*)dev)->local_routing[node_index][if_index] == 1)
             {
@@ -176,50 +175,51 @@ recv_from_master_to_slave(axiom_dev_t *dev, axiom_node_id_t *src_node_id,
        that are connected to me  */
     while (((axiom_sim_node_args_t*)dev)->net->num_of_ended_rt < num_nodes_after_me)
     {
-        read_bytes = read(((axiom_sim_node_args_t*)dev)->net->node_if_fd[if_index], &message, sizeof(message));
+        read_bytes = read(((axiom_sim_node_args_t*)dev)->net->node_if_fd[if_index],
+                &message, sizeof(message));
 
         if (read_bytes != sizeof(message))
         {
             return AXIOM_RET_ERROR;
         }
-        if (message.header.rx.port_flag.field.port == AXIOM_SMALL_PORT_INIT)
+        if (message.header.rx.port_flag.field.port != AXIOM_SMALL_PORT_INIT)
         {
-            memcpy(&rt_message, &message.payload, sizeof(rt_message));
+            continue;
+        }
+        memcpy(&rt_message, &message.payload, sizeof(rt_message));
 
-            *port = message.header.rx.port_flag.field.port;
-            node_id = rt_message.node_id;
-            if_id = rt_message.if_id;
-            DPRINTF("routing: received on socket = %d for node %d: (%d,%d) [I'm node %d]",
-                       ((axiom_sim_node_args_t*)dev)->net->node_if_fd[if_index],
-                       message.header.tx.dst, node_id, if_id, my_id);
+        *port = message.header.rx.port_flag.field.port;
+        DPRINTF("routing: received on socket = %d for node %d: (%d,%d) \
+                [I'm node %d]",
+                ((axiom_sim_node_args_t*)dev)->net->node_if_fd[if_index],
+                message.header.tx.dst, rt_message.node_id, rt_message.if_id, my_id);
 
-            if (rt_message.command ==  AXIOM_RT_CMD_INFO)
+        if (rt_message.command ==  AXIOM_RT_CMD_INFO)
+        {
+            if (message.header.tx.dst == my_id)
             {
-                if (message.header.tx.dst == my_id)
-                {
-                    /* it is my routing table, return the info to the caller */
-                    *src_node_id = message.header.tx.dst;
-                    *payload = message.payload;
-                    return AXIOM_RET_OK;
-                }
-                /* I have to forward this info to recipient node*/
-                axiom_net_send_small(dev, message.header.tx.dst,
-                                              message.header.rx.port_flag.field.port,
-                                              message.header.rx.port_flag.field.flag,
-                                              &(message.payload));
+                /* it is my routing table, return the info to the caller */
+                *src_node_id = message.header.tx.dst;
+                *payload = message.payload;
+                return AXIOM_RET_OK;
             }
-            else if (rt_message.command == AXIOM_RT_CMD_END_INFO)
-            {
-                /* increment the number of ended received table */
-                ((axiom_sim_node_args_t*)dev)->net->num_of_ended_rt++;
+            /* I have to forward this info to recipient node*/
+            axiom_net_send_small(dev, message.header.tx.dst,
+                    message.header.rx.port_flag.field.port,
+                    message.header.rx.port_flag.field.flag,
+                    &(message.payload));
+        }
+        else if (rt_message.command == AXIOM_RT_CMD_END_INFO)
+        {
+            /* increment the number of ended received table */
+            ((axiom_sim_node_args_t*)dev)->net->num_of_ended_rt++;
 
-                if (message.header.tx.dst != my_id)
-                {
-                    axiom_net_send_small(dev, message.header.tx.dst,
-                                                  message.header.rx.port_flag.field.port,
-                                                  message.header.rx.port_flag.field.flag,
-                                                  &(message.payload));
-                }
+            if (message.header.tx.dst != my_id)
+            {
+                axiom_net_send_small(dev, message.header.tx.dst,
+                        message.header.rx.port_flag.field.port,
+                        message.header.rx.port_flag.field.flag,
+                        &(message.payload));
             }
         }
     }
@@ -249,118 +249,116 @@ recv_from_master_to_slave(axiom_dev_t *dev, axiom_node_id_t *src_node_id,
  */
 static axiom_msg_id_t
 send_from_slave_to_master(axiom_dev_t *dev, axiom_if_id_t dest_node_id,
-                              axiom_port_t port, axiom_flag_t flag,
-                              axiom_payload_t *payload)
+        axiom_port_t port, axiom_flag_t flag, axiom_payload_t *payload)
 {
     axiom_node_id_t my_id, node_index;
     int do_flag, num_nodes_after_me, i;
     ssize_t read_bytes;
     axiom_small_msg_t message;
     ssize_t write_ret;
+    uint8_t if_index;
+    uint8_t recv_if[AXIOM_MAX_INTERFACES];
 
-    if (port == AXIOM_SMALL_PORT_INIT)
+    if (port != AXIOM_SMALL_PORT_INIT)
     {
-        uint8_t if_index;
-        uint8_t recv_if[AXIOM_MAX_INTERFACES];
+        return AXIOM_RET_ERROR;
+    }
 
-        memset (recv_if, 0, sizeof(recv_if));
+    memset (recv_if, 0, sizeof(recv_if));
 
 
-        /* Header message */
-        message.header.tx.port_flag.field.port = port;
-        message.header.tx.port_flag.field.flag = flag;
-        message.header.tx.dst = dest_node_id;
+    /* Header message */
+    message.header.tx.port_flag.field.port = port;
+    message.header.tx.port_flag.field.flag = flag;
+    message.header.tx.dst = dest_node_id;
 
-        /* Payload */
-        message.payload= *payload;
+    /* Payload */
+    message.payload= *payload;
 
-        my_id = axiom_get_node_id(dev);
+    my_id = axiom_get_node_id(dev);
 
-        /* cycle to found the number of nodes with id > my_id that connected to me
-           into my local routing table; they represent the nodes from which I have
-           to receive packets reply that them send to Master through me */
-        num_nodes_after_me = 0;
-        for (node_index = my_id + 1; node_index < AXIOM_MAX_NODES; node_index++)
+    /* cycle to found the number of nodes with id > my_id that connected to me
+     * into my local routing table; they represent the nodes from which I have
+     * to receive packets reply that them send to Master through me */
+    num_nodes_after_me = 0;
+    for (node_index = my_id + 1; node_index < AXIOM_MAX_NODES; node_index++)
+    {
+        for (if_index = 0; if_index < AXIOM_MAX_INTERFACES; if_index ++)
         {
-            for (if_index = 0; if_index < AXIOM_MAX_INTERFACES; if_index ++)
+            if (((axiom_sim_node_args_t*)dev)->local_routing[node_index][if_index] == 1)
             {
-                if (((axiom_sim_node_args_t*)dev)->local_routing[node_index][if_index] == 1)
-                {
-                    recv_if[if_index]++;
-                    num_nodes_after_me++;
-                    if_index = AXIOM_MAX_INTERFACES;
-                }
+                recv_if[if_index]++;
+                num_nodes_after_me++;
+                if_index = AXIOM_MAX_INTERFACES;
             }
         }
+    }
 
-        /* cycle to found the smallest node id connected to me into my local routing table;
-           to whic I have to forward the reply messages that nodes with id greater than mine
-           want to send to Master */
-        do_flag = 1;
-        for (node_index = 0; (node_index < my_id) && (do_flag == 1); node_index++)
+    /* cycle to found the smallest node id connected to me into my local routing
+     * table; to whic I have to forward the reply messages that nodes with id
+     * greater than mine want to send to Master */
+    do_flag = 1;
+    for (node_index = 0; (node_index < my_id) && (do_flag == 1); node_index++)
+    {
+        for (if_index = 0; (if_index < AXIOM_MAX_INTERFACES) && (do_flag == 1);
+                if_index ++)
         {
-            for (if_index = 0; (if_index < AXIOM_MAX_INTERFACES) && (do_flag == 1); if_index ++)
+            if (((axiom_sim_node_args_t*)dev)->local_routing[node_index][if_index] == 1)
             {
-                if (((axiom_sim_node_args_t*)dev)->local_routing[node_index][if_index] == 1)
-                {
-                    do_flag = 0;
-                }
+                do_flag = 0;
             }
         }
-        if (if_index != 0)
+    }
+    if (if_index == 0)
+    {
+        return AXIOM_RET_ERROR;
+    }
+
+    if_index--;
+
+    /* send the message */
+    write_ret = write( ((axiom_sim_node_args_t*)dev)->net->node_if_fd[if_index],
+            &message, sizeof(message));
+    if ((write_ret == -1) || (write_ret == 0))
+    {
+        return AXIOM_RET_ERROR;
+    }
+
+    DPRINTF("reply: send on socket = %d to node %d: (%d,%d)",
+            ((axiom_sim_node_args_t*)dev)->net->node_if_fd[if_index],
+            message.header.tx.dst, (uint8_t)((message.payload & 0x00FF0000) >>
+                16), (uint8_t)((message.payload & 0x0000FF00) >> 8));
+
+    i = 0;
+
+    while (((axiom_sim_node_args_t*)dev)->net->num_of_ended_rt < num_nodes_after_me)
+    {
+        if (((axiom_sim_node_args_t*)dev)->net->num_recv_reply[i] != recv_if[i])
         {
-            if_index--;
+            read_bytes = read(((axiom_sim_node_args_t*)dev)->net->node_if_fd[i],
+                    &message, sizeof(message));
+
+            if (read_bytes != sizeof(message))
+            {
+                return AXIOM_RET_ERROR;
+            }
+
+            ((axiom_sim_node_args_t*)dev)->net->num_recv_reply[i]++;
+            ((axiom_sim_node_args_t*)dev)->net->num_of_ended_rt++;
+
+            /* I have to forward this back to the Master */
+            axiom_net_send_small(dev, message.header.tx.dst,
+                    message.header.rx.port_flag.field.port,
+                    message.header.rx.port_flag.field.flag,
+                    &(message.payload));
         }
         else
         {
-            return AXIOM_RET_ERROR;
+            i++;
         }
-
-        /* send the message */
-        write_ret = write( ((axiom_sim_node_args_t*)dev)->net->node_if_fd[if_index], &message, sizeof(message));
-        if ((write_ret == -1) || (write_ret == 0))
-        {
-            return AXIOM_RET_ERROR;
-        }
-
-        DPRINTF("reply: send on socket = %d to node %d: (%d,%d)",
-           ((axiom_sim_node_args_t*)dev)->net->node_if_fd[if_index], message.header.tx.dst,
-           (uint8_t)((message.payload & 0x00FF0000) >> 16), (uint8_t)((message.payload & 0x0000FF00) >> 8));
-
-        i = 0;
-
-        while (((axiom_sim_node_args_t*)dev)->net->num_of_ended_rt < num_nodes_after_me)
-        {
-            if (((axiom_sim_node_args_t*)dev)->net->num_recv_reply[i] != recv_if[i])
-            {
-                read_bytes = read(((axiom_sim_node_args_t*)dev)->net->node_if_fd[i], &message, sizeof(message));
-
-                if (read_bytes != sizeof(message))
-                {
-                 return AXIOM_RET_ERROR;
-                }
-
-                ((axiom_sim_node_args_t*)dev)->net->num_recv_reply[i]++;
-                ((axiom_sim_node_args_t*)dev)->net->num_of_ended_rt++;
-
-                 /* I have to forward this back to the Master */
-                 axiom_net_send_small(dev, message.header.tx.dst,
-                                               message.header.rx.port_flag.field.port,
-                                               message.header.rx.port_flag.field.flag,
-                                               &(message.payload));
-            }
-            else
-            {
-                i++;
-            }
-        }
-
-        return AXIOM_RET_OK;
     }
-    else
-    {
-       return AXIOM_RET_ERROR;
-    }
+
+    return AXIOM_RET_OK;
 }
 
 /*
@@ -373,10 +371,9 @@ send_from_slave_to_master(axiom_dev_t *dev, axiom_if_id_t dest_node_id,
  * @param payload data received
  * @return Returns -1 on error!
  */
-static axiom_msg_id_t
-recv_from_slave_to_master (axiom_dev_t *dev, axiom_node_id_t *src_node_id,
-                           axiom_port_t *port, axiom_flag_t *flag,
-                           axiom_payload_t *payload)
+static axiom_msg_id_t recv_from_slave_to_master (axiom_dev_t *dev,
+        axiom_node_id_t *src_node_id, axiom_port_t *port, axiom_flag_t *flag,
+        axiom_payload_t *payload)
 {
     axiom_node_id_t my_id, node_index;
     uint8_t if_index;
@@ -405,12 +402,14 @@ recv_from_slave_to_master (axiom_dev_t *dev, axiom_node_id_t *src_node_id,
         }
     }
 
-    read_bytes = read(((axiom_sim_node_args_t*)dev)->net->node_if_fd[recv_if], &message, sizeof(message));
+    read_bytes = read(((axiom_sim_node_args_t*)dev)->net->node_if_fd[recv_if],
+            &message, sizeof(message));
 
     if (read_bytes != sizeof(message))
     {
         return AXIOM_RET_ERROR;
     }
+
     *port = message.header.rx.port_flag.field.port;
     *src_node_id = message.header.tx.dst;
     *payload = message.payload;
@@ -573,13 +572,14 @@ axiom_net_send_small_neighbour(axiom_dev_t *dev, axiom_if_id_t src_interface,
     message.payload = *payload;
 
 
-    write_ret = write( ((axiom_sim_node_args_t*)dev)->net->node_if_fd[src_interface],
+    write_ret = write(((axiom_sim_node_args_t*)dev)->net->node_if_fd[src_interface],
             &message, sizeof(message));
 
     if ((write_ret == -1) || (write_ret == 0))
     {
         return AXIOM_RET_ERROR;
     }
+
     return AXIOM_RET_OK;
 }
 
@@ -594,8 +594,7 @@ axiom_net_send_small_neighbour(axiom_dev_t *dev, axiom_if_id_t src_interface,
  */
 axiom_msg_id_t
 axiom_net_send_small(axiom_dev_t *dev, axiom_if_id_t dest_node_id,
-                              axiom_port_t port, axiom_flag_t flag,
-                              axiom_payload_t *payload)
+        axiom_port_t port, axiom_flag_t flag, axiom_payload_t *payload)
 {
     axiom_msg_id_t ret;
 
@@ -644,17 +643,18 @@ axiom_net_recv_small_neighbour(axiom_dev_t *dev, axiom_node_id_t *src_interface,
 
         if (fds[i].fd != 0)
         {
-            /* Really exist a connection (a socket descriptor) on the 'if_number' interface of the
-             *  node managed by the running thread.
-             *  */
+            /* Really exist a connection (a socket descriptor) on the
+             * 'if_number' interface of the node managed by the running thread.
+             */
             fds[i].events = POLLIN;
             interface_counter++;
 
-            NDPRINTF("fds[%d].fd = %d", i,  ((axiom_sim_node_args_t*)dev)->net->node_if_fd[i]);
+            NDPRINTF("fds[%d].fd = %d", i,
+                    ((axiom_sim_node_args_t*)dev)->net->node_if_fd[i]);
         }
     }
 
-    read_counter = poll( fds, interface_counter, -1);
+    read_counter = poll(fds, interface_counter, -1);
 
     if (read_counter == -1)
     {
@@ -663,38 +663,35 @@ axiom_net_recv_small_neighbour(axiom_dev_t *dev, axiom_node_id_t *src_interface,
     else if (read_counter == 0)
     {
         /* timeout; no event detected */
+        DPRINTF("poll timeout");
+        return AXIOM_RET_OK;
     }
-    else
+
+    for (i = 0; i < interface_counter; i++)
     {
-        for (i = 0; i < interface_counter; i++)
+        /* If we detect the event, zero it out so we can reuse the structure */
+        if (fds[i].revents & POLLIN)
         {
-            /* If we detect the event, zero it out so we can reuse the structure */
-            if (fds[i].revents & POLLIN)
+            /* zero the event out so we can reuse the structure */
+            fds[i].revents = 0;
+
+            /* read the received message */
+            read_bytes = read(fds[i].fd, &message, sizeof(message));
+            if (read_bytes != sizeof(message))
             {
-                /* zero the event out so we can reuse the structure */
-                fds[i].revents = 0;
-
-                /* read the received message */
-                read_bytes = read(fds[i].fd, &message, sizeof(message));
-                if (read_bytes == sizeof(message))
-                {
-                    NDPRINTF("Receive from socket number = %d",
-                            ((axiom_sim_node_args_t*)dev)->net->node_if_fd[i]);
-
-                    /* Header */
-                    *src_interface = i; /* index of the interface from which I have received */
-                    *port = message.header.rx.port_flag.field.port;
-                    *flag = message.header.rx.port_flag.field.flag;
-
-                    *payload = message.payload;
-
-                    break; /* socket found, exit from cycle */
-                }
-                else
-                {
-                    return AXIOM_RET_ERROR;
-                }
+                return AXIOM_RET_ERROR;
             }
+            NDPRINTF("Receive from socket number = %d",
+                    ((axiom_sim_node_args_t*)dev)->net->node_if_fd[i]);
+
+            /* index of the interface from which I have received */
+            *src_interface = i;
+            *port = message.header.rx.port_flag.field.port;
+            *flag = message.header.rx.port_flag.field.flag;
+
+            *payload = message.payload;
+
+            break; /* socket found, exit from cycle */
         }
     }
 
@@ -730,5 +727,4 @@ axiom_net_recv_small(axiom_dev_t *dev, axiom_node_id_t *src_node_id,
     }
 
     return ret;
-
 }

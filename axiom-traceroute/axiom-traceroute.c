@@ -1,13 +1,3 @@
-/*
- * axiom_discovery_protocol_test.c
- *
- * Version:     v0.3.1
- * Last update: 2016-04-15
- *
- * This file implementas the axiom-traceroute application
- *
- */
-
 #include <ctype.h>
 #include <stdio.h>
 #include <stdint.h>
@@ -29,7 +19,8 @@
 
 int verbose = 0;
 
-static void usage(void)
+static void
+usage(void)
 {
     printf("usage: axiom-traceroute [arguments] -d dest_node \n");
     printf("AXIOM traceroute: print the hops needed to reach the specified dest_node\n\n");
@@ -64,7 +55,8 @@ recv_tracereoute_reply(axiom_dev_t *dev, axiom_node_id_t *recv_node,
 }
 
 
-int main(int argc, char **argv)
+int
+main(int argc, char **argv)
 {
     axiom_dev_t *dev = NULL;
     axiom_node_id_t dest_node, recv_node = 0;

@@ -1,13 +1,3 @@
-/*
- * axiom_discovery_protocol_test.c
- *
- * Version:     v0.3.1
- * Last update: 2016-03-23
- *
- * This file implements the axiom-whoami application
- *
- */
-
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>

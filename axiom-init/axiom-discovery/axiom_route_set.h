@@ -1,12 +1,5 @@
 /*
- * axiom_route_set.h
- *
- * Version:     v0.3.1
- * Last update: 2016-03-22
- *
- * This file defines AXIOM NIC final routing table set
- * function prototypes
- *
+ * This file defines AXIOM NIC final routing table set function prototypes
  */
 #ifndef ROUTE_SET_H
 #define ROUTE_SET_H
@@ -21,7 +14,8 @@
  * @param final_routing_table node local routing table, containing
  *                  the routes to set into the hardware routing table
  */
-axiom_msg_id_t axiom_set_routing_table(axiom_dev_t *dev,
-                    axiom_if_id_t final_routing_table[AXIOM_MAX_NODES]);
+axiom_msg_id_t
+axiom_set_routing_table(axiom_dev_t *dev,
+        axiom_if_id_t final_routing_table[AXIOM_MAX_NODES]);
 
 #endif /* !ROUTE_SET_H */

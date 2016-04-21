@@ -1,13 +1,3 @@
-/*
- * axiom_netperf.c
- *
- * Version:     v0.3.1
- * Last update: 2016-04-15
- *
- * This file implementas the axiom-netperf application
- *
- */
-
 #include <ctype.h>
 #include <stdio.h>
 #include <stdint.h>
@@ -31,7 +21,8 @@
 
 int verbose = 0;
 
-static void usage(void)
+static void
+usage(void)
 {
     printf("usage: axiom-netperf [arguments] -d dest_node \n");
     printf("AXIOM netperf: estimate the throughput between this node and the\n");
@@ -42,7 +33,8 @@ static void usage(void)
     printf("-h, --help                  print this help\n\n");
 }
 
-static double usec2sec(uint64_t usec)
+static double
+usec2sec(uint64_t usec)
 {
     return ((double)(usec) / 1000000);
 }
@@ -71,7 +63,8 @@ axiom_recv_uint64_small(axiom_dev_t *dev, axiom_node_id_t *src,
     return AXIOM_RET_OK;
 }
 
-int main(int argc, char **argv)
+int
+main(int argc, char **argv)
 {
     axiom_dev_t *dev = NULL;
     axiom_msg_id_t msg_err;
@@ -96,13 +89,10 @@ int main(int argc, char **argv)
     };
 
     while ((opt = getopt_long(argc, argv,"vhd:",
-                         long_options, &long_index )) != -1)
-    {
-        switch (opt)
-        {
+                         long_options, &long_index )) != -1) {
+        switch (opt) {
             case 'd' :
-                if (sscanf(optarg, "%" SCNu8, &dest_node) != 1)
-                {
+                if (sscanf(optarg, "%" SCNu8, &dest_node) != 1) {
                     EPRINTF("wrong number of destination nodes");
                     usage();
                     exit(-1);
@@ -122,8 +112,7 @@ int main(int argc, char **argv)
     }
 
     /* check if dest_node parameter has been inserted */
-    if (dest_node_ok != 1)
-    {
+    if (dest_node_ok != 1) {
         usage();
         return 0;
     }
@@ -137,8 +126,7 @@ int main(int argc, char **argv)
 
     /* bind the current process on port */
     err = axiom_bind(dev, AXIOM_SMALL_PORT_NETUTILS);
-    if (err == AXIOM_RET_ERROR)
-    {
+    if (err == AXIOM_RET_ERROR) {
         EPRINTF("axiom_bind error");
         goto err;
     }
@@ -151,8 +139,7 @@ int main(int argc, char **argv)
     payload.data = total_bytes >> AXIOM_NETPERF_SCALE;
     msg_err = axiom_send_small(dev, dest_node, AXIOM_SMALL_PORT_INIT,
             AXIOM_SMALL_FLAG_DATA, (axiom_payload_t *)&payload);
-    if (msg_err == AXIOM_RET_ERROR)
-    {
+    if (msg_err == AXIOM_RET_ERROR) {
         EPRINTF("send error");
         goto err;
     }
@@ -160,8 +147,7 @@ int main(int argc, char **argv)
 
     /* get time of the first sent netperf message */
     ret = gettimeofday(&start_tv, NULL);
-    if (ret == -1)
-    {
+    if (ret == -1) {
         EPRINTF("gettimeofday error");
         goto err;
     }
@@ -169,13 +155,12 @@ int main(int argc, char **argv)
             start_tv.tv_sec, start_tv.tv_usec);
 
     payload.command = AXIOM_CMD_NETPERF;
-    for (sent_bytes = 0; sent_bytes < total_bytes; sent_bytes += sizeof(axiom_small_msg_t))
-    {
+    for (sent_bytes = 0; sent_bytes < total_bytes;
+            sent_bytes += sizeof(axiom_small_msg_t)) {
         /* send netperf message */
         msg_err = axiom_send_small(dev, dest_node, AXIOM_SMALL_PORT_INIT,
                 AXIOM_SMALL_FLAG_DATA, (axiom_payload_t *)&payload);
-        if (msg_err == AXIOM_RET_ERROR)
-        {
+        if (msg_err == AXIOM_RET_ERROR) {
             EPRINTF("send error");
             goto err;
         }
@@ -186,8 +171,7 @@ int main(int argc, char **argv)
 
     /* get time of the last sent netperf message */
     ret = gettimeofday(&end_tv, NULL);
-    if (ret == -1)
-    {
+    if (ret == -1) {
         EPRINTF("gettimeofday error");
         goto err;
     }
@@ -204,8 +188,7 @@ int main(int argc, char **argv)
     elapsed_rx_usec = 0;
     err = axiom_recv_uint64_small(dev, &src_node, &port, &flag,
             AXIOM_CMD_NETPERF_END, &elapsed_rx_usec);
-    if ((err == AXIOM_RET_ERROR) || (src_node != dest_node))
-    {
+    if ((err == AXIOM_RET_ERROR) || (src_node != dest_node)) {
         EPRINTF("recv_elapsed_time error");
         goto err;
     }

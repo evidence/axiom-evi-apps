@@ -1,12 +1,3 @@
-/*
- * axiom_discovery_protocol_test.c
- *
- * Version:     v0.2
- * Last update: 2016-03-23
- *
- * This file implementats the axiom-onfo application
- *
- */
 #include <getopt.h>
 #include <stdio.h>
 #include <stdint.h>
@@ -33,7 +24,8 @@
 
 int verbose = 0;
 
-static void usage(void)
+static void
+usage(void)
 {
     printf("usage: axiom-info [arguments]\n");
     printf("Print information about the AXIOM NIC\n\n");
@@ -49,7 +41,8 @@ static void usage(void)
     printf("-h, --help                  print this help\n\n");
 }
 
-void print_nodeid(axiom_dev_t *dev)
+void
+print_nodeid(axiom_dev_t *dev)
 {
     axiom_node_id_t nodeid;
 
@@ -58,7 +51,8 @@ void print_nodeid(axiom_dev_t *dev)
     printf("\tnode id = %u\n\n", nodeid);
 }
 
-void print_ifnumber(axiom_dev_t *dev)
+void
+print_ifnumber(axiom_dev_t *dev)
 {
     axiom_err_t err;
     axiom_if_id_t if_number;
@@ -71,7 +65,8 @@ void print_ifnumber(axiom_dev_t *dev)
     printf("\tnumber of interfaces = %u\n\n", if_number);
 }
 
-void print_ifinfo(axiom_dev_t *dev, axiom_if_id_t if_id)
+void
+print_ifinfo(axiom_dev_t *dev, axiom_if_id_t if_id)
 {
     axiom_err_t err;
     uint8_t if_features;
@@ -103,7 +98,8 @@ void print_ifinfo(axiom_dev_t *dev, axiom_if_id_t if_id)
     printf("\n");
 }
 
-void print_ifinfo_all(axiom_dev_t *dev)
+void
+print_ifinfo_all(axiom_dev_t *dev)
 {
     axiom_err_t err;
     axiom_if_id_t if_number;
@@ -119,7 +115,8 @@ void print_ifinfo_all(axiom_dev_t *dev)
     }
 }
 
-void print_routing_table(axiom_dev_t *dev, int all_nodes)
+void
+print_routing_table(axiom_dev_t *dev, int all_nodes)
 {
     axiom_err_t err;
     uint8_t enabled_mask;
@@ -157,7 +154,8 @@ void print_routing_table(axiom_dev_t *dev, int all_nodes)
     printf("\n");
 }
 
-void print_ni_status(axiom_dev_t *dev)
+void
+print_ni_status(axiom_dev_t *dev)
 {
     uint32_t status;
 
@@ -171,7 +169,8 @@ void print_ni_status(axiom_dev_t *dev)
 }
 
 
-void print_ni_control(axiom_dev_t *dev)
+void
+print_ni_control(axiom_dev_t *dev)
 {
     uint32_t control;
     int loopback;
@@ -186,7 +185,8 @@ void print_ni_control(axiom_dev_t *dev)
     printf("\n");
 }
 
-int main(int argc, char **argv)
+int
+main(int argc, char **argv)
 {
     axiom_dev_t *dev = NULL;
     uint16_t print_bitmap = 0;

@@ -1,11 +1,5 @@
 /*
- * axiom_simulator.c
- *
- * Version:     v0.3.1
- * Last update: 2016-03-22
- *
  * This file implements AXIOM node network simulation
- *
  */
 #include <stdio.h>
 #include <stdint.h>
@@ -22,7 +16,8 @@
 pthread_key_t node_info_key;      /* thread private data */
 
 
-void print_topology(axiom_sim_topology_t *tpl)
+void
+print_topology(axiom_sim_topology_t *tpl)
 {
     int i, j;
 
@@ -41,12 +36,12 @@ void print_topology(axiom_sim_topology_t *tpl)
     }
 }
 
-void print_local_routing_table(axiom_sim_node_args_t *nodes, int num_nodes)
+void
+print_local_routing_table(axiom_sim_node_args_t *nodes, int num_nodes)
 {
     int index, i, j;
 
-    for (index = 0; index < num_nodes; index++)
-    {
+    for (index = 0; index < num_nodes; index++) {
         printf("\nNode %d LOCAL ROUTING TABLE\n", nodes[index].node_id);
         printf("Node");
         for (i = 0; i < nodes[index].num_interfaces; i++) {
@@ -54,11 +49,9 @@ void print_local_routing_table(axiom_sim_node_args_t *nodes, int num_nodes)
         }
         printf("\n");
 
-        for (i = 0; i < num_nodes; i++)
-        {
+        for (i = 0; i < num_nodes; i++) {
             printf("%d", i);
-            for (j = 0; j < nodes[index].num_interfaces; j++)
-            {
+            for (j = 0; j < nodes[index].num_interfaces; j++) {
                 printf("\t%u", nodes[index].local_routing[i][j]);
             }
             printf("\n");
@@ -66,14 +59,13 @@ void print_local_routing_table(axiom_sim_node_args_t *nodes, int num_nodes)
     }
 }
 
-void print_routing_tables (axiom_if_id_t rt[][AXIOM_MAX_NODES], int num_nodes)
+void
+print_routing_tables (axiom_if_id_t rt[][AXIOM_MAX_NODES], int num_nodes)
 {
     int i, j;
     int comma = 0;
 
-
-    for (i = 0; i < num_nodes; i++)
-    {
+    for (i = 0; i < num_nodes; i++) {
         printf("\nNode %d ROUTING TABLE\n", i);
         for (j = 0; j < num_nodes; j++) {
             printf("\tNode%d", j);
@@ -81,32 +73,27 @@ void print_routing_tables (axiom_if_id_t rt[][AXIOM_MAX_NODES], int num_nodes)
 
         printf("\n");
         printf("IF");
-        for (j = 0; j < num_nodes; j++)
-        {
+        for (j = 0; j < num_nodes; j++) {
             printf ("\t(");
-            if (rt[i][j] & 0x01)
-            {
+            if (rt[i][j] & 0x01) {
                 printf ("%d", 0);
                 comma = 1;
             }
-            if (rt[i][j] & 0x02)
-            {
+            if (rt[i][j] & 0x02) {
                 if (comma == 1)
                     printf(",");
                 else
                     comma = 1;
                 printf ("%d", 1);
             }
-            if (rt[i][j] & 0x04)
-            {
+            if (rt[i][j] & 0x04) {
                 if (comma == 1)
                     printf(",");
                 else
                     comma = 1;
                 printf ("%d", 2);
             }
-            if (rt[i][j] & 0x08)
-            {
+            if (rt[i][j] & 0x08) {
                 if (comma == 1)
                     printf(",");
                 else
@@ -126,8 +113,7 @@ print_received_routing_table(axiom_sim_node_args_t *nodes, int num_nodes)
     int index, j;
     int comma = 0;
 
-    for (index = 0; index < num_nodes; index++)
-    {
+    for (index = 0; index < num_nodes; index++) {
         printf("\nNode %d RECEIVED ROUTING TABLE\n", nodes[index].node_id);
         for (j = 0; j < AXIOM_MAX_NODES; j++) {
             printf("\tNode%d", j);
@@ -135,32 +121,27 @@ print_received_routing_table(axiom_sim_node_args_t *nodes, int num_nodes)
 
         printf("\n");
         printf("IF");
-        for (j = 0; j < num_nodes; j++)
-        {
+        for (j = 0; j < num_nodes; j++) {
             printf ("\t(");
-            if (nodes[index].final_routing_table[j] & 0x01)
-            {
+            if (nodes[index].final_routing_table[j] & 0x01) {
                 printf ("%d", 0);
                 comma = 1;
             }
-            if (nodes[index].final_routing_table[j] & 0x02)
-            {
+            if (nodes[index].final_routing_table[j] & 0x02) {
                 if (comma == 1)
                     printf(",");
                 else
                     comma = 1;
                 printf ("%d", 1);
             }
-            if (nodes[index].final_routing_table[j] & 0x04)
-            {
+            if (nodes[index].final_routing_table[j] & 0x04) {
                 if (comma == 1)
                     printf(",");
                 else
                     comma = 1;
                     printf ("%d", 2);
             }
-            if (nodes[index].final_routing_table[j] & 0x08)
-            {
+            if (nodes[index].final_routing_table[j] & 0x08) {
                 if (comma == 1)
                     printf(",");
                 else
@@ -176,7 +157,8 @@ print_received_routing_table(axiom_sim_node_args_t *nodes, int num_nodes)
 
 }
 
-int start_nodes(axiom_sim_node_args_t *nodes, int num_nodes, int master_node,
+int
+start_nodes(axiom_sim_node_args_t *nodes, int num_nodes, int master_node,
         void *(*master_body)(void *), void *(*slave_body)(void *))
 {
     int i, j, h, err;
@@ -195,10 +177,8 @@ int start_nodes(axiom_sim_node_args_t *nodes, int num_nodes, int master_node,
         /* init the number of node interfaces */
         nodes[i].num_interfaces = AXIOM_MAX_INTERFACES;
         /* init the node local routing table */
-        for (j = 0; j < num_nodes; j++)
-        {
-            for (h = 0; h < nodes[i].num_interfaces; h++)
-            {
+        for (j = 0; j < num_nodes; j++) {
+            for (h = 0; h < nodes[i].num_interfaces; h++) {
                 nodes[i].local_routing[j][h] = 0;
             }
         }
@@ -213,7 +193,8 @@ int start_nodes(axiom_sim_node_args_t *nodes, int num_nodes, int master_node,
     return 0;
 }
 
-void wait_nodes(axiom_sim_node_args_t *nodes, int num_nodes)
+void
+wait_nodes(axiom_sim_node_args_t *nodes, int num_nodes)
 {
     int i;
 
@@ -225,12 +206,14 @@ void wait_nodes(axiom_sim_node_args_t *nodes, int num_nodes)
 }
 
 
-void set_node_info(axiom_sim_node_args_t *args)
+void
+set_node_info(axiom_sim_node_args_t *args)
 {
     pthread_setspecific(node_info_key, (void *)args);
 }
 
-axiom_sim_node_args_t *get_node_info()
+axiom_sim_node_args_t *
+get_node_info()
 {
     return (axiom_sim_node_args_t *)pthread_getspecific(node_info_key);
 }
