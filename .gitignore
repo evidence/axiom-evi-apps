@@ -11,6 +11,7 @@ axiom-info/axiom-info
 axiom-ping-reply/axiom-ping-reply
 axiom-ping/axiom-ping
 axiom-traceroute/axiom-traceroute
+axiom-netperf/axiom-netperf
 
 #
 # Normal rules
