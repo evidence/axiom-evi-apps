@@ -27,7 +27,7 @@
 #include "axiom_nic_init.h"
 #include "dprintf.h"
 
-#define AXIOM_NETPERF_BYTES (1<<14)
+#define AXIOM_NETPERF_SCALE 10
 
 int verbose = 0;
 
@@ -37,29 +37,27 @@ static double usec2sec(uint64_t usec)
 }
 
 /* receive elapsed time from remote node */
-static int recv_elapsed_time(axiom_dev_t *dev,  axiom_node_id_t *recv_node,
-                             axiom_port_t *port, axiom_flag_t *flag,
-                             axiom_payload_t *recv_payload,
-                             uint64_t *elapsed_rx_usec) {
+static axiom_err_t
+axiom_recv_uint64_small(axiom_dev_t *dev, axiom_node_id_t *src,
+        axiom_port_t *port, axiom_flag_t *flag, axiom_init_cmd_t cmd,
+        uint64_t *data)
+{
     axiom_msg_id_t msg_err;
-    int i;
+    axiom_netperf_payload_t payload;
+    uint8_t i;
+    uint8_t *data_p = ((uint8_t *)data);
 
-    for (i = 0; i < sizeof(uint64_t)/2; i++)
-    {
-        msg_err =  axiom_recv_small(dev, recv_node, port, flag, recv_payload);
-        if (msg_err == AXIOM_RET_ERROR)
-        {
-            return -1;
+    for (i = 0; i < sizeof(*data); i += sizeof(payload.data)) {
+        msg_err =  axiom_recv_small(dev, src, port, flag,
+                (axiom_payload_t *)&payload);
+        if (msg_err == AXIOM_RET_ERROR || cmd != payload.command) {
+            return AXIOM_RET_ERROR;
         }
-        if (((axiom_netperf_time_payload_t*)recv_payload)->command != AXIOM_CMD_NETPERF)
-        {
-            return -1;
-        }
-        *elapsed_rx_usec |=  (uint64_t)(((axiom_netperf_time_payload_t*)recv_payload)->time <<
-                                        (((axiom_netperf_time_payload_t*)recv_payload)->byte_order*16));
+        *((typeof(payload.data) *)&data_p[payload.offset]) = payload.data;
+        DPRINTF("payload - offset: 0x%x data: 0x%x", payload.offset, payload.data);
     }
 
-    return 0;
+    return AXIOM_RET_OK;
 }
 
 static void usage(void)
@@ -75,17 +73,19 @@ int main(int argc, char **argv)
 {
     axiom_dev_t *dev = NULL;
     axiom_msg_id_t msg_err;
-    axiom_node_id_t dest_node, recv_node;
-    int dest_node_ok = 0, i, err, ret;
+    axiom_node_id_t dest_node, src_node;
     axiom_port_t port;
     axiom_flag_t flag;
     axiom_netperf_payload_t payload;
-    axiom_netperf_time_payload_t recv_payload;
     struct timeval start_tv, end_tv, elapsed_tv;
     uint64_t elapsed_usec, elapsed_rx_usec;
+    uint64_t sent_bytes, total_bytes = 5 << AXIOM_NETPERF_SCALE;
     double tx_th, rx_th;
+    int dest_node_ok = 0, err, ret;
     int long_index = 0;
     int opt = 0;
+
+
     static struct option long_options[] = {
         {"n", required_argument, 0, 'n'},
         {"verbose", no_argument, 0, 'v'},
@@ -141,6 +141,21 @@ int main(int argc, char **argv)
         goto err;
     }
 
+    total_bytes = (total_bytes >> AXIOM_NETPERF_SCALE) <<
+        AXIOM_NETPERF_SCALE;
+
+    /* send start message */
+    payload.command = AXIOM_CMD_NETPERF_START;
+    payload.data = total_bytes >> AXIOM_NETPERF_SCALE;
+    msg_err = axiom_send_small(dev, dest_node, AXIOM_SMALL_PORT_INIT,
+            AXIOM_SMALL_FLAG_DATA, (axiom_payload_t *)&payload);
+    if (msg_err == AXIOM_RET_ERROR)
+    {
+        EPRINTF("send error");
+        goto err;
+    }
+    printf("Starting send %llu bytes to node %u...\n", total_bytes, dest_node);
+
     /* get time of the first sent netperf message */
     ret = gettimeofday(&start_tv, NULL);
     if (ret == -1)
@@ -151,10 +166,9 @@ int main(int argc, char **argv)
     IPRINTF(verbose,"Start timestamp: %ld sec\t%ld microsec\n",
             start_tv.tv_sec, start_tv.tv_usec);
 
-    for (i = 0; i < AXIOM_NETPERF_BYTES; i += sizeof(axiom_small_msg_t))
+    payload.command = AXIOM_CMD_NETPERF;
+    for (sent_bytes = 0; sent_bytes < total_bytes; sent_bytes += sizeof(axiom_small_msg_t))
     {
-        payload.command = AXIOM_CMD_NETPERF;
-        payload.total_bytes = AXIOM_NETPERF_BYTES;
         /* send netperf message */
         msg_err = axiom_send_small(dev, dest_node, AXIOM_SMALL_PORT_INIT,
                 AXIOM_SMALL_FLAG_DATA, (axiom_payload_t *)&payload);
@@ -163,6 +177,9 @@ int main(int argc, char **argv)
             EPRINTF("send error");
             goto err;
         }
+        IPRINTF(verbose, "NETPERF msg sent to: %u - total_bytes: %llu \
+                sent_bytes: %llu", dest_node, total_bytes,
+                sent_bytes + sizeof(axiom_small_msg_t));
     }
 
     /* get time of the last sent netperf message */
@@ -175,29 +192,30 @@ int main(int argc, char **argv)
     IPRINTF(verbose,"End timestamp: %ld sec\t%ld microsec\n", end_tv.tv_sec,
             end_tv.tv_usec);
 
+    printf("Sent %llu bytes to node %u\n", total_bytes, dest_node);
+
     /* compute time elapsed ms */
     timersub(&end_tv, &start_tv, &elapsed_tv);
     elapsed_usec = elapsed_tv.tv_usec + (elapsed_tv.tv_sec * 1000000);
 
     /* receive elapsed rx throughput time form dest_node */
     elapsed_rx_usec = 0;
-    err = recv_elapsed_time(dev, &recv_node, &port, &flag,
-            (axiom_payload_t*)&recv_payload, &elapsed_rx_usec);
-    if ((err == -1) || (recv_node != dest_node))
+    err = axiom_recv_uint64_small(dev, &src_node, &port, &flag,
+            AXIOM_CMD_NETPERF_END, &elapsed_rx_usec);
+    if ((err == AXIOM_RET_ERROR) || (src_node != dest_node))
     {
         EPRINTF("recv_elapsed_time error");
         goto err;
     }
 
-    tx_th = (double)(AXIOM_NETPERF_BYTES / usec2sec(elapsed_usec));
-    rx_th = (double)(AXIOM_NETPERF_BYTES / usec2sec(elapsed_rx_usec));
+    tx_th = (double)(sent_bytes / usec2sec(elapsed_usec));
+    rx_th = (double)(sent_bytes / usec2sec(elapsed_rx_usec));
 
     IPRINTF(verbose, "elapsed_tx_usec = %llu - elapsed_rx_usec = %llu",
             elapsed_usec, elapsed_rx_usec);
 
-    printf("%u Bytes sent\n", AXIOM_NETPERF_BYTES);
     printf("Throughput TX %3.3f KB/s - RX %3.3f KB/s\n", tx_th / 1024,
-            rx_th /1024);
+            rx_th / 1024);
 
 err:
     axiom_close(dev);

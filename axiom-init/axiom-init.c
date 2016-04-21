@@ -118,7 +118,7 @@ int main(int argc, char **argv)
                 axiom_traceroute_reply(dev, src, payload, verbose);
                 break;
 
-            case AXIOM_CMD_NETPERF:
+            case AXIOM_CMD_NETPERF: case AXIOM_CMD_NETPERF_START:
                 axiom_netperf_reply(dev, src, payload, verbose);
                 break;
 
