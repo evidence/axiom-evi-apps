@@ -27,12 +27,15 @@
 
 static void usage(void)
 {
-    printf("usage: ./axiom-send-small [[-p port] [-n] | [-h]] -d dest -l payload\n");
-    printf("Send AXIOM small raw message\n\n");
-    printf("-p, --port      port     port used for sending\n");
+    printf("usage: axiom-send-small [arguments] -d dest -l payload\n");
+    printf("Send AXIOM small raw message to specified dest (dest can be remote node\n");
+    printf("or local interface (if you send a message to neighbour [-n])\n\n");
+    printf("Arguments:\n");
     printf("-d, --dest      dest     dest node id or local if (TO_NEIGHBOUR) \n");
-    printf("-n, --neighbour          send to neighbour\n");
     printf("-l, --payload   payload  message to send (uint32_t)\n");
+    printf("-p, --port      port     port used for sending this message\n");
+    printf("-n, --neighbour          send message to neighbour (dest is used\n");
+    printf("                         to specify the local interface)\n");
     printf("-h, --help               print this help\n\n");
 }
 

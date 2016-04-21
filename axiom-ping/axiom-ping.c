@@ -32,19 +32,20 @@
 
 int verbose = 0;
 
-static volatile sig_atomic_t sigint_received = 0;
-
 static void usage(void)
 {
-    printf("usage: ./axiom-ping [[-i interval] | [-c count] | \n");
-    printf("                                         [-v] | [-h]] -d dest \n");
-    printf("AXIOM ping\n\n");
-    printf("-d, --dest      dest     dest node id \n");
-    printf("-i, --interval  interval ms between two ping messagges \n");
-    printf("-c, --count     count    number of ping messagges to send \n");
-    printf("-v, --verbose            verbose output\n");
-    printf("-h, --help               print this help\n\n");
+    printf("usage: axiom-ping [arguments] -d dest_node \n");
+    printf("AXIOM ping: estimate the round trip time (RTT) between this node\n");
+    printf("            and the specified dest_node\n");
+    printf("Arguments:\n");
+    printf("-d, --dest       dest_node   destination node id of axiom-ping\n");
+    printf("-i, --interval   interval    ms between two ping messagges \n");
+    printf("-c, --count      count       number of ping messagges to send \n");
+    printf("-v, --verbose                verbose output\n");
+    printf("-h, --help                   print this help\n\n");
 }
+
+static volatile sig_atomic_t sigint_received = 0;
 
 /* control-C handler */
 static void sigint_handler(int sig)

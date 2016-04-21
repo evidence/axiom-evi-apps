@@ -31,6 +31,17 @@
 
 int verbose = 0;
 
+static void usage(void)
+{
+    printf("usage: axiom-netperf [arguments] -d dest_node \n");
+    printf("AXIOM netperf: estimate the throughput between this node and the\n");
+    printf("               specified dest_node\n\n");
+    printf("Arguments:\n");
+    printf("-d, --dest      dest_node   destination node id of axiom-netperf\n");
+    printf("-v, --verbose               verbose output\n");
+    printf("-h, --help                  print this help\n\n");
+}
+
 static double usec2sec(uint64_t usec)
 {
     return ((double)(usec) / 1000000);
@@ -60,15 +71,6 @@ axiom_recv_uint64_small(axiom_dev_t *dev, axiom_node_id_t *src,
     return AXIOM_RET_OK;
 }
 
-static void usage(void)
-{
-    printf("usage: ./axiom-netperf [[-n dest_node] | [-v] | [-h]] \n");
-    printf("AXIOM traceroute\n\n");
-    printf("-n,             dest_node   destination node of netperf\n");
-    printf("-v, --verbose               verbose output\n");
-    printf("-h, --help                  print this help\n\n");
-}
-
 int main(int argc, char **argv)
 {
     axiom_dev_t *dev = NULL;
@@ -87,21 +89,21 @@ int main(int argc, char **argv)
 
 
     static struct option long_options[] = {
-        {"n", required_argument, 0, 'n'},
+        {"dest", required_argument, 0, 'd'},
         {"verbose", no_argument, 0, 'v'},
         {"help", no_argument, 0, 'h'},
         {0, 0, 0, 0}
     };
 
-    while ((opt = getopt_long(argc, argv,"vhn:",
+    while ((opt = getopt_long(argc, argv,"vhd:",
                          long_options, &long_index )) != -1)
     {
         switch (opt)
         {
-            case 'n' :
+            case 'd' :
                 if (sscanf(optarg, "%" SCNu8, &dest_node) != 1)
                 {
-                    EPRINTF("wrong number of nodes");
+                    EPRINTF("wrong number of destination nodes");
                     usage();
                     exit(-1);
                 }

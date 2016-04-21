@@ -35,8 +35,9 @@ int verbose = 0;
 
 static void usage(void)
 {
-    printf("usage: axiom-info\n");
+    printf("usage: axiom-info [arguments]\n");
     printf("Print information about the AXIOM NIC\n\n");
+    printf("Arguments:\n");
     printf("-a, --all (default)         print all information\n");
     printf("-n, --nodeid                print node id\n");
     printf("-i, --ifnumber              print number of interfaces\n");

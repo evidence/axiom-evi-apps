@@ -31,11 +31,12 @@ int verbose = 0;
 
 static void usage(void)
 {
-    printf("usage: ./axiom-traceroute [[-n dest_node] | [-v] | [-h]] \n");
-    printf("AXIOM traceroute\n\n");
-    printf("-n,             dest_node   destination node of traceroute\n");
-    printf("-v, --verbose               verbose output\n");
-    printf("-h, --help                  print this help\n\n");
+    printf("usage: axiom-traceroute [arguments] -d dest_node \n");
+    printf("AXIOM traceroute: print the hops needed to reach the specified dest_node\n\n");
+    printf("Arguments:\n");
+    printf("-d, --dest     dest_node   destination node of traceroute\n");
+    printf("-v, --verbose              verbose output\n");
+    printf("-h, --help                 print this help\n\n");
 }
 
 static int
@@ -79,18 +80,18 @@ int main(int argc, char **argv)
     int opt = 0;
     int recv_err;
     static struct option long_options[] = {
-        {"n", required_argument, 0, 'n'},
+        {"dest", required_argument, 0, 'd'},
         {"verbose", no_argument, 0, 'v'},
         {"help", no_argument, 0, 'h'},
         {0, 0, 0, 0}
     };
 
-    while ((opt = getopt_long(argc, argv,"vhn:",
+    while ((opt = getopt_long(argc, argv,"vhd:",
                          long_options, &long_index )) != -1)
     {
         switch (opt)
         {
-            case 'n' :
+            case 'd' :
                 if (sscanf(optarg, "%" SCNu8, &dest_node) != 1)
                 {
                     EPRINTF("wrong number of nodes");

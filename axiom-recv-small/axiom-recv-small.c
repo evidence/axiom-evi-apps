@@ -27,10 +27,11 @@
 
 static void usage(void)
 {
-    printf("usage: axiom-recv-small [[-p port] [-o] | [-h]]\n");
+    printf("usage: axiom-recv-small [arguments]\n");
     printf("Receive AXIOM small raw message\n\n");
+    printf("Arguments:\n");
     printf("-p, --port  port     port used for receiving\n");
-    printf("-o, --once           receive once\n");
+    printf("-o, --once           receive one message and exit\n");
     printf("-h, --help           print this help\n\n");
 }
 

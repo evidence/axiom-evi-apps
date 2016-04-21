@@ -33,13 +33,13 @@ int verbose = 0;
 
 static void usage(void)
 {
-    printf("usage: axiom-init -n [master | slave]\n");
+    printf("usage: axiom-init [arguments]\n");
     printf("Start AXIOM node in slaves mode (or master if it is specified)\n\n");
+    printf("Arguments:\n");
     printf("-m, --master        start node as master\n");
     printf("-v, --verbose       verbose output\n");
     printf("-h, --help          print this help\n\n");
 }
-
 
 int main(int argc, char **argv)
 {
