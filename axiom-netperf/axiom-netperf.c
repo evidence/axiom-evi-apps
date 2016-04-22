@@ -17,7 +17,9 @@
 #include "axiom_nic_init.h"
 #include "dprintf.h"
 
-#define AXIOM_NETPERF_SCALE 10
+#define AXIOM_NETPERF_DEF_DATA_SCALE    10
+#define AXIOM_NETPERF_DEF_CHAR_SCALE    'B'
+#define AXIOM_NETPERF_DEF_DATA_LENGTH   512
 
 int verbose = 0;
 
@@ -29,6 +31,8 @@ usage(void)
     printf("               specified dest_node\n\n");
     printf("Arguments:\n");
     printf("-d, --dest      dest_node   destination node id of axiom-netperf\n");
+    printf("-l, --length    x[B|K|M|G]  bytes to send to the destination node\n");
+    printf("                            The suffix specifies the length unit\n");
     printf("-v, --verbose               verbose output\n");
     printf("-h, --help                  print this help\n\n");
 }
@@ -37,6 +41,34 @@ static double
 usec2sec(uint64_t usec)
 {
     return ((double)(usec) / 1000000);
+}
+
+static uint8_t
+get_scale(char char_scale) {
+    uint8_t scale;
+
+    switch (char_scale) {
+        case 'b': case 'B':
+            scale = 0;
+            break;
+
+        case 'k': case 'K':
+            scale = 10;
+            break;
+
+        case 'm': case 'M':
+            scale = 20;
+            break;
+
+        case 'G': case 'g':
+            scale = 30;
+            break;
+
+        default:
+            scale = 0;
+    }
+
+    return scale;
 }
 
 /* receive elapsed time from remote node */
@@ -73,22 +105,23 @@ main(int argc, char **argv)
     axiom_flag_t flag;
     axiom_netperf_payload_t payload;
     struct timeval start_tv, end_tv, elapsed_tv;
-    uint64_t elapsed_usec, elapsed_rx_usec;
-    uint64_t sent_bytes, total_bytes = 256 << AXIOM_NETPERF_SCALE;
     double tx_th, rx_th;
-    int dest_node_ok = 0, err, ret;
-    int long_index = 0;
-    int opt = 0;
-
+    int dest_node_ok = 0, err, ret, long_index, opt;
+    uint64_t elapsed_usec, elapsed_rx_usec, sent_bytes, total_bytes;
+    uint16_t data_length = AXIOM_NETPERF_DEF_DATA_LENGTH;
+    uint8_t data_scale = AXIOM_NETPERF_DEF_DATA_SCALE;
+    char char_scale = AXIOM_NETPERF_DEF_CHAR_SCALE;
 
     static struct option long_options[] = {
         {"dest", required_argument, 0, 'd'},
+        {"length", required_argument, 0, 'l'},
         {"verbose", no_argument, 0, 'v'},
         {"help", no_argument, 0, 'h'},
         {0, 0, 0, 0}
     };
 
-    while ((opt = getopt_long(argc, argv,"vhd:",
+
+    while ((opt = getopt_long(argc, argv,"vhd:l:",
                          long_options, &long_index )) != -1) {
         switch (opt) {
             case 'd' :
@@ -98,6 +131,15 @@ main(int argc, char **argv)
                     exit(-1);
                 }
                 dest_node_ok = 1;
+                break;
+
+            case 'l' :
+                if (sscanf(optarg, "%" SCNu16 "%c", &data_length, &char_scale) == 0) {
+                    EPRINTF("wrong number of length");
+                    usage();
+                    exit(-1);
+                }
+                data_scale = get_scale(char_scale);
                 break;
 
             case 'v':
@@ -131,19 +173,19 @@ main(int argc, char **argv)
         goto err;
     }
 
-    total_bytes = (total_bytes >> AXIOM_NETPERF_SCALE) <<
-        AXIOM_NETPERF_SCALE;
+    total_bytes = data_length << data_scale;
 
     /* send start message */
     payload.command = AXIOM_CMD_NETPERF_START;
-    payload.data = total_bytes >> AXIOM_NETPERF_SCALE;
+    payload.data = data_length;
+    payload.offset = data_scale;
     msg_err = axiom_send_small(dev, dest_node, AXIOM_SMALL_PORT_INIT,
             AXIOM_SMALL_FLAG_DATA, (axiom_payload_t *)&payload);
     if (msg_err == AXIOM_RET_ERROR) {
         EPRINTF("send error");
         goto err;
     }
-    printf("Starting send %llu bytes to node %u...\n", total_bytes, dest_node);
+    printf("Starting send %" PRIu64 " bytes to node %u...\n", total_bytes, dest_node);
 
     /* get time of the first sent netperf message */
     ret = gettimeofday(&start_tv, NULL);
@@ -164,8 +206,8 @@ main(int argc, char **argv)
             EPRINTF("send error");
             goto err;
         }
-        IPRINTF(verbose, "NETPERF msg sent to: %u - total_bytes: %llu"
-                " sent_bytes: %llu", dest_node, total_bytes,
+        IPRINTF(verbose, "NETPERF msg sent to: %u - total_bytes: %" PRIu64
+                " sent_bytes: %" PRIu64, dest_node, total_bytes,
                 sent_bytes + sizeof(axiom_small_msg_t));
     }
 
@@ -178,7 +220,7 @@ main(int argc, char **argv)
     IPRINTF(verbose,"End timestamp: %ld sec %ld microsec\n", end_tv.tv_sec,
             end_tv.tv_usec);
 
-    printf("Sent %llu bytes to node %u\n", total_bytes, dest_node);
+    printf("Sent %" PRIu64 " bytes to node %u\n", total_bytes, dest_node);
 
     /* compute time elapsed ms */
     timersub(&end_tv, &start_tv, &elapsed_tv);
@@ -196,8 +238,8 @@ main(int argc, char **argv)
     tx_th = (double)(sent_bytes / usec2sec(elapsed_usec));
     rx_th = (double)(sent_bytes / usec2sec(elapsed_rx_usec));
 
-    IPRINTF(verbose, "elapsed_tx_usec = %llu - elapsed_rx_usec = %llu",
-            elapsed_usec, elapsed_rx_usec);
+    IPRINTF(verbose, "elapsed_tx_usec = %" PRIu64 " - elapsed_rx_usec = %"
+            PRIu64, elapsed_usec, elapsed_rx_usec);
 
     printf("Throughput TX %3.3f KB/s - RX %3.3f KB/s\n", tx_th / 1024,
             rx_th / 1024);

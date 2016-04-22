@@ -17,8 +17,6 @@
 
 #include "axiom_netperf_reply.h"
 
-#define AXIOM_NETPERF_SCALE 10
-
 typedef struct axiom_netperf_status {
     struct timeval start_tv;
     uint64_t expected_bytes;
@@ -78,7 +76,8 @@ axiom_netperf_reply(axiom_dev_t *dev, axiom_node_id_t src,
 
     if (recv_payload->command == AXIOM_CMD_NETPERF_START) {
         /* TODO: define a macro */
-        cur_status->expected_bytes = recv_payload->data << AXIOM_NETPERF_SCALE;
+        cur_status->expected_bytes = recv_payload->data <<
+            recv_payload->offset;
         /* reset start time */
         //memset(&cur_status->start_tv, 0, sizeof(cur_status->start_tv));
         cur_status->received_bytes = 0;
