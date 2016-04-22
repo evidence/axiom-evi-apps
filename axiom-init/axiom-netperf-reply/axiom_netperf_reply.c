@@ -85,7 +85,7 @@ axiom_netperf_reply(axiom_dev_t *dev, axiom_node_id_t src,
 
         /* get time of the first netperf message received */
         memcpy(&cur_status->start_tv, &cur_tv, sizeof(cur_status->start_tv));
-        IPRINTF(verbose,"Start timestamp: %ld sec\t%ld usec\n",
+        IPRINTF(verbose,"Start timestamp: %ld sec %ld usec\n",
                 cur_tv.tv_sec, cur_tv.tv_usec);
         return;
     } else if (recv_payload->command != AXIOM_CMD_NETPERF) {
@@ -107,8 +107,8 @@ axiom_netperf_reply(axiom_dev_t *dev, axiom_node_id_t src,
     /* XXX tbv: does all 8 bytes of small messagge arrive? */
     cur_status->received_bytes += (uint16_t)sizeof(axiom_small_msg_t);
 
-    IPRINTF(verbose, "NETPERF msg received from: %u - expected_bytes: %llu \
-            received_bytes: %llu", src, cur_status->expected_bytes,
+    IPRINTF(verbose, "NETPERF msg received from: %u - expected_bytes: %llu "
+            "received_bytes: %llu", src, cur_status->expected_bytes,
             cur_status->received_bytes);
 
     if (cur_status->received_bytes >= cur_status->expected_bytes)
@@ -119,7 +119,7 @@ axiom_netperf_reply(axiom_dev_t *dev, axiom_node_id_t src,
         double rx_th;
 
         /* get time of the last netperf message received */
-        IPRINTF(verbose,"End timestamp: %ld sec\t%ld microsec\n", cur_tv.tv_sec,
+        IPRINTF(verbose,"End timestamp: %ld sec %ld microsec\n", cur_tv.tv_sec,
                 cur_tv.tv_usec);
 
         /* compute time elapsed */

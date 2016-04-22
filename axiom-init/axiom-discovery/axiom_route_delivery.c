@@ -63,8 +63,8 @@ axiom_delivery_routing_tables(axiom_dev_t *dev,
                         AXIOM_RT_CMD_INFO, rt_node_index, ifaces);
                 if (ret == AXIOM_RET_ERROR)
                 {
-                    EPRINTF("MASTER, Error sending AXIOM_RT_TYPE_INFO message \
-                            to node %d", dest_node_index);
+                    EPRINTF("MASTER, Error sending AXIOM_RT_TYPE_INFO message "
+                            "to node %d", dest_node_index);
                     return ret;
                 }
             }
@@ -81,8 +81,8 @@ axiom_delivery_routing_tables(axiom_dev_t *dev,
                 AXIOM_RT_CMD_END_INFO, 0, 0);
         if (ret == AXIOM_RET_ERROR)
         {
-            EPRINTF("MASTER, Error sending AXIOM_RT_TYPE_END_INFO message \
-                    to node %d", dest_node_index);
+            EPRINTF("MASTER, Error sending AXIOM_RT_TYPE_END_INFO message "
+                    "to node %d", dest_node_index);
             return ret;
         }
     }

@@ -74,7 +74,7 @@ main(int argc, char **argv)
     axiom_netperf_payload_t payload;
     struct timeval start_tv, end_tv, elapsed_tv;
     uint64_t elapsed_usec, elapsed_rx_usec;
-    uint64_t sent_bytes, total_bytes = 5 << AXIOM_NETPERF_SCALE;
+    uint64_t sent_bytes, total_bytes = 256 << AXIOM_NETPERF_SCALE;
     double tx_th, rx_th;
     int dest_node_ok = 0, err, ret;
     int long_index = 0;
@@ -151,7 +151,7 @@ main(int argc, char **argv)
         EPRINTF("gettimeofday error");
         goto err;
     }
-    IPRINTF(verbose,"Start timestamp: %ld sec\t%ld microsec\n",
+    IPRINTF(verbose,"Start timestamp: %ld sec %ld microsec\n",
             start_tv.tv_sec, start_tv.tv_usec);
 
     payload.command = AXIOM_CMD_NETPERF;
@@ -164,8 +164,8 @@ main(int argc, char **argv)
             EPRINTF("send error");
             goto err;
         }
-        IPRINTF(verbose, "NETPERF msg sent to: %u - total_bytes: %llu \
-                sent_bytes: %llu", dest_node, total_bytes,
+        IPRINTF(verbose, "NETPERF msg sent to: %u - total_bytes: %llu"
+                " sent_bytes: %llu", dest_node, total_bytes,
                 sent_bytes + sizeof(axiom_small_msg_t));
     }
 
@@ -175,7 +175,7 @@ main(int argc, char **argv)
         EPRINTF("gettimeofday error");
         goto err;
     }
-    IPRINTF(verbose,"End timestamp: %ld sec\t%ld microsec\n", end_tv.tv_sec,
+    IPRINTF(verbose,"End timestamp: %ld sec %ld microsec\n", end_tv.tv_sec,
             end_tv.tv_usec);
 
     printf("Sent %llu bytes to node %u\n", total_bytes, dest_node);

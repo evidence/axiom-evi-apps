@@ -189,8 +189,8 @@ recv_from_master_to_slave(axiom_dev_t *dev, axiom_node_id_t *src_node_id,
         memcpy(&rt_message, &message.payload, sizeof(rt_message));
 
         *port = message.header.rx.port_flag.field.port;
-        DPRINTF("routing: received on socket = %d for node %d: (%d,%d) \
-                [I'm node %d]",
+        DPRINTF("routing: received on socket = %d for node %d: (%d,%d) "
+                "[I'm node %d]",
                 ((axiom_sim_node_args_t*)dev)->net->node_if_fd[if_index],
                 message.header.tx.dst, rt_message.node_id, rt_message.if_id, my_id);
 
@@ -470,7 +470,7 @@ allocate_link(uint8_t nodeA, uint8_t ifA, axiom_sim_node_args_t *nodes,
 
     nodes[nodeA].net->node_if_fd[ifA] = sockets[0];
     nodes[nodeB].net->node_if_fd[ifB] = sockets[1];
-    DPRINTF("Socket pair: [%d,%d]\n\r", sockets[0], sockets[1]);
+    DPRINTF("Socket pair: [%d,%d]\n", sockets[0], sockets[1]);
 
     return 0;
 }

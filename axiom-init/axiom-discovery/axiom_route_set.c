@@ -75,8 +75,8 @@ axiom_set_routing_table(axiom_dev_t *dev,
             /* Interface connected to another board*/
             if ((if_features & 0x01) != 0)
             {
-                DPRINTF("Node:%d, Send to interface number = %d the \
-                        AXIOM_RAW_TYPE_SET_ROUTING message",
+                DPRINTF("Node:%d, Send to interface number = %d the "
+                        "AXIOM_RAW_TYPE_SET_ROUTING message",
                         my_node_id, if_index);
 
                 /* Say over interface 'if_index': Set your routing table */
@@ -84,8 +84,8 @@ axiom_set_routing_table(axiom_dev_t *dev,
                         AXIOM_RT_CMD_SET_ROUTING);
                 if (ret == AXIOM_RET_ERROR)
                 {
-                    EPRINTF("Node:%d, error sending to interface number = %d \
-                            the AXIOM_RAW_TYPE_SET_ROUTING message",
+                    EPRINTF("Node:%d, error sending to interface number = %d "
+                            "the AXIOM_RAW_TYPE_SET_ROUTING message",
                             my_node_id, if_index);
                     return ret;
                 }
@@ -151,8 +151,8 @@ axiom_set_routing_table(axiom_dev_t *dev,
             /* Interface connected to another board */
             if ((if_features & 0x01) != 0)
             {
-                DPRINTF("Node:%d, Send to interface number = %d \
-                        the AXIOM_RAW_TYPE_SET_ROUTING message",
+                DPRINTF("Node:%d, Send to interface number = %d "
+                        "the AXIOM_RAW_TYPE_SET_ROUTING message",
                         my_node_id, if_index);
 
                 /* Say over interface 'if_index': Set your routing table */
