@@ -233,7 +233,7 @@ main(int argc, char **argv)
 
         /* ********************** statiscs ***************************** */
         /* difference computation */
-        diff_nsec = diff_ts.tv_nsec + (diff_ts.tv_sec * 1000000000);
+        diff_nsec = timespec2nsec(diff_ts);
 
         sum_nsec += diff_nsec;
 

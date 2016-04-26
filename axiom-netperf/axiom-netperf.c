@@ -7,6 +7,7 @@
 #include <getopt.h>
 #include <inttypes.h>
 #include <signal.h>
+#include <time.h>
 
 #include <sys/types.h>
 #include <sys/time.h>
@@ -15,6 +16,7 @@
 #include "axiom_nic_api_user.h"
 #include "axiom_nic_packets.h"
 #include "axiom_nic_init.h"
+#include "axiom_utility.h"
 #include "dprintf.h"
 
 #define AXIOM_NETPERF_DEF_DATA_SCALE    10
@@ -35,12 +37,6 @@ usage(void)
     printf("                            The suffix specifies the length unit\n");
     printf("-v, --verbose               verbose output\n");
     printf("-h, --help                  print this help\n\n");
-}
-
-static double
-usec2sec(uint64_t usec)
-{
-    return ((double)(usec) / 1000000);
 }
 
 static uint8_t
@@ -104,10 +100,10 @@ main(int argc, char **argv)
     axiom_port_t port;
     axiom_flag_t flag;
     axiom_netperf_payload_t payload;
-    struct timeval start_tv, end_tv, elapsed_tv;
+    struct timespec start_ts, end_ts, elapsed_ts;
     double tx_th, rx_th;
     int dest_node_ok = 0, err, ret, long_index, opt;
-    uint64_t elapsed_usec, elapsed_rx_usec, sent_bytes, total_bytes;
+    uint64_t elapsed_nsec, elapsed_rx_nsec, sent_bytes, total_bytes;
     uint16_t data_length = AXIOM_NETPERF_DEF_DATA_LENGTH;
     uint8_t data_scale = AXIOM_NETPERF_DEF_DATA_SCALE;
     char char_scale = AXIOM_NETPERF_DEF_CHAR_SCALE;
@@ -188,13 +184,13 @@ main(int argc, char **argv)
     printf("Starting send %" PRIu64 " bytes to node %u...\n", total_bytes, dest_node);
 
     /* get time of the first sent netperf message */
-    ret = gettimeofday(&start_tv, NULL);
+    ret = clock_gettime(CLOCK_REALTIME, &start_ts);
     if (ret == -1) {
-        EPRINTF("gettimeofday error");
+        EPRINTF("gettime error");
         goto err;
     }
-    IPRINTF(verbose,"Start timestamp: %ld sec %ld microsec\n",
-            start_tv.tv_sec, start_tv.tv_usec);
+    IPRINTF(verbose,"Start timestamp: %ld sec %ld nanosec\n",
+            start_ts.tv_sec, start_ts.tv_nsec);
 
     payload.command = AXIOM_CMD_NETPERF;
     for (sent_bytes = 0; sent_bytes < total_bytes;
@@ -206,40 +202,40 @@ main(int argc, char **argv)
             EPRINTF("send error");
             goto err;
         }
-        IPRINTF(verbose, "NETPERF msg sent to: %u - total_bytes: %" PRIu64
+        DPRINTF("NETPERF msg sent to: %u - total_bytes: %" PRIu64
                 " sent_bytes: %" PRIu64, dest_node, total_bytes,
                 sent_bytes + sizeof(axiom_small_msg_t));
     }
 
     /* get time of the last sent netperf message */
-    ret = gettimeofday(&end_tv, NULL);
+    ret = clock_gettime(CLOCK_REALTIME, &end_ts);
     if (ret == -1) {
-        EPRINTF("gettimeofday error");
+        EPRINTF("gettime error");
         goto err;
     }
-    IPRINTF(verbose,"End timestamp: %ld sec %ld microsec\n", end_tv.tv_sec,
-            end_tv.tv_usec);
+    IPRINTF(verbose,"End timestamp: %ld sec %ld nanosec\n", end_ts.tv_sec,
+            end_ts.tv_nsec);
 
     printf("Sent %" PRIu64 " bytes to node %u\n", total_bytes, dest_node);
 
     /* compute time elapsed ms */
-    timersub(&end_tv, &start_tv, &elapsed_tv);
-    elapsed_usec = elapsed_tv.tv_usec + (elapsed_tv.tv_sec * 1000000);
+    elapsed_ts = timespec_sub(end_ts, start_ts);
+    elapsed_nsec = timespec2nsec(elapsed_ts);
 
     /* receive elapsed rx throughput time form dest_node */
-    elapsed_rx_usec = 0;
+    elapsed_rx_nsec = 0;
     err = axiom_recv_uint64_small(dev, &src_node, &port, &flag,
-            AXIOM_CMD_NETPERF_END, &elapsed_rx_usec);
+            AXIOM_CMD_NETPERF_END, &elapsed_rx_nsec);
     if ((err == AXIOM_RET_ERROR) || (src_node != dest_node)) {
         EPRINTF("recv_elapsed_time error");
         goto err;
     }
 
-    tx_th = (double)(sent_bytes / usec2sec(elapsed_usec));
-    rx_th = (double)(sent_bytes / usec2sec(elapsed_rx_usec));
+    tx_th = (double)(sent_bytes / nsec2sec(elapsed_nsec));
+    rx_th = (double)(sent_bytes / nsec2sec(elapsed_rx_nsec));
 
-    IPRINTF(verbose, "elapsed_tx_usec = %" PRIu64 " - elapsed_rx_usec = %"
-            PRIu64, elapsed_usec, elapsed_rx_usec);
+    IPRINTF(verbose, "elapsed_tx_nsec = %" PRIu64 " - elapsed_rx_nsec = %"
+            PRIu64, elapsed_nsec, elapsed_rx_nsec);
 
     printf("Throughput TX %3.3f KB/s - RX %3.3f KB/s\n", tx_th / 1024,
             rx_th / 1024);
