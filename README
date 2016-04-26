@@ -4,17 +4,61 @@
 This repository contains the following user space application:
 
  * axiom-init
-    + runs the discovery algorithm and sets the routing table
+    + runs the discovery algorithm, sets the routing table and handles control messages
 ```
         example:
-        in n-1 nodes:           axiom-init -n slave
-        in 1 randomly node:     axiom-init -n master
+        in n-1 nodes:           axiom-init &
+        in 1 randomly node:     axiom-init -m &
+```
+ * axiom-info
+    + prints informations (node-id, interfaces, routing, etc.) about AXIOM NIC
+```
+        example:
+        # print all information
+        axiom-info
+```
+```
+        # print nodeid
+        axiom-info -n
+```
+```
+        # print routing table
+        axiom-info -r
 ```
  * axiom-whoami
-     + prints the nodeid set after the discovery phase
+     + prints the node-id set after the discovery phase
 ```
         example:
         axiom-whoami
+```
+ * axiom-ping
+    + estimate the round trip time (RTT) between two nodes
+```
+        example:
+        # Estimate RTT with target node 2. Send a ping message every 0.5 seconds.
+        axiom-ping -d 2 -i 0.5
+```
+```
+        # Estimante RTT with target node 2. Send 10 ping message every 0.2 seconds.
+        axiom-ping -d 2 -c 10 -i 0.2
+```
+ * axiom-netperf
+    + estimate the throughput between two nodes
+```
+        example:
+        # Estimate the throughput with targat node 3, sending 512 KBytes of data.
+        axiom-netperf -d 3 -l 512K
+```
+```
+        # Estimate the throughput with targat node 3, sending 2 MBytes of data.
+        axiom-netperf -d 3 -l 2M
+```
+ * axiom-traceroute
+    + prints the hops needed to reach a specified target node
+```
+        example:
+        # Print the hops needed to reach the node 1
+        axiom-traceroute -d 1
 ```
  * axiom-[send|recv]-small
      + sends/receives Axiom RAW SMALL data to/from a node
