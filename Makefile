@@ -4,9 +4,11 @@ CLEAN_DIR := $(addprefix _clean_, $(APPS_DIR))
 INSTALL_DIR := $(addprefix _install_, $(APPS_DIR))
 
 PWD := $(shell pwd)
+#CCARCH := arm
+CCARCH := aarch64
 BUILDROOT := ${PWD}/../axiom-evi-buildroot
 DESTDIR := ${BUILDROOT}/output/target
-CCPREFIX := ${BUILDROOT}/output/host/usr/bin/arm-linux-
+CCPREFIX := ${BUILDROOT}/output/host/usr/bin/$(CCARCH)-linux-
 
 DFLAGS := -g -DPDEBUG
 
