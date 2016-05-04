@@ -9,7 +9,7 @@
 int main(int argc, char **argv)
 {
     axiom_dev_t *dev = NULL;
-    axiom_node_id_t my_node_id;
+    axiom_node_id_t node_id;
 
     /* open the axiom device */
     dev = axiom_open(NULL);
@@ -19,9 +19,9 @@ int main(int argc, char **argv)
         exit(-1);
     }
 
-    my_node_id = axiom_get_node_id(dev);
+    node_id = axiom_get_node_id(dev);
 
-    printf ("I'm node %d\n", my_node_id);
+    printf ("I'm node %d\n", node_id);
 
     axiom_close(dev);
 

@@ -20,7 +20,7 @@
  * @param final_routing_table node local routing table to initialize
  */
 static void
-init_my_routing_table (axiom_if_id_t final_routing_table[AXIOM_MAX_NODES])
+init_routing_table (axiom_if_id_t final_routing_table[AXIOM_MAX_NODES])
 {
     uint8_t i;
 
@@ -129,7 +129,7 @@ axiom_wait_rt_received(axiom_dev_t *dev, axiom_node_id_t number_of_total_nodes)
 }
 
 axiom_err_t
-axiom_receive_routing_tables(axiom_dev_t *dev, axiom_node_id_t my_node_id,
+axiom_receive_routing_tables(axiom_dev_t *dev, axiom_node_id_t node_id,
         axiom_if_id_t final_routing_table[AXIOM_MAX_NODES],
         axiom_node_id_t *max_node_id)
 {
@@ -139,7 +139,7 @@ axiom_receive_routing_tables(axiom_dev_t *dev, axiom_node_id_t my_node_id,
     axiom_node_id_t max_id = 0;
     axiom_err_t ret;
 
-    init_my_routing_table(final_routing_table);
+    init_routing_table(final_routing_table);
 
     while (cmd != AXIOM_RT_CMD_END_INFO)
     {
@@ -150,12 +150,12 @@ axiom_receive_routing_tables(axiom_dev_t *dev, axiom_node_id_t my_node_id,
         if (ret == AXIOM_RET_ERROR)
         {
             EPRINTF("Slave %d, Error receiving AXIOM_RT_TYPE_INFO message",
-                    my_node_id);
+                    node_id);
             return ret;
         }
         if (cmd  == AXIOM_RT_CMD_INFO)
         {
-            /* it is for my routing table, memorize it */
+            /* it is for local routing table, memorize it */
             final_routing_table[node_to_set] = if_to_set;
 
             /* compute the maximum node id of the network*/
@@ -169,23 +169,23 @@ axiom_receive_routing_tables(axiom_dev_t *dev, axiom_node_id_t my_node_id,
             /* Master has finished with routing table delivery */
 
             /* compute the nodes total number of the network */
-            if (my_node_id > max_id)
+            if (node_id > max_id)
             {
-                *max_node_id = my_node_id;
+                *max_node_id = node_id;
             }
             else
             {
                 *max_node_id = max_id;
             }
 
-            /* reply to MASTER that I'have received my routing table */
+            /* reply to MASTER that I'have received local routing table */
             ret = axiom_send_small_delivery(dev, AXIOM_MASTER_ID,
-                    AXIOM_RT_CMD_RT_REPLY, my_node_id, 0);
+                    AXIOM_RT_CMD_RT_REPLY, node_id, 0);
 
             if (ret == AXIOM_RET_ERROR)
             {
                 EPRINTF("Slave %d, Error sending AXIOM_RT_CMD_RT_REPLY message",
-                        my_node_id);
+                        node_id);
                 return ret;
             }
         }

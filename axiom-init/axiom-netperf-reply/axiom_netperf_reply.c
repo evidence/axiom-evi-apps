@@ -17,7 +17,7 @@
 #include "axiom_utility.h"
 #include "dprintf.h"
 
-#include "axiom_netperf_reply.h"
+#include "../axiom-init.h"
 
 typedef struct axiom_netperf_status {
     struct timespec start_ts;
@@ -104,8 +104,9 @@ axiom_netperf_reply(axiom_dev_t *dev, axiom_node_id_t src,
     cur_status->received_bytes += (uint16_t)sizeof(axiom_small_msg_t);
 
     DPRINTF("NETPERF msg received from: %u - expected_bytes: %llu "
-            "received_bytes: %llu", src, cur_status->expected_bytes,
-            cur_status->received_bytes);
+            "received_bytes: %llu", src,
+            (long long unsigned)cur_status->expected_bytes,
+            (long long unsigned)cur_status->received_bytes);
 
     if (cur_status->received_bytes >= cur_status->expected_bytes)
     {
@@ -123,7 +124,7 @@ axiom_netperf_reply(axiom_dev_t *dev, axiom_node_id_t src,
         elapsed_nsec = timespec2nsec(elapsed_ts);
         rx_th = (double)(cur_status->received_bytes / nsec2sec(elapsed_nsec));
         IPRINTF(verbose, "Rx throughput = %3.3f KB/s - elapsed_nsec = %llu",
-                rx_th / 1024, elapsed_nsec);
+                rx_th / 1024, (long long unsigned)elapsed_nsec);
 
         /* send elapsed time to netperf application */
         err = axiom_send_uint64_small(dev, src, AXIOM_SMALL_PORT_NETUTILS,

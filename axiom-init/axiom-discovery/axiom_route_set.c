@@ -20,7 +20,7 @@
  *                            received from Master node
  */
 static void
-set_my_routing_table(axiom_dev_t *dev,
+set_routing_table(axiom_dev_t *dev,
         axiom_if_id_t final_routing_table[AXIOM_MAX_NODES])
 {
     axiom_node_id_t node_id_index;
@@ -33,7 +33,7 @@ set_my_routing_table(axiom_dev_t *dev,
         if (enabled_mask != 0)
         {
             /* only if the node is connected to me
-               I update my routing table */
+               I update local routing table */
             axiom_set_routing(dev, node_id_index, enabled_mask);
         }
     }
@@ -53,14 +53,14 @@ axiom_set_routing_table(axiom_dev_t *dev,
 
 
     /* The node reads its node id */
-    axiom_node_id_t my_node_id = axiom_get_node_id(dev);
+    axiom_node_id_t node_id = axiom_get_node_id(dev);
 
-    if (my_node_id == AXIOM_MASTER_ID)
+    if (node_id == AXIOM_MASTER_ID)
     {
         /* ********************** Master node ******************** */
 
         /* Set its routing table */
-        set_my_routing_table(dev, final_routing_table);
+        set_routing_table(dev, final_routing_table);
 
         /* Send message to all neighbours
         indicating to set their routing tables */
@@ -77,7 +77,7 @@ axiom_set_routing_table(axiom_dev_t *dev,
             {
                 DPRINTF("Node:%d, Send to interface number = %d the "
                         "AXIOM_RAW_TYPE_SET_ROUTING message",
-                        my_node_id, if_index);
+                        node_id, if_index);
 
                 /* Say over interface 'if_index': Set your routing table */
                 ret = axiom_send_small_set_routing(dev, if_index,
@@ -86,7 +86,7 @@ axiom_set_routing_table(axiom_dev_t *dev,
                 {
                     EPRINTF("Node:%d, error sending to interface number = %d "
                             "the AXIOM_RAW_TYPE_SET_ROUTING message",
-                            my_node_id, if_index);
+                            node_id, if_index);
                     return ret;
                 }
             }
@@ -107,7 +107,7 @@ axiom_set_routing_table(axiom_dev_t *dev,
                 if (ret == AXIOM_RET_ERROR)
                 {
                     EPRINTF("Node:%d, error receiving AXIOM_RAW_TYPE_SET_ROUTING message",
-                            my_node_id);
+                            node_id);
                     return ret;
                 }
             }
@@ -122,22 +122,22 @@ axiom_set_routing_table(axiom_dev_t *dev,
         while ((cmd != AXIOM_RT_CMD_SET_ROUTING) && (ret == AXIOM_RET_OK))
         {
             DPRINTF("Node %d: Wait for AXIOM_RAW_TYPE_SET_ROUTING message",
-                    my_node_id);
+                    node_id);
 
             ret = axiom_recv_small_set_routing(dev, &src_interface, &cmd);
             if (ret == AXIOM_RET_ERROR)
             {
                 EPRINTF("Node:%d, error receiving AXIOM_RAW_TYPE_SET_ROUTING message",
-                        my_node_id);
+                        node_id);
                 return ret;
             }
-            DPRINTF("Node %d: recevied from my interface %d:", my_node_id,
+            DPRINTF("Node %d: recevied from local interface %d:", node_id,
                     src_interface);
 
             if (cmd == AXIOM_RT_CMD_SET_ROUTING)
             {
                 /* The first request to set the routing table */
-                set_my_routing_table(dev, final_routing_table);
+                set_routing_table(dev, final_routing_table);
             }
         }
 
@@ -153,7 +153,7 @@ axiom_set_routing_table(axiom_dev_t *dev,
             {
                 DPRINTF("Node:%d, Send to interface number = %d "
                         "the AXIOM_RAW_TYPE_SET_ROUTING message",
-                        my_node_id, if_index);
+                        node_id, if_index);
 
                 /* Say over interface 'if_index': Set your routing table */
                 ret = axiom_send_small_set_routing(dev, if_index,
@@ -161,7 +161,7 @@ axiom_set_routing_table(axiom_dev_t *dev,
                 if (ret == AXIOM_RET_ERROR)
                 {
                     EPRINTF("Node:%d, error sending AXIOM_RAW_TYPE_SET_ROUTING message",
-                            my_node_id);
+                            node_id);
                     return ret;
                 }
                 num_interface++;
@@ -178,7 +178,7 @@ axiom_set_routing_table(axiom_dev_t *dev,
             if (ret == AXIOM_RET_ERROR)
             {
                 EPRINTF("Node:%d, axiom_recv_raw_set_routing() error",
-                        my_node_id);
+                        node_id);
                 return ret;
             }
             num_interface --;

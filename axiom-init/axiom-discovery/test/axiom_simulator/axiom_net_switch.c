@@ -373,11 +373,11 @@ axiom_net_recv_small(axiom_dev_t *dev, axiom_node_id_t *src_node_id,
         DPRINTF("routing: received on socket = %d for node %d: (%d,%d) [I'm node %d]",
                 ((axiom_sim_node_args_t*)dev)->net->switch_fd,
                 small_eth.small_msg.header.tx.dst, rt_message.node_id,
-                rt_message.if_id, axiom_get_node_id(dev));
+                rt_message.if_mask, axiom_get_node_id(dev));
 
         if (rt_message.command ==  AXIOM_RT_CMD_INFO)
         {
-            /* it is my routing table, return the info to the caller */
+            /* it is local routing table, return the info to the caller */
             *src_node_id = small_eth.small_msg.header.rx.src;
             *payload = small_eth.small_msg.payload;
         }

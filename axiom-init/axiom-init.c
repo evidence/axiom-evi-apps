@@ -14,10 +14,7 @@
 #include "axiom_nic_packets.h"
 #include "axiom_nic_api_user.h"
 #include "axiom_nic_init.h"
-#include "axiom-discovery/axiom_discovery_node.h"
-#include "axiom-pong/axiom_pong.h"
-#include "axiom-traceroute-reply/axiom_traceroute_reply.h"
-#include "axiom-netperf-reply/axiom_netperf_reply.h"
+#include "axiom-init.h"
 
 int verbose = 0;
 

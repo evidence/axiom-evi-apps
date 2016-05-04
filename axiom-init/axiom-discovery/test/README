@@ -1,0 +1,4 @@
+These files was deprecated and out-to-date starting from v0.5
+
+They are initially used as a stub to develop routing and discovery algorithm
+waiting the QEMU AXIOM NIC emulation.

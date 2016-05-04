@@ -20,7 +20,7 @@ usage(void)
 {
     printf("usage: axiom-send-small [arguments] -d dest -l payload\n");
     printf("Send AXIOM small raw message to specified dest (dest can be remote node\n");
-    printf("or local interface (if you send a message to neighbour [-n])\n\n");
+    printf("or local interface, if you send a message to neighbour [-n])\n\n");
     printf("Arguments:\n");
     printf("-d, --dest      dest     dest node id or local if (TO_NEIGHBOUR) \n");
     printf("-l, --payload   payload  message to send (uint32_t)\n");
@@ -34,7 +34,7 @@ int
 main(int argc, char **argv)
 {
     axiom_dev_t *dev = NULL;
-    axiom_msg_id_t recv_ret, my_node_id;
+    axiom_msg_id_t recv_ret, node_id;
     axiom_port_t port = 1;
     axiom_node_id_t dst_id;
     int port_ok = 0, dst_ok = 0, payload_ok = 0, to_neighbour = 0;
@@ -149,7 +149,7 @@ main(int argc, char **argv)
         exit(-1);
     }
 
-    my_node_id = axiom_get_node_id(dev);
+    node_id = axiom_get_node_id(dev);
 
     /* bind the current process on port */
 #if 0
@@ -158,7 +158,7 @@ main(int argc, char **argv)
     }
 #endif
 
-    printf("[node %u] sending small message...\n", my_node_id);
+    printf("[node %u] sending small message...\n", node_id);
     /* send a small message*/
     recv_ret =  axiom_send_small(dev, (axiom_node_id_t)dst_id,
                                         (axiom_port_t)port, flag,
@@ -169,7 +169,7 @@ main(int argc, char **argv)
            goto err;
     }
 
-    printf("[node %u] message sent to port %u\n", my_node_id, port);
+    printf("[node %u] message sent to port %u\n", node_id, port);
     if (flag & AXIOM_SMALL_FLAG_NEIGHBOUR) {
         printf("\t- local_interface = %u\n", dst_id);
         printf("\t- flag = %s\n", "NEIGHBOUR");

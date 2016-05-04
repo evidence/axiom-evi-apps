@@ -130,17 +130,17 @@ recv_from_master_to_slave(axiom_dev_t *dev, axiom_node_id_t *src_node_id,
     axiom_routing_payload_t rt_message;
     ssize_t read_bytes;
 
-    axiom_node_id_t my_id, node_index;
+    axiom_node_id_t node_id, node_index;
     axiom_if_id_t if_index;
     int do_flag, num_nodes_after_me;
 
-    my_id = axiom_get_node_id(dev);
+    node_id = axiom_get_node_id(dev);
 
-    /* cycle to found the number of nodes with id > my_id that connected to me
-       into my local routing table; they represent the nodes to which I have
+    /* cycle to found the number of nodes with id > node_id that connected to me
+       into local local routing table; they represent the nodes to which I have
        to send packets that Master has to send them through me */
     num_nodes_after_me = 1;
-    for (node_index = my_id + 1; node_index < AXIOM_MAX_NODES; node_index++)
+    for (node_index = node_id + 1; node_index < AXIOM_MAX_NODES; node_index++)
     {
         for (if_index = 0; if_index < AXIOM_MAX_INTERFACES; if_index ++)
         {
@@ -152,10 +152,10 @@ recv_from_master_to_slave(axiom_dev_t *dev, axiom_node_id_t *src_node_id,
         }
     }
 
-    /* cycle to found the smallest node id connected to me into my local routing table;
+    /* cycle to found the smallest node id connected to me into local local routing table;
        this represents the node who sent me: "Say your ID" into discovery phase */
     do_flag = 1;
-    for (node_index = 0; (node_index < my_id) && (do_flag == 1); node_index++)
+    for (node_index = 0; (node_index < node_id) && (do_flag == 1); node_index++)
     {
         for (if_index = 0; (if_index < AXIOM_MAX_INTERFACES) && (do_flag == 1);
                 if_index ++)
@@ -171,7 +171,7 @@ recv_from_master_to_slave(axiom_dev_t *dev, axiom_node_id_t *src_node_id,
         if_index--;
     }
 
-    /* while Master has not ended to send my table and the table of the nodes
+    /* while Master has not ended to send local table and the table of the nodes
        that are connected to me  */
     while (((axiom_sim_node_args_t*)dev)->net->num_of_ended_rt < num_nodes_after_me)
     {
@@ -192,13 +192,13 @@ recv_from_master_to_slave(axiom_dev_t *dev, axiom_node_id_t *src_node_id,
         DPRINTF("routing: received on socket = %d for node %d: (%d,%d) "
                 "[I'm node %d]",
                 ((axiom_sim_node_args_t*)dev)->net->node_if_fd[if_index],
-                message.header.tx.dst, rt_message.node_id, rt_message.if_id, my_id);
+                message.header.tx.dst, rt_message.node_id, rt_message.if_mask, node_id);
 
         if (rt_message.command ==  AXIOM_RT_CMD_INFO)
         {
-            if (message.header.tx.dst == my_id)
+            if (message.header.tx.dst == node_id)
             {
-                /* it is my routing table, return the info to the caller */
+                /* it is local routing table, return the info to the caller */
                 *src_node_id = message.header.tx.dst;
                 *payload = message.payload;
                 return AXIOM_RET_OK;
@@ -214,7 +214,7 @@ recv_from_master_to_slave(axiom_dev_t *dev, axiom_node_id_t *src_node_id,
             /* increment the number of ended received table */
             ((axiom_sim_node_args_t*)dev)->net->num_of_ended_rt++;
 
-            if (message.header.tx.dst != my_id)
+            if (message.header.tx.dst != node_id)
             {
                 axiom_net_send_small(dev, message.header.tx.dst,
                         message.header.rx.port_flag.field.port,
@@ -224,7 +224,7 @@ recv_from_master_to_slave(axiom_dev_t *dev, axiom_node_id_t *src_node_id,
         }
     }
 
-    /* while end: Master has ended to send my table and the table of the nodes
+    /* while end: Master has ended to send local table and the table of the nodes
        that are connected to me are  */
     rt_message.command = AXIOM_RT_CMD_END_INFO;
     *payload = message.payload;
@@ -251,7 +251,7 @@ static axiom_msg_id_t
 send_from_slave_to_master(axiom_dev_t *dev, axiom_if_id_t dest_node_id,
         axiom_port_t port, axiom_flag_t flag, axiom_payload_t *payload)
 {
-    axiom_node_id_t my_id, node_index;
+    axiom_node_id_t node_id, node_index;
     int do_flag, num_nodes_after_me, i;
     ssize_t read_bytes;
     axiom_small_msg_t message;
@@ -275,13 +275,13 @@ send_from_slave_to_master(axiom_dev_t *dev, axiom_if_id_t dest_node_id,
     /* Payload */
     message.payload= *payload;
 
-    my_id = axiom_get_node_id(dev);
+    node_id = axiom_get_node_id(dev);
 
-    /* cycle to found the number of nodes with id > my_id that connected to me
-     * into my local routing table; they represent the nodes from which I have
+    /* cycle to found the number of nodes with id > node_id that connected to me
+     * into local local routing table; they represent the nodes from which I have
      * to receive packets reply that them send to Master through me */
     num_nodes_after_me = 0;
-    for (node_index = my_id + 1; node_index < AXIOM_MAX_NODES; node_index++)
+    for (node_index = node_id + 1; node_index < AXIOM_MAX_NODES; node_index++)
     {
         for (if_index = 0; if_index < AXIOM_MAX_INTERFACES; if_index ++)
         {
@@ -294,11 +294,11 @@ send_from_slave_to_master(axiom_dev_t *dev, axiom_if_id_t dest_node_id,
         }
     }
 
-    /* cycle to found the smallest node id connected to me into my local routing
+    /* cycle to found the smallest node id connected to me into local local routing
      * table; to whic I have to forward the reply messages that nodes with id
      * greater than mine want to send to Master */
     do_flag = 1;
-    for (node_index = 0; (node_index < my_id) && (do_flag == 1); node_index++)
+    for (node_index = 0; (node_index < node_id) && (do_flag == 1); node_index++)
     {
         for (if_index = 0; (if_index < AXIOM_MAX_INTERFACES) && (do_flag == 1);
                 if_index ++)
@@ -375,18 +375,18 @@ static axiom_msg_id_t recv_from_slave_to_master (axiom_dev_t *dev,
         axiom_node_id_t *src_node_id, axiom_port_t *port, axiom_flag_t *flag,
         axiom_payload_t *payload)
 {
-    axiom_node_id_t my_id, node_index;
+    axiom_node_id_t node_id, node_index;
     uint8_t if_index;
     ssize_t read_bytes;
     uint8_t recv_if = AXIOM_MAX_INTERFACES;
     axiom_small_msg_t message;
 
-    my_id = axiom_get_node_id(dev);
+    node_id = axiom_get_node_id(dev);
 
-    /* cycle to found the node with id > my_id that connected to me
-       into my local routing table; it represents the node from which I have
+    /* cycle to found the node with id > node_id that connected to me
+       into local local routing table; it represents the node from which I have
        to receive packets reply that each node send to me  */
-    for (node_index = my_id + 1; node_index < AXIOM_MAX_NODES; node_index++)
+    for (node_index = node_id + 1; node_index < AXIOM_MAX_NODES; node_index++)
     {
         for (if_index = 0; if_index < AXIOM_MAX_INTERFACES; if_index++)
         {

@@ -27,7 +27,7 @@ all: $(APPS)
 
 axiom-init: axiom-init.o $(AXIOM_DISC)/axiom_discovery_node.o $(AXIOM_DISC)/axiom_discovery_protocol.o $(AXIOM_DISC)/axiom_route_compute.o $(AXIOM_DISC)/axiom_route_delivery.o $(AXIOM_DISC)/axiom_route_set.o $(AXIOM_PONG)/axiom_pong.o $(AXIOM_TR_REPLY)/axiom_traceroute_reply.o $(AXIOM_NETPERF_REPLY)/axiom_netperf_reply.o $(AXIOM_NIC_UL)/axiom_user_api.a
 
-axiom-init.o: axiom-init.c $(AXIOM_DISC)/axiom_discovery_node.h $(AXIOM_PONG)/axiom_pong.h $(AXIOM_TR_REPLY)/axiom_traceroute_reply.h $(AXIOM_NETPERF_REPLY)/axiom_netperf_reply.h $(HEADERS)
+axiom-init.o: axiom-init.c axiom-init.h $(HEADERS)
 
 $(AXIOM_NIC_UL)/%:
 	cd $(AXIOM_NIC_UL) && make CCPREFIX=$(CCPREFIX) DFLAGS="$(DFLAGS)"

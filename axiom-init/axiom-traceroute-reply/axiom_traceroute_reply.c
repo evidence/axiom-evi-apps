@@ -12,16 +12,16 @@
 #include "axiom_nic_init.h"
 #include "dprintf.h"
 
-#include "axiom_traceroute_reply.h"
+#include "../axiom-init.h"
 
 void
 axiom_traceroute_reply(axiom_dev_t *dev, axiom_if_id_t src,
         axiom_payload_t payload, int verbose) {
     axiom_err_t err;
     axiom_err_t ret;
-    axiom_if_id_t my_if;
+    axiom_if_id_t if_id;
     axiom_msg_id_t msg_err;
-    axiom_msg_id_t my_node_id;
+    axiom_msg_id_t node_id;
     axiom_payload_t send_payload;
     axiom_traceroute_payload_t *recv_payload =
             ((axiom_traceroute_payload_t *) &payload);
@@ -49,16 +49,16 @@ axiom_traceroute_reply(axiom_dev_t *dev, axiom_if_id_t src,
             recv_payload->step);
 
 
-    my_node_id = axiom_get_node_id(dev);
-    if (my_node_id != recv_payload->dst_id) {
+    node_id = axiom_get_node_id(dev);
+    if (node_id != recv_payload->dst_id) {
         /* get interface to reach next hop for recv_payload->dst_id node */
-        err = axiom_next_hop(dev, recv_payload->dst_id, &my_if);
+        err = axiom_next_hop(dev, recv_payload->dst_id, &if_id);
         if (err == AXIOM_RET_ERROR) {
             EPRINTF("axiom_next_hop error");
             return;
         }
         /* send small neighbour traceroute message */
-        msg_err = axiom_send_small_init(dev, my_if, AXIOM_SMALL_FLAG_NEIGHBOUR,
+        msg_err = axiom_send_small_init(dev, if_id, AXIOM_SMALL_FLAG_NEIGHBOUR,
                                         (axiom_payload_t *)&send_payload);
 
         if (msg_err == AXIOM_RET_ERROR) {

@@ -60,9 +60,9 @@ main(int argc, char **argv)
 {
     axiom_dev_t *dev = NULL;
     axiom_node_id_t dest_node, recv_node = 0;
-    axiom_if_id_t my_if;
+    axiom_if_id_t if_id;
     axiom_err_t err;
-    axiom_msg_id_t msg_err, my_node_id;
+    axiom_msg_id_t msg_err, node_id;
     axiom_port_t port;
     axiom_flag_t flag;
     axiom_traceroute_payload_t payload, recv_payload;
@@ -118,7 +118,7 @@ main(int argc, char **argv)
         exit(-1);
     }
 
-    my_node_id = axiom_get_node_id(dev);
+    node_id = axiom_get_node_id(dev);
 
     /* bind the current process on port */
     err = axiom_bind(dev, AXIOM_SMALL_PORT_NETUTILS);
@@ -129,25 +129,25 @@ main(int argc, char **argv)
     }
 
     /* get interface to reach next hop for dest_node */
-    err = axiom_next_hop(dev, dest_node, &my_if);
+    err = axiom_next_hop(dev, dest_node, &if_id);
     if (err == AXIOM_RET_ERROR)
     {
         EPRINTF("node[%u] is unreachable", dest_node);
         exit(-1);
     }
 
-    printf("Node %u, start traceroute to node %u, %d hops max\n", my_node_id,
+    printf("Node %u, start traceroute to node %u, %d hops max\n", node_id,
             dest_node, AXIOM_MAX_NODES);
 
     flag = AXIOM_SMALL_FLAG_NEIGHBOUR;
     port = AXIOM_SMALL_PORT_INIT;
     payload.command = AXIOM_CMD_TRACEROUTE;
-    payload.src_id = my_node_id;
+    payload.src_id = node_id;
     payload.dst_id = dest_node;
     payload.step = 0;
 
     /* send initial small neighbour traceroute message */
-    msg_err = axiom_send_small(dev, my_if, port, flag,
+    msg_err = axiom_send_small(dev, if_id, port, flag,
             (axiom_payload_t *)&payload);
 
     if (msg_err == AXIOM_RET_ERROR)

@@ -12,7 +12,7 @@
 #include "axiom_nic_init.h"
 #include "dprintf.h"
 
-#include "axiom_pong.h"
+#include "../axiom-init.h"
 
 void
 axiom_pong(axiom_dev_t *dev, axiom_if_id_t first_src,

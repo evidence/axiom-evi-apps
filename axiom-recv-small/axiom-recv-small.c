@@ -31,7 +31,7 @@ main(int argc, char **argv)
 {
     axiom_dev_t *dev = NULL;
     axiom_msg_id_t recv_ret;
-    axiom_node_id_t src_id, my_node_id;
+    axiom_node_id_t src_id, node_id;
     axiom_port_t port = 1, recv_port;
     int port_ok = 0, once = 0;
     axiom_flag_t flag;
@@ -91,7 +91,7 @@ main(int argc, char **argv)
         exit(-1);
     }
 
-    my_node_id = axiom_get_node_id(dev);
+    node_id = axiom_get_node_id(dev);
 
     /* bind the current process on port */
     err = axiom_bind(dev, port);
@@ -103,7 +103,7 @@ main(int argc, char **argv)
 
     do {
         printf("[node %u] receiving small message on port %u...\n",
-                my_node_id, port);
+                node_id, port);
 
         /* receive a small message from port*/
         recv_ret =  axiom_recv_small(dev, &src_id, (axiom_port_t *)&recv_port,
@@ -114,7 +114,7 @@ main(int argc, char **argv)
             break;
         }
 
-        printf("[node %u] message received on port %u\n", my_node_id, recv_port);
+        printf("[node %u] message received on port %u\n", node_id, recv_port);
         if (flag & AXIOM_SMALL_FLAG_NEIGHBOUR) {
             printf("\t- local_interface = %u\n", src_id);
             printf("\t- flag = %s\n", "NEIGHBOUR");

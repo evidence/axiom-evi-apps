@@ -4,7 +4,7 @@
 #ifndef AXIOM_SIMULATOR_h
 #define AXIOM_SIMULATOR_h
 
-#include "../axiom_discovery_protocol.h"
+#include "axiom_discovery_protocol.h"
 
 typedef struct axiom_net axiom_net_t;
 

@@ -16,6 +16,7 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 
+#include "axiom_discovery_protocol.h"
 #include "axiom_discovery_node.h"
 #include "axiom_simulator.h"
 #include "axiom_net.h"

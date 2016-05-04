@@ -52,9 +52,9 @@ int
 main(int argc, char **argv)
 {
     axiom_dev_t *dev = NULL;
-    axiom_msg_id_t send_ret, recv_ret, my_node_id;
+    axiom_msg_id_t send_ret, recv_ret, node_id;
     axiom_port_t remote_port = AXIOM_SMALL_PORT_INIT, recv_port;
-    axiom_port_t my_port = AXIOM_SMALL_PORT_NETUTILS;
+    axiom_port_t port = AXIOM_SMALL_PORT_NETUTILS;
     axiom_node_id_t dst_id, src_id;
     axiom_ping_payload_t payload, recv_payload;
     axiom_err_t err;
@@ -78,7 +78,7 @@ main(int argc, char **argv)
         {0, 0, 0, 0}
     };
 
-    /* set my_hanlder for signal SIGINT */
+    /* set hanlder for signal SIGINT */
     memset(&sig, 0, sizeof(sig));
     sig.sa_handler = sigint_handler;
     sigaction(SIGINT, &sig, NULL);
@@ -143,10 +143,10 @@ main(int argc, char **argv)
         exit(-1);
     }
 
-    my_node_id = axiom_get_node_id(dev);
+    node_id = axiom_get_node_id(dev);
 
-    /* bind the current process on my port */
-    err = axiom_bind(dev, my_port);
+    /* bind the current process on local port */
+    err = axiom_bind(dev, port);
     if (err == AXIOM_RET_ERROR) {
         EPRINTF("bind error");
         goto err;
@@ -160,7 +160,7 @@ main(int argc, char **argv)
         axiom_flag_t flag = AXIOM_SMALL_FLAG_DATA;
         int retry;
 
-        IPRINTF(verbose,"[node %u] sending ping message...\n", my_node_id);
+        IPRINTF(verbose,"[node %u] sending ping message...\n", node_id);
 #ifndef AXIOM_NO_TX
         /* send a small message*/
         payload.command = AXIOM_CMD_PING;
@@ -180,7 +180,7 @@ main(int argc, char **argv)
         }
         sent_packets++;
 
-        IPRINTF(verbose,"[node %u] message sent to port %u\n", my_node_id,
+        IPRINTF(verbose,"[node %u] message sent to port %u\n", node_id,
                 remote_port);
         IPRINTF(verbose,"\t- destination_node_id = %u\n", dst_id);
 
@@ -224,7 +224,7 @@ main(int argc, char **argv)
         } while (retry);
 
         recv_packets++;
-        IPRINTF(verbose,"[node %u] reply received on port %u\n", my_node_id,
+        IPRINTF(verbose,"[node %u] reply received on port %u\n", node_id,
                 recv_port);
         IPRINTF(verbose,"\t- source_node_id = %u\n", src_id);
         IPRINTF(verbose,"\t- message index = %u\n", recv_payload.packet_id);
