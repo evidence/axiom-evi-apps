@@ -1,3 +1,13 @@
+/*!
+ * \file axiom-send-small.c
+ *
+ * \version     v0.4
+ * \date        2016-05-03
+ *
+ * This file contains the implementation of axiom-send-small application.
+ *
+ * axiom-send-small sends AXIOM small raw message to a specified remote node.
+ */
 #include <ctype.h>
 #include <stdio.h>
 #include <stdint.h>

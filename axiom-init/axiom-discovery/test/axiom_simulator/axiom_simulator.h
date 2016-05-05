@@ -6,6 +6,9 @@
 
 #include "axiom_discovery_protocol.h"
 
+/*! \brief Rotuing table value for not conneced node */
+#define AXIOM_NULL_INTERFACE            255
+
 typedef struct axiom_net axiom_net_t;
 
 typedef struct node_args {

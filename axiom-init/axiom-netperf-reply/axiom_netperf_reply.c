@@ -1,5 +1,11 @@
-/*
- * This file implements the axiom-netperf-reply application
+/*!
+ * \file axiom_netperf_reply.c
+ *
+ * \version     v0.4
+ * \date        2016-05-03
+ *
+ * This file contains the functions used in the axiom-init deamon to handle
+ * the axiom-netperf messages.
  */
 #include <stdio.h>
 #include <stdint.h>
@@ -19,12 +25,14 @@
 
 #include "../axiom-init.h"
 
+/*! \brief axiom-netperf status */
 typedef struct axiom_netperf_status {
-    struct timespec start_ts;
-    uint64_t expected_bytes;
-    uint64_t received_bytes;
+    struct timespec start_ts;   /*!< \brief timestamp of the first byte */
+    uint64_t expected_bytes;    /*!< \brief total bytes that will be received */
+    uint64_t received_bytes;    /*!< \brief number of bytes received */
 } axiom_netperf_status_t;
 
+/*! \brief axiom-netperf status array to handle all nodes */
 axiom_netperf_status_t status[AXIOM_MAX_NODES];
 
 static axiom_err_t

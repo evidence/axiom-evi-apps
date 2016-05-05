@@ -1,3 +1,13 @@
+/*!
+ * \file axiom-recv-small.c
+ *
+ * \version     v0.4
+ * \date        2016-05-03
+ *
+ * This file contains the implementation of axiom-recv-small application.
+ *
+ * axiom-recv-small receives AXIOM small raw message
+ */
 #include <ctype.h>
 #include <stdio.h>
 #include <stdint.h>

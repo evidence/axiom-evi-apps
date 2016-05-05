@@ -1,5 +1,10 @@
-/*
- * This file implements Master node routing table computation for all AXIOM nodes
+/*!
+ * \file axiom_route_compute.c
+ *
+ * \version     v0.4
+ * \date        2016-05-03
+ *
+ * This file contains the implementation of routing table computation.
  */
 
 #include <stdio.h>
@@ -14,28 +19,22 @@
 #include "axiom_nic_api_user.h"
 
 
-/* At the end of the discovery algorithm,  Master node
- * (which knows the entire network topology) performs a
- * similar-Dijkstra algorithm in order to compute the routing
- * tables of all the nodes of the network.
- * This algorithm assumes that each link between two nodes has
- * an unitary cost (the shortes path has to be computed) and it
- * starts from Mastr neighbours e than to their neighbours, etc...
- * In computing Y node routing table, each time an  Y neighbour
- * node or an Y neighbours connected node is found, the Master
- * immediately add this X node into the Y routing table; that is
- *  the first time the Master found an Y connected node it adds
- * the node into the routing table.
- * Since the nodes are added into the routing table from Master
- * to the increasing neighborhood level, the shortest path from
- * Y to each network node is computed.
- * This algorithm computes only a single path between the nodes.
-*/
+/* At the end of the discovery algorithm,  Master node (which knows the entire
+ * network topology) performs a similar-Dijkstra algorithm in order to compute
+ * the routing tables of all the nodes of the network.  This algorithm assumes
+ * that each link between two nodes has an unitary cost (the shortes path has to
+ * be computed) and it starts from Mastr neighbours e than to their neighbours,
+ * etc...  In computing Y node routing table, each time an  Y neighbour node or
+ * an Y neighbours connected node is found, the Master immediately add this X
+ * node into the Y routing table; that is the first time the Master found an Y
+ * connected node it adds the node into the routing table.  Since the nodes are
+ * added into the routing table from Master to the increasing neighborhood
+ * level, the shortest path from Y to each network node is computed.  This
+ * algorithm computes only a single path between the nodes.
+ */
 
 
-/* This function initializes a node routing table: the node
-   is connected with no other node
-   It initializes fisrt and second level node neighbours tables too*/
+/* init a node routing table */
 static void
 init_node_routing_table(axiom_if_id_t rt[][AXIOM_MAX_NODES],
         axiom_if_id_t neighbour_table[][AXIOM_MAX_NODES])
@@ -54,9 +53,11 @@ init_node_routing_table(axiom_if_id_t rt[][AXIOM_MAX_NODES],
 
 }
 
-/* This function computes the first level neighbours of
-   'actual_node_id' node
-    Return the number of founded neighbours */
+/*
+ * This function computes the first level neighbours of
+ * 'actual_node_id' node.
+ * Return the number of founded neighbours
+ */
 static uint8_t
 compute_first_level_neighbours(
         axiom_node_id_t actual_node_id,
@@ -103,12 +104,11 @@ compute_first_level_neighbours(
     return neighbours_counter;
 }
 
-/* This function is executed by the Master node in order to
- * compute all nodes routing table.*/
+
 void
 axiom_compute_routing_tables(axiom_node_id_t topology[][AXIOM_MAX_INTERFACES],
         axiom_if_id_t routing_tables[][AXIOM_MAX_NODES],
-        axiom_node_id_t number_of_total_nodes)
+        axiom_node_id_t total_nodes)
 {
     /* ID of the node of of which the master is computing the routing table*/
     axiom_node_id_t actual_node_id;
@@ -122,7 +122,7 @@ axiom_compute_routing_tables(axiom_node_id_t topology[][AXIOM_MAX_INTERFACES],
     uint8_t neighbours_counter;
 
     /* for each node of the network */
-    for (actual_node_id = 0; actual_node_id < number_of_total_nodes; actual_node_id++)
+    for (actual_node_id = 0; actual_node_id < total_nodes; actual_node_id++)
     {
         /* Init 'actual_node_id' node routing table and first and second
            level 'actual_node_id' neighbours tables */
@@ -136,7 +136,7 @@ axiom_compute_routing_tables(axiom_node_id_t topology[][AXIOM_MAX_INTERFACES],
        do
        {
             /* Compute the second level neighbours*/
-           for (node_index = 0; node_index < number_of_total_nodes; node_index++)
+           for (node_index = 0; node_index < total_nodes; node_index++)
            {
                if (neighbour_table[0][node_index] == AXIOM_NULL_NODE)
                {
@@ -181,36 +181,7 @@ axiom_compute_routing_tables(axiom_node_id_t topology[][AXIOM_MAX_INTERFACES],
                    AXIOM_MAX_NODES*sizeof(axiom_node_id_t));
        /* exit from cycle when 'actual_node_id' routing table has
         * been completed with all the AXIOM_MAX_NODES - 1 nodes info */
-       } while (neighbours_counter < number_of_total_nodes - 1);
+       } while (neighbours_counter < total_nodes - 1);
     }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 

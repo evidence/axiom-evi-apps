@@ -1,3 +1,13 @@
+/*!
+ * \file axiom-whoami.c
+ *
+ * \version     v0.4
+ * \date        2016-05-03
+ *
+ * This file contains the implementation of axiom-whoami application.
+ *
+ * axiom-whoami prints the node id of the local axiom node
+ */
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>

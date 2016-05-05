@@ -1,5 +1,11 @@
-/*
- * This file implements AXIOM ping replay
+/*!
+ * \file axiom_pong.c
+ *
+ * \version     v0.4
+ * \date        2016-05-03
+ *
+ * This file contains the functions used in the axiom-init deamon to handle
+ * the axiom-ping/pong messages.
  */
 #include <stdio.h>
 #include <stdint.h>

@@ -1,6 +1,11 @@
-/*
- * This file implements AXIOM discovery and routing phase of
- * Master and Slaves nodes.
+/*!
+ * \file axiom_discovery_node.c
+ *
+ * \version     v0.4
+ * \date        2016-05-03
+ *
+ * This file contains the functions used in the axiom-init deamon to handle
+ * the discovery and routing messages for Master and Slaves nodes.
  */
 #include <stdio.h>
 #include <stdint.h>
@@ -16,8 +21,9 @@
 #include "axiom_discovery_protocol.h"
 #include "../axiom-init.h"
 
-static void print_topology(axiom_node_id_t tpl[][AXIOM_MAX_INTERFACES],
-        axiom_node_id_t number_of_total_nodes)
+static void
+print_topology(axiom_node_id_t tpl[][AXIOM_MAX_INTERFACES],
+        axiom_node_id_t total_nodes)
 {
     int i, j;
 
@@ -28,7 +34,7 @@ static void print_topology(axiom_node_id_t tpl[][AXIOM_MAX_INTERFACES],
     }
     printf("\n");
 
-    for (i = 0; i < number_of_total_nodes; i++) {
+    for (i = 0; i < total_nodes; i++) {
         printf("%d", i);
         for (j = 0; j < AXIOM_MAX_INTERFACES; j++) {
             printf("\t%u", tpl[i][j]);
@@ -79,13 +85,13 @@ axiom_discovery_master(axiom_dev_t *dev,
         axiom_if_id_t final_routing_table[AXIOM_MAX_NODES], int verbose)
 {
     axiom_msg_id_t ret;
-    axiom_node_id_t number_of_total_nodes = 0;
+    axiom_node_id_t total_nodes = 0;
     axiom_if_id_t routing_tables[AXIOM_MAX_NODES][AXIOM_MAX_NODES];
 
     IPRINTF(verbose, "MASTER: start discovery protocol");
 
     /* Discovery phase: discover the global topology */
-    ret = axiom_master_node_discovery(dev, topology, &number_of_total_nodes);
+    ret = axiom_master_node_discovery(dev, topology, &total_nodes);
 
     IPRINTF(verbose, "MASTER: end discovery protocol");
 
@@ -93,7 +99,7 @@ axiom_discovery_master(axiom_dev_t *dev,
     {
         IPRINTF(verbose, "MASTER: compute routing tables");
         /* compute each node routing table */
-        axiom_compute_routing_tables(topology, routing_tables, number_of_total_nodes);
+        axiom_compute_routing_tables(topology, routing_tables, total_nodes);
 
         /* copy its routing table */
         memcpy(final_routing_table, routing_tables[0], sizeof(axiom_if_id_t)*AXIOM_MAX_NODES);
@@ -101,7 +107,7 @@ axiom_discovery_master(axiom_dev_t *dev,
         IPRINTF(verbose, "MASTER: delivery routing tables");
 
         /* delivery of each node routing tables */
-        ret = axiom_delivery_routing_tables(dev, routing_tables, number_of_total_nodes);
+        ret = axiom_delivery_routing_tables(dev, routing_tables, total_nodes);
         if (ret == AXIOM_RET_ERROR)
         {
             EPRINTF("MASTER: axiom_delivery_routing_tables failed");
@@ -110,7 +116,7 @@ axiom_discovery_master(axiom_dev_t *dev,
         {
 
             IPRINTF(verbose, "MASTER: wait for all delivery reply");
-            ret = axiom_wait_rt_received(dev, number_of_total_nodes);
+            ret = axiom_wait_rt_received(dev, total_nodes);
             if (ret == AXIOM_RET_ERROR)
             {
                 EPRINTF("Master: axiom_wait_rt_received failed");
@@ -130,10 +136,10 @@ axiom_discovery_master(axiom_dev_t *dev,
     IPRINTF(verbose, "MASTER: end");
 
     /* print the final topology */
-    print_topology(topology, number_of_total_nodes);
+    print_topology(topology, total_nodes);
 
     /* print local routing table */
-    print_routing_table(dev, AXIOM_MASTER_ID, number_of_total_nodes-1);
+    print_routing_table(dev, AXIOM_MASTER_ID, total_nodes - 1);
 }
 
 /* Slave node code*/

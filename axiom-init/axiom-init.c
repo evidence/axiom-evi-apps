@@ -1,3 +1,14 @@
+/*!
+ * \file axiom-init.c
+ *
+ * \version     v0.4
+ * \date        2016-05-03
+ *
+ * This file contains the implementation of axiom-init deamon.
+ *
+ * axiom-init starts an axiom node in slave or master mode and handles all
+ * control messagges received on port 0.
+ */
 #include <pthread.h>
 #include <ctype.h>
 #include <stdio.h>

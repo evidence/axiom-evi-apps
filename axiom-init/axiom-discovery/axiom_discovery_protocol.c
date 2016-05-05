@@ -1,19 +1,22 @@
-/*
- * This file implements AXIOM NIC discovery phase
+/*!
+ * \file axiom_discovery_protocol.c
+ *
+ * \version     v0.4
+ * \date        2016-05-03
+ *
+ * This file contains the implementation of the axiom discovery phase.
  */
 #include <stdio.h>
 #include <stdint.h>
 #include <unistd.h>
 #include <sys/types.h>
 
-
 #include "axiom_discovery_protocol.h"
 #include "axiom_nic_discovery.h"
 
-/* Initializes the gloabl Topology matrix of a node:
- * initially, it kwnows that no node is connected */
+/* Initializes the gloabl Topology matrix of a node */
 static void
-init_topology_structure(axiom_node_id_t topology[][AXIOM_MAX_INTERFACES])
+axiom_topology_init(axiom_node_id_t topology[][AXIOM_MAX_INTERFACES])
 {
     int i,j;
 
@@ -27,34 +30,15 @@ init_topology_structure(axiom_node_id_t topology[][AXIOM_MAX_INTERFACES])
 }
 
 /* Codify the mask to set into the routing table */
-uint8_t
-axiom_codify_routing_mask(axiom_dev_t *dev, axiom_node_id_t node_id,
-        uint8_t interface_index)
+inline static uint8_t
+axiom_codify_routing_mask(axiom_if_id_t if_id)
 {
-    uint8_t b_mask;
-
-    axiom_get_routing(dev, node_id, &b_mask);
-    b_mask |= (uint8_t)(1 << interface_index);
-
-    return b_mask;
+    return (uint8_t)(1 << if_id);
 }
 
-/*
- * @brief This function implements the Master and Slave common part
- *          of the discover algorithm.
- * @param dev The axiom device private data pointer
- * @param next_id The id returned from the node which ends its
- *                discovery phase; this id is the id of the first
- *                node that has finished its discovery phase after
- *                the node that is exiting from this function
- *                was sent "START DISCOVERY" message to its neighbour.
- * @param topology matrix memorizing the each node partial topology.
- *          When all nodes have executed this function, the topology
- *          matrix of Master contatins the global topology of the
- *          network.
- *
- */
-static int discover_phase(axiom_dev_t *dev, axiom_node_id_t *next_id,
+/* Master and Slave common part of the discover algorithm */
+static int
+discover_phase(axiom_dev_t *dev, axiom_node_id_t *next_id,
         axiom_node_id_t topology[][AXIOM_MAX_INTERFACES])
 {
     axiom_if_id_t num_interface = 0;
@@ -172,7 +156,8 @@ static int discover_phase(axiom_dev_t *dev, axiom_node_id_t *next_id,
 
         /* Immediately update local routing table: next_id node is connceted
          * to local 'i' interface */
-        b_mask = axiom_codify_routing_mask(dev, *next_id, i);
+        axiom_get_routing(dev, *next_id, &b_mask);
+        b_mask |= axiom_codify_routing_mask(i);
         axiom_set_routing(dev, *next_id, b_mask);
 
         /* Update the topology data structure:  local 'i' interface is connected
@@ -263,7 +248,8 @@ static int discover_phase(axiom_dev_t *dev, axiom_node_id_t *next_id,
                 for (node_index = start_node_index; node_index <= (*next_id);
                         node_index++)
                 {
-                    b_mask = axiom_codify_routing_mask(dev, node_index, i);
+                    axiom_get_routing(dev, node_index, &b_mask);
+                    b_mask |= axiom_codify_routing_mask(i);
                     axiom_set_routing(dev, node_index, b_mask);
                 }
                 NDPRINTF("Node:%d TOPOLOGY\n", node_id);
@@ -280,14 +266,15 @@ static int discover_phase(axiom_dev_t *dev, axiom_node_id_t *next_id,
 }
 
 /* Master node Discovery Algorithm code */
-int axiom_master_node_discovery(axiom_dev_t *dev,
-                          axiom_node_id_t topology[][AXIOM_MAX_INTERFACES],
-                          axiom_node_id_t *number_of_total_nodes)
+int
+axiom_master_node_discovery(axiom_dev_t *dev,
+        axiom_node_id_t topology[][AXIOM_MAX_INTERFACES],
+        axiom_node_id_t *number_of_total_nodes)
 {
     axiom_node_id_t next_id = AXIOM_MASTER_ID;
     int ret;
 
-    init_topology_structure(topology);
+    axiom_topology_init(topology);
 
     /* sets its id to zero */
     axiom_set_node_id(dev, AXIOM_MASTER_ID);
@@ -298,11 +285,12 @@ int axiom_master_node_discovery(axiom_dev_t *dev,
     return ret;
 }
 
-/* Other nodes Discovery Algorithm code */
-int axiom_slave_node_discovery (axiom_dev_t *dev,
+/* Slave nodes Discovery Algorithm code */
+int
+axiom_slave_node_discovery (axiom_dev_t *dev,
         axiom_node_id_t topology[][AXIOM_MAX_INTERFACES],
-        axiom_node_id_t *node_id,
-        axiom_if_id_t first_interface, axiom_payload_t first_msg)
+        axiom_node_id_t *node_id, axiom_if_id_t first_interface,
+        axiom_payload_t first_msg)
 {
     axiom_node_id_t next_id;
     axiom_discovery_cmd_t msg_cmd ;
@@ -324,7 +312,7 @@ int axiom_slave_node_discovery (axiom_dev_t *dev,
     }
 
     /* init local topolgy structure */
-    init_topology_structure(topology);
+    axiom_topology_init(topology);
 
     /* reset id when discovery phase starts */
     *node_id = 0;
@@ -335,7 +323,8 @@ int axiom_slave_node_discovery (axiom_dev_t *dev,
 
     /* Immediately update local routing table: src_node_id node is connceted to
      * local 'src_interface' interface */
-    b_mask = axiom_codify_routing_mask(dev, src_node_id, src_interface);
+    axiom_get_routing(dev, src_node_id, &b_mask);
+    b_mask = axiom_codify_routing_mask(src_interface);
     axiom_set_routing(dev, src_node_id, b_mask);
 
     /* If I have a node _id */

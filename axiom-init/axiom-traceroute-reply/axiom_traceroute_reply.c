@@ -1,5 +1,11 @@
-/*
- * This file implements the axiom-traceroute-reply application
+/*!
+ * \file axiom_traceroute_reply.c
+ *
+ * \version     v0.4
+ * \date        2016-05-03
+ *
+ * This file contains the functions used in the axiom-init deamon to handle
+ * the axiom-traceroute messages.
  */
 #include <stdio.h>
 #include <stdint.h>
@@ -17,11 +23,10 @@
 void
 axiom_traceroute_reply(axiom_dev_t *dev, axiom_if_id_t src,
         axiom_payload_t payload, int verbose) {
-    axiom_err_t err;
     axiom_err_t ret;
     axiom_if_id_t if_id;
     axiom_msg_id_t msg_err;
-    axiom_msg_id_t node_id;
+    axiom_node_id_t node_id;
     axiom_payload_t send_payload;
     axiom_traceroute_payload_t *recv_payload =
             ((axiom_traceroute_payload_t *) &payload);
@@ -52,8 +57,8 @@ axiom_traceroute_reply(axiom_dev_t *dev, axiom_if_id_t src,
     node_id = axiom_get_node_id(dev);
     if (node_id != recv_payload->dst_id) {
         /* get interface to reach next hop for recv_payload->dst_id node */
-        err = axiom_next_hop(dev, recv_payload->dst_id, &if_id);
-        if (err == AXIOM_RET_ERROR) {
+        ret = axiom_next_hop(dev, recv_payload->dst_id, &if_id);
+        if (ret == AXIOM_RET_ERROR) {
             EPRINTF("axiom_next_hop error");
             return;
         }

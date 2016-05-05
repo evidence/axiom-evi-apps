@@ -1,3 +1,13 @@
+/*!
+ * \file axiom-info.c
+ *
+ * \version     v0.4
+ * \date        2016-05-03
+ *
+ * This file contains the implementation of axiom-info application.
+ *
+ * axiom-info prints information about the AXIOM NIC
+ */
 #include <getopt.h>
 #include <stdio.h>
 #include <stdint.h>
@@ -41,7 +51,7 @@ usage(void)
     printf("-h, --help                  print this help\n\n");
 }
 
-void
+static void
 print_nodeid(axiom_dev_t *dev)
 {
     axiom_node_id_t nodeid;
@@ -51,7 +61,7 @@ print_nodeid(axiom_dev_t *dev)
     printf("\tnode id = %u\n\n", nodeid);
 }
 
-void
+static void
 print_ifnumber(axiom_dev_t *dev)
 {
     axiom_err_t err;
@@ -65,7 +75,7 @@ print_ifnumber(axiom_dev_t *dev)
     printf("\tnumber of interfaces = %u\n\n", if_number);
 }
 
-void
+static void
 print_ifinfo(axiom_dev_t *dev, axiom_if_id_t if_id)
 {
     axiom_err_t err;
@@ -98,7 +108,7 @@ print_ifinfo(axiom_dev_t *dev, axiom_if_id_t if_id)
     printf("\n");
 }
 
-void
+static void
 print_ifinfo_all(axiom_dev_t *dev)
 {
     axiom_err_t err;
@@ -115,7 +125,7 @@ print_ifinfo_all(axiom_dev_t *dev)
     }
 }
 
-void
+static void
 print_routing_table(axiom_dev_t *dev, int all_nodes)
 {
     axiom_err_t err;
@@ -154,7 +164,7 @@ print_routing_table(axiom_dev_t *dev, int all_nodes)
     printf("\n");
 }
 
-void
+static void
 print_ni_status(axiom_dev_t *dev)
 {
     uint32_t status;
@@ -169,7 +179,7 @@ print_ni_status(axiom_dev_t *dev)
 }
 
 
-void
+static void
 print_ni_control(axiom_dev_t *dev)
 {
     uint32_t control;
