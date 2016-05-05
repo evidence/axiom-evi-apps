@@ -1,6 +1,6 @@
 AXIOM_INCLUDE := ../../../axiom-evi-nic/include
 
-OBJS := axiom_discovery_node.o axiom_discovery_protocol.o axiom_route_compute.o axiom_route_delivery.o axiom_route_set.o
+OBJS := axiom_discovery_node.o axiom_discovery_protocol.o axiom_routing.o
 HEADERS := $(AXIOM_INCLUDE)/*.h
 CLEANFILES = *.o
 
@@ -22,16 +22,11 @@ CC := ${CCPREFIX}gcc
 
 all: $(OBJS)
 
-axiom_discovery_node.o: axiom_discovery_node.c ../axiom-init.h axiom_route_compute.h axiom_route_delivery.h axiom_route_set.h axiom_discovery_protocol.h $(HEADERS)
+axiom_discovery_node.o: axiom_discovery_node.c ../axiom-init.h axiom_routing.h axiom_discovery_protocol.h $(HEADERS)
 
 axiom_discovery_protocol.o: axiom_discovery_protocol.c axiom_discovery_protocol.h $(HEADERS)
 
-axiom_route_compute.o: axiom_route_compute.c axiom_discovery_protocol.h axiom_route_compute.h $(HEADERS)
-
-axiom_route_delivery.o: axiom_route_delivery.c axiom_route_delivery.h axiom_discovery_protocol.h axiom_route_compute.h $(HEADERS)
-
-axiom_route_set.o: axiom_route_set.c axiom_discovery_protocol.h axiom_route_compute.h axiom_route_set.h $(HEADERS)
-
+axiom_routing.o: axiom_routing.c axiom_discovery_protocol.h axiom_routing.h $(HEADERS)
 
 clean:
 	rm -rf $(CLEANFILES)

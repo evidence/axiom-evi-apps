@@ -1,13 +1,29 @@
-#ifndef ROUTE_DELIVERY_H
-#define ROUTE_DELIVERY_H
+#ifndef AXIOM_ROUTING_H
+#define AXIOM_ROUTING_H
 /*!
- * \file axiom_route_delivery.h
+ * \file axiom_routing.h
  *
  * \version     v0.4
  * \date        2016-05-03
  *
- * This file contains the defines and prototypes of routing table delivery.
+ * This file contains the defines and prototypes of axiom routing.
  */
+
+
+#define AXIOM_NULL_RT_INTERFACE  0
+
+/*!
+ * \brief This function is executed by the Master node in order to compute the
+ *        routing tables of all nodes.
+ *
+ * \param topology              Network topology discovered
+ * \param[out] routing_tables   Routing table for all nodes
+ * \param total_nodes           Number of nodes into network
+ */
+void
+axiom_compute_routing_tables(axiom_node_id_t topology[][AXIOM_MAX_INTERFACES],
+        axiom_if_id_t routing_tables[][AXIOM_MAX_NODES],
+        axiom_node_id_t total_nodes);
 
 /*!
  * \brief This function is executed by the Master node in order to
@@ -52,4 +68,22 @@ axiom_receive_routing_tables(axiom_dev_t *dev, axiom_node_id_t node_id,
         axiom_if_id_t routing_table[AXIOM_MAX_NODES],
         axiom_node_id_t *max_node_id);
 
-#endif /* !ROUTE_DELIVERY_H */
+/*!
+ * \brief This function sets the routing table and forwards the commands to the
+ *        neighbours.
+ *
+ * \param dev                   The axiom device private data pointer
+ * \param routing_table         Routing table to set
+ *
+ * \return AXIOM_RET_OK on success, otherwise AXIOM_RET_ERROR
+ *
+ * This function is executed initially by the Master for communicating to the
+ * neighbours to set the previously sent routing table.  Each slave node, when
+ * it receives this message, sets the hardware routing table and forwards
+ * message to its neighbours.
+ */
+axiom_err_t
+axiom_set_routing_table(axiom_dev_t *dev,
+        axiom_if_id_t routing_table[AXIOM_MAX_NODES]);
+
+#endif /* !AXIOM_ROUTING_H */

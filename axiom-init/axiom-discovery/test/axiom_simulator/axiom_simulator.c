@@ -10,7 +10,7 @@
 #include <sys/socket.h>
 
 #include "axiom_simulator.h"
-#include "axiom_route_compute.h"
+#include "axiom_routing.h"
 
 
 pthread_key_t node_info_key;      /* thread private data */

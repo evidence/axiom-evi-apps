@@ -15,9 +15,7 @@
 
 #include "axiom_nic_packets.h"
 #include "axiom_nic_discovery.h"
-#include "axiom_route_compute.h"
-#include "axiom_route_delivery.h"
-#include "axiom_route_set.h"
+#include "axiom_routing.h"
 #include "axiom_discovery_protocol.h"
 #include "../axiom-init.h"
 

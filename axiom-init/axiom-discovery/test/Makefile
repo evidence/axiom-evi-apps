@@ -24,17 +24,17 @@ CC := ${CCPREFIX}gcc
 
 all: $(APPS)
 
-axsw_discovery_protocol_test: axiom_discovery_protocol_test.o $(AXIOM_SIM)/axiom_simulator.o $(AXIOM_SIM)/axiom_nic_simulator.o $(AXIOM_DISCOVERY)/axiom_discovery_node.o $(AXIOM_DISCOVERY)/axiom_discovery_protocol.o $(AXIOM_DISCOVERY)/axiom_route_compute.o $(AXIOM_DISCOVERY)/axiom_route_delivery.o $(AXIOM_DISCOVERY)/axiom_route_set.o $(AXIOM_SIM)/axiom_net_switch.o
+axsw_discovery_protocol_test: axiom_discovery_protocol_test.o $(AXIOM_SIM)/axiom_simulator.o $(AXIOM_SIM)/axiom_nic_simulator.o $(AXIOM_DISCOVERY)/axiom_discovery_node.o $(AXIOM_DISCOVERY)/axiom_discovery_protocol.o $(AXIOM_DISCOVERY)/axiom_routing.o $(AXIOM_SIM)/axiom_net_switch.o
 	$(CC) -o $@ $(CFLAGS) $^ $(LDLIBS)
 
-axiom_discovery_protocol_test: axiom_discovery_protocol_test.o $(AXIOM_SIM)/axiom_simulator.o $(AXIOM_SIM)/axiom_nic_simulator.o $(AXIOM_DISCOVERY)/axiom_discovery_node.o  $(AXIOM_DISCOVERY)/axiom_discovery_protocol.o $(AXIOM_DISCOVERY)/axiom_route_compute.o $(AXIOM_DISCOVERY)/axiom_route_delivery.o $(AXIOM_DISCOVERY)/axiom_route_set.o $(AXIOM_SIM)/axiom_net_socketpair.o
+axiom_discovery_protocol_test: axiom_discovery_protocol_test.o $(AXIOM_SIM)/axiom_simulator.o $(AXIOM_SIM)/axiom_nic_simulator.o $(AXIOM_DISCOVERY)/axiom_discovery_node.o  $(AXIOM_DISCOVERY)/axiom_discovery_protocol.o $(AXIOM_DISCOVERY)/axiom_routing.o $(AXIOM_SIM)/axiom_net_socketpair.o
 	$(CC) -o $@ $(CFLAGS) $^ $(LDLIBS)
 
 
 axiom_discovery_protocol_test.o: axiom_discovery_protocol_test.c $(AXIOM_SIM)/axiom_simulator.h $(AXIOM_DISCOVERY)/axiom_discovery_protocol.h $(HEADERS)
 
 
-$(AXIOM_SIM)/axiom_simulator.o: $(AXIOM_SIM)/axiom_simulator.c $(AXIOM_SIM)/axiom_simulator.h $(AXIOM_DISCOVERY)/axiom_route_compute.h $(HEADERS)
+$(AXIOM_SIM)/axiom_simulator.o: $(AXIOM_SIM)/axiom_simulator.c $(AXIOM_SIM)/axiom_simulator.h $(AXIOM_DISCOVERY)/axiom_routing.h $(HEADERS)
 
 $(AXIOM_SIM)/axiom_net_socketpair.o: $(AXIOM_SIM)/axiom_net_socketpair.c $(AXIOM_SIM)/axiom_net.h $(HEADERS)
 
