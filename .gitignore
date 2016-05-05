@@ -4,8 +4,8 @@
 axiom-recv-small/axiom-recv-small
 axiom-send-small/axiom-send-small
 axiom-whoami/axiom-whoami
-axiom-init/axiom-discovery/axsw_discovery_protocol_test
-axiom-init/axiom-discovery/axiom_discovery_protocol_test
+axiom-init/axiom-discovery/test/axiom_discovery_protocol_test
+axiom-init/axiom-discovery/test/axsw_discovery_protocol_test
 axiom-init/axiom-init
 axiom-info/axiom-info
 axiom-ping-reply/axiom-ping-reply
