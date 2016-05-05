@@ -1,7 +1,7 @@
 /*!
  * \file axiom-send-small.c
  *
- * \version     v0.4
+ * \version     v0.5
  * \date        2016-05-03
  *
  * This file contains the implementation of axiom-send-small application.
