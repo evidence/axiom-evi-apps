@@ -4,14 +4,14 @@
 This repository contains the following user space application:
 
  * axiom-init
-    + runs the discovery algorithm, sets the routing table and handles control messages
+    + run the discovery algorithm, sets the routing table and handles control messages
 ```
         example:
         in n-1 nodes:           axiom-init &
         in 1 randomly node:     axiom-init -m &
 ```
  * axiom-info
-    + prints informations (node-id, interfaces, routing, etc.) about AXIOM NIC
+    + print informations (node-id, interfaces, routing, etc.) about AXIOM NIC
 ```
         example:
         # print all information
@@ -26,7 +26,7 @@ This repository contains the following user space application:
         axiom-info -r
 ```
  * axiom-whoami
-     + prints the node-id set after the discovery phase
+     + print the node-id set after the discovery phase
 ```
         example:
         axiom-whoami
@@ -54,14 +54,14 @@ This repository contains the following user space application:
         axiom-netperf -d 3 -l 2M
 ```
  * axiom-traceroute
-    + prints the hops needed to reach a specified target node
+    + print the hops needed to reach a specified target node
 ```
         example:
         # Print the hops needed to reach the node 1
         axiom-traceroute -d 1
 ```
  * axiom-[send|recv]-small
-     + sends/receives Axiom RAW SMALL data to/from a node
+     + send/receive Axiom RAW SMALL data to/from a node
 ```
         examples:
         # receive RAW SMALL message
