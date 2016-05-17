@@ -167,7 +167,7 @@ main(int argc, char **argv)
     payload.packet_id = 0;
     while (!sigint_received &&  (num_ping > 0)) {
         struct timespec start_ts, end_ts, diff_ts;
-        axiom_flag_t flag = AXIOM_SMALL_FLAG_DATA;
+        axiom_type_t type = AXIOM_SMALL_TYPE_DATA;
         int retry;
 
         IPRINTF(verbose,"[node %u] sending ping message...\n", node_id);
@@ -176,7 +176,7 @@ main(int argc, char **argv)
         payload.command = AXIOM_CMD_PING;
         payload.packet_id = payload.packet_id + 1;
         send_ret =  axiom_send_small(dev, (axiom_node_id_t)dst_id,
-                remote_port, flag, (axiom_payload_t*)&payload);
+                remote_port, type, (axiom_payload_t*)&payload);
         if (send_ret == AXIOM_RET_ERROR) {
             EPRINTF("send error");
             goto err;
@@ -200,7 +200,7 @@ main(int argc, char **argv)
 #ifndef AXIOM_NO_TX
             /* receive a ping reply (pong) */
             recv_ret =  axiom_recv_small(dev, &src_id, (axiom_port_t *)&recv_port,
-                    &flag, (axiom_payload_t*)&recv_payload);
+                    &type, (axiom_payload_t*)&recv_payload);
 #else
             usleep(1);
 #endif

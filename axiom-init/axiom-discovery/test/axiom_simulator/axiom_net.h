@@ -46,7 +46,7 @@ axiom_net_connect_status(axiom_dev_t *dev, axiom_if_id_t if_number);
  */
 axiom_msg_id_t
 axiom_net_send_small_neighbour(axiom_dev_t *dev,
-        axiom_if_id_t src_interface, axiom_port_t port, axiom_flag_t flag,
+        axiom_if_id_t src_interface, axiom_port_t port, axiom_type_t type,
         axiom_payload_t *payload);
 
 /*
@@ -54,38 +54,38 @@ axiom_net_send_small_neighbour(axiom_dev_t *dev,
  * @param dev The axiom device private data pointer
  * @param dest_node_id Receiver node identification
  * @param port port the small message
- * @param flag flag the small message
+ * @param type type the small message
  * @param payload Data to receive
  * return Returns ...
  */
 axiom_msg_id_t
 axiom_net_send_small(axiom_dev_t *dev, axiom_if_id_t dest_node_id,
-        axiom_port_t port, axiom_flag_t flag, axiom_payload_t *payload);
+        axiom_port_t port, axiom_type_t type, axiom_payload_t *payload);
 
 /*
  * @brief This function receives small neighbour data.
  * @param dev The axiom device private data pointer
  * @param src_interface The interface on which the message is recevied
  * @param port port of the small message
- * @param flag flags of the small message
+ * @param type type of the small message
  * @param payload data received
  * @return Returns -1 on error!
  */
 axiom_msg_id_t
 axiom_net_recv_small_neighbour(axiom_dev_t *dev, axiom_node_id_t *src_interface,
-        axiom_port_t *port, axiom_flag_t *flag, axiom_payload_t *payload);
+        axiom_port_t *port, axiom_type_t *type, axiom_payload_t *payload);
 
 /*
  * @brief This function receives small data.
  * @param dev The axiom devive private data pointer
  * @param src_node_id The node which has sent the received message
  * @param port port of the small message
- * @param flag flags of the small message
+ * @param type type of the small message
  * @param payload data received
  * @return Returns -1 on error!
  */
 axiom_msg_id_t
 axiom_net_recv_small(axiom_dev_t *dev, axiom_node_id_t *src_node_id,
-        axiom_port_t *port, axiom_flag_t *flag, axiom_payload_t *payload);
+        axiom_port_t *port, axiom_type_t *type, axiom_payload_t *payload);
 
 #endif /* !AXIOM_NET_h */

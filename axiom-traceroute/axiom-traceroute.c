@@ -42,12 +42,12 @@ usage(void)
 
 static int
 recv_tracereoute_reply(axiom_dev_t *dev, axiom_node_id_t *recv_node,
-                       axiom_port_t *port, axiom_flag_t *flag,
+                       axiom_port_t *port, axiom_type_t *type,
                        axiom_traceroute_payload_t *recv_payload)
 {
     axiom_msg_id_t msg_err;
 
-    msg_err =  axiom_recv_small(dev, recv_node, port, flag,
+    msg_err =  axiom_recv_small(dev, recv_node, port, type,
             (axiom_payload_t*)recv_payload);
 
     if (msg_err == AXIOM_RET_ERROR)
@@ -74,7 +74,7 @@ main(int argc, char **argv)
     axiom_err_t err;
     axiom_msg_id_t msg_err, node_id;
     axiom_port_t port;
-    axiom_flag_t flag;
+    axiom_type_t type;
     axiom_traceroute_payload_t payload, recv_payload;
     uint8_t received_reply = 0, expected_reply = 0;
     int dest_node_ok = 0;
@@ -149,7 +149,7 @@ main(int argc, char **argv)
     printf("Node %u, start traceroute to node %u, %d hops max\n", node_id,
             dest_node, AXIOM_MAX_NODES);
 
-    flag = AXIOM_SMALL_FLAG_NEIGHBOUR;
+    type = AXIOM_SMALL_TYPE_NEIGHBOUR;
     port = AXIOM_SMALL_PORT_INIT;
     payload.command = AXIOM_CMD_TRACEROUTE;
     payload.src_id = node_id;
@@ -157,7 +157,7 @@ main(int argc, char **argv)
     payload.step = 0;
 
     /* send initial small neighbour traceroute message */
-    msg_err = axiom_send_small(dev, if_id, port, flag,
+    msg_err = axiom_send_small(dev, if_id, port, type,
             (axiom_payload_t *)&payload);
 
     if (msg_err == AXIOM_RET_ERROR)
@@ -170,7 +170,7 @@ main(int argc, char **argv)
     do
     {
         recv_err = recv_tracereoute_reply(dev, &recv_node, &port,
-                &flag, &recv_payload);
+                &type, &recv_payload);
         if (recv_err == -1)
         {
             goto err;

@@ -95,11 +95,11 @@ main(int argc, char **argv)
 
     while(run) {
         axiom_node_id_t src;
-        axiom_flag_t flag;
+        axiom_type_t type;
         axiom_init_cmd_t cmd;
         axiom_payload_t payload;
 
-        ret = axiom_recv_small_init(dev, &src, &flag, &cmd, &payload);
+        ret = axiom_recv_small_init(dev, &src, &type, &cmd, &payload);
         if (ret == AXIOM_RET_ERROR) {
             EPRINTF("error receiving message");
             break;

@@ -32,13 +32,13 @@ typedef struct axiom_net {
  * @param dev The axiom device private data pointer
  * @param dest_node_id Receiver node identification
  * @param port port the small message
- * @param flag flag the small message
+ * @param type type the small message
  * @param payload Data to receive
  * return Returns ...
  */
 static axiom_msg_id_t
 send_from_master_to_slave(axiom_dev_t *dev, axiom_if_id_t dest_node_id,
-        axiom_port_t port, axiom_flag_t flag, axiom_payload_t *payload)
+        axiom_port_t port, axiom_type_t type, axiom_payload_t *payload)
 {
     axiom_small_msg_t message;
     ssize_t write_ret;
@@ -53,8 +53,8 @@ send_from_master_to_slave(axiom_dev_t *dev, axiom_if_id_t dest_node_id,
     uint8_t if_index;
 
     /* Header message */
-    message.header.tx.port_flag.field.port = port;
-    message.header.tx.port_flag.field.flag = flag;
+    message.header.tx.port_type.field.port = port;
+    message.header.tx.port_type.field.type = type;
     message.header.tx.dst = dest_node_id;
 
     /* Payload */
@@ -118,13 +118,13 @@ send_from_master_to_slave(axiom_dev_t *dev, axiom_if_id_t dest_node_id,
  * @param dev The axiom devive private data pointer
  * @param src_node_id The node which has sent the received message
  * @param port port of the small message
- * @param flag flags of the small message
+ * @param type type of the small message
  * @param payload data received
  * @return Returns -1 on error!
  */
 static axiom_msg_id_t
 recv_from_master_to_slave(axiom_dev_t *dev, axiom_node_id_t *src_node_id,
-        axiom_port_t *port, axiom_flag_t *flag, axiom_payload_t *payload)
+        axiom_port_t *port, axiom_type_t *type, axiom_payload_t *payload)
 {
     axiom_small_msg_t message;
     axiom_routing_payload_t rt_message;
@@ -182,13 +182,13 @@ recv_from_master_to_slave(axiom_dev_t *dev, axiom_node_id_t *src_node_id,
         {
             return AXIOM_RET_ERROR;
         }
-        if (message.header.rx.port_flag.field.port != AXIOM_SMALL_PORT_INIT)
+        if (message.header.rx.port_type.field.port != AXIOM_SMALL_PORT_INIT)
         {
             continue;
         }
         memcpy(&rt_message, &message.payload, sizeof(rt_message));
 
-        *port = message.header.rx.port_flag.field.port;
+        *port = message.header.rx.port_type.field.port;
         DPRINTF("routing: received on socket = %d for node %d: (%d,%d) "
                 "[I'm node %d]",
                 ((axiom_sim_node_args_t*)dev)->net->node_if_fd[if_index],
@@ -205,8 +205,8 @@ recv_from_master_to_slave(axiom_dev_t *dev, axiom_node_id_t *src_node_id,
             }
             /* I have to forward this info to recipient node*/
             axiom_net_send_small(dev, message.header.tx.dst,
-                    message.header.rx.port_flag.field.port,
-                    message.header.rx.port_flag.field.flag,
+                    message.header.rx.port_type.field.port,
+                    message.header.rx.port_type.field.type,
                     &(message.payload));
         }
         else if (rt_message.command == AXIOM_RT_CMD_END_INFO)
@@ -217,8 +217,8 @@ recv_from_master_to_slave(axiom_dev_t *dev, axiom_node_id_t *src_node_id,
             if (message.header.tx.dst != node_id)
             {
                 axiom_net_send_small(dev, message.header.tx.dst,
-                        message.header.rx.port_flag.field.port,
-                        message.header.rx.port_flag.field.flag,
+                        message.header.rx.port_type.field.port,
+                        message.header.rx.port_type.field.type,
                         &(message.payload));
             }
         }
@@ -243,13 +243,13 @@ recv_from_master_to_slave(axiom_dev_t *dev, axiom_node_id_t *src_node_id,
  * @param dev The axiom device private data pointer
  * @param dest_node_id Receiver node identification
  * @param port port the small message
- * @param flag flag the small message
+ * @param type type the small message
  * @param payload Data to receive
  * return Returns ...
  */
 static axiom_msg_id_t
 send_from_slave_to_master(axiom_dev_t *dev, axiom_if_id_t dest_node_id,
-        axiom_port_t port, axiom_flag_t flag, axiom_payload_t *payload)
+        axiom_port_t port, axiom_type_t type, axiom_payload_t *payload)
 {
     axiom_node_id_t node_id, node_index;
     int do_flag, num_nodes_after_me, i;
@@ -268,8 +268,8 @@ send_from_slave_to_master(axiom_dev_t *dev, axiom_if_id_t dest_node_id,
 
 
     /* Header message */
-    message.header.tx.port_flag.field.port = port;
-    message.header.tx.port_flag.field.flag = flag;
+    message.header.tx.port_type.field.port = port;
+    message.header.tx.port_type.field.type = type;
     message.header.tx.dst = dest_node_id;
 
     /* Payload */
@@ -348,8 +348,8 @@ send_from_slave_to_master(axiom_dev_t *dev, axiom_if_id_t dest_node_id,
 
             /* I have to forward this back to the Master */
             axiom_net_send_small(dev, message.header.tx.dst,
-                    message.header.rx.port_flag.field.port,
-                    message.header.rx.port_flag.field.flag,
+                    message.header.rx.port_type.field.port,
+                    message.header.rx.port_type.field.type,
                     &(message.payload));
         }
         else
@@ -367,12 +367,12 @@ send_from_slave_to_master(axiom_dev_t *dev, axiom_if_id_t dest_node_id,
  * @param dev The axiom devive private data pointer
  * @param src_node_id The node which has sent the received message
  * @param port port of the small message
- * @param flag flags of the small message
+ * @param type type of the small message
  * @param payload data received
  * @return Returns -1 on error!
  */
 static axiom_msg_id_t recv_from_slave_to_master (axiom_dev_t *dev,
-        axiom_node_id_t *src_node_id, axiom_port_t *port, axiom_flag_t *flag,
+        axiom_node_id_t *src_node_id, axiom_port_t *port, axiom_type_t *type,
         axiom_payload_t *payload)
 {
     axiom_node_id_t node_id, node_index;
@@ -410,7 +410,7 @@ static axiom_msg_id_t recv_from_slave_to_master (axiom_dev_t *dev,
         return AXIOM_RET_ERROR;
     }
 
-    *port = message.header.rx.port_flag.field.port;
+    *port = message.header.rx.port_type.field.port;
     *src_node_id = message.header.tx.dst;
     *payload = message.payload;
 
@@ -552,20 +552,20 @@ axiom_net_connect_status(axiom_dev_t *dev, axiom_if_id_t if_number)
  * @param dev The axiom device private data pointer
  * @param src_interface Sender interface identification
  * @param port port the small message
- * @param flag flag the small message
+ * @param type type the small message
  * @param payload Data to send
  * return Returns ...
  */
 axiom_msg_id_t
 axiom_net_send_small_neighbour(axiom_dev_t *dev, axiom_if_id_t src_interface,
-        axiom_port_t port, axiom_flag_t flag, axiom_payload_t *payload)
+        axiom_port_t port, axiom_type_t type, axiom_payload_t *payload)
 {
     axiom_small_msg_t message;
     ssize_t write_ret;
 
     /* Header */
-    message.header.tx.port_flag.field.port = port;
-    message.header.tx.port_flag.field.flag = flag;
+    message.header.tx.port_type.field.port = port;
+    message.header.tx.port_type.field.type = type;
     message.header.tx.dst = src_interface;
 
     /* Payload */
@@ -588,13 +588,13 @@ axiom_net_send_small_neighbour(axiom_dev_t *dev, axiom_if_id_t src_interface,
  * @param dev The axiom device private data pointer
  * @param dest_node_id Receiver node identification
  * @param port port the small message
- * @param flag flag the small message
+ * @param type type the small message
  * @param payload Data to receive
  * return Returns ...
  */
 axiom_msg_id_t
 axiom_net_send_small(axiom_dev_t *dev, axiom_if_id_t dest_node_id,
-        axiom_port_t port, axiom_flag_t flag, axiom_payload_t *payload)
+        axiom_port_t port, axiom_type_t type, axiom_payload_t *payload)
 {
     axiom_msg_id_t ret;
 
@@ -602,13 +602,13 @@ axiom_net_send_small(axiom_dev_t *dev, axiom_if_id_t dest_node_id,
     {
         /* management of messages sent from MASTER to all nodes with each node
            routing table*/
-        ret = send_from_master_to_slave(dev, dest_node_id, port, flag, payload);
+        ret = send_from_master_to_slave(dev, dest_node_id, port, type, payload);
     }
     else
     {
         /* management of messages reply from Slave to Master to confirm
          * the receiption of its the routing table */
-        ret = send_from_slave_to_master(dev, dest_node_id, port, flag, payload);
+        ret = send_from_slave_to_master(dev, dest_node_id, port, type, payload);
     }
 
     return ret;
@@ -620,13 +620,13 @@ axiom_net_send_small(axiom_dev_t *dev, axiom_if_id_t dest_node_id,
  * @param dev The axiom device private data pointer
  * @param src_interface The interface on which the message is recevied
  * @param port port of the small message
- * @param flag flags of the small message
+ * @param type type of the small message
  * @param payload data received
  * @return Returns -1 on error!
  */
 axiom_msg_id_t
 axiom_net_recv_small_neighbour(axiom_dev_t *dev, axiom_node_id_t *src_interface,
-        axiom_port_t *port, axiom_flag_t *flag, axiom_payload_t *payload)
+        axiom_port_t *port, axiom_type_t *type, axiom_payload_t *payload)
 {
     axiom_small_msg_t message;
     struct pollfd fds[AXIOM_MAX_INTERFACES];
@@ -686,8 +686,8 @@ axiom_net_recv_small_neighbour(axiom_dev_t *dev, axiom_node_id_t *src_interface,
 
             /* index of the interface from which I have received */
             *src_interface = i;
-            *port = message.header.rx.port_flag.field.port;
-            *flag = message.header.rx.port_flag.field.flag;
+            *port = message.header.rx.port_type.field.port;
+            *type = message.header.rx.port_type.field.type;
 
             *payload = message.payload;
 
@@ -703,13 +703,13 @@ axiom_net_recv_small_neighbour(axiom_dev_t *dev, axiom_node_id_t *src_interface,
  * @param dev The axiom devive private data pointer
  * @param src_node_id The node which has sent the received message
  * @param port port of the small message
- * @param flag flags of the small message
+ * @param type type of the small message
  * @param payload data received
  * @return Returns -1 on error!
  */
 axiom_msg_id_t
 axiom_net_recv_small(axiom_dev_t *dev, axiom_node_id_t *src_node_id,
-        axiom_port_t *port, axiom_flag_t *flag, axiom_payload_t *payload)
+        axiom_port_t *port, axiom_type_t *type, axiom_payload_t *payload)
 {
     axiom_msg_id_t ret;
 
@@ -717,13 +717,13 @@ axiom_net_recv_small(axiom_dev_t *dev, axiom_node_id_t *src_node_id,
     {
         /* management of messages sent from MASTER to all nodes with each node
            routing table*/
-        ret = recv_from_master_to_slave(dev, src_node_id, port, flag, payload);
+        ret = recv_from_master_to_slave(dev, src_node_id, port, type, payload);
     }
     else
     {
         /* management of messages reply from Slave to Master to confirm
          * the receiption of its the routing table */
-        ret = recv_from_slave_to_master(dev, src_node_id, port, flag, payload);
+        ret = recv_from_slave_to_master(dev, src_node_id, port, type, payload);
     }
 
     return ret;

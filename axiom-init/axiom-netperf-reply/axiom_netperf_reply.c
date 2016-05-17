@@ -37,7 +37,7 @@ axiom_netperf_status_t status[AXIOM_MAX_NODES];
 
 static axiom_err_t
 axiom_send_uint64_small(axiom_dev_t *dev, axiom_node_id_t dst,
-        axiom_port_t port, axiom_flag_t flag, axiom_init_cmd_t cmd,
+        axiom_port_t port, axiom_type_t type, axiom_init_cmd_t cmd,
         uint64_t data)
 {
     axiom_msg_id_t msg_err;
@@ -52,7 +52,7 @@ axiom_send_uint64_small(axiom_dev_t *dev, axiom_node_id_t dst,
         payload.data = *((typeof(payload.data) *)&data_p[i]);
 
         /* send small neighbour traceroute message */
-        msg_err = axiom_send_small(dev, dst, port, flag,
+        msg_err = axiom_send_small(dev, dst, port, type,
                 (axiom_payload_t *)&payload);
         if (msg_err == AXIOM_RET_ERROR) {
             return msg_err;
@@ -136,7 +136,7 @@ axiom_netperf_reply(axiom_dev_t *dev, axiom_node_id_t src,
 
         /* send elapsed time to netperf application */
         err = axiom_send_uint64_small(dev, src, AXIOM_SMALL_PORT_NETUTILS,
-                AXIOM_SMALL_FLAG_DATA, AXIOM_CMD_NETPERF_END, elapsed_nsec);
+                AXIOM_SMALL_TYPE_DATA, AXIOM_CMD_NETPERF_END, elapsed_nsec);
         if (err == AXIOM_RET_ERROR)
         {
             EPRINTF("send back time error");

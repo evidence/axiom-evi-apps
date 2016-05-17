@@ -44,7 +44,7 @@ main(int argc, char **argv)
     axiom_node_id_t src_id, node_id;
     axiom_port_t port = 1, recv_port;
     int port_ok = 0, once = 0;
-    axiom_flag_t flag;
+    axiom_type_t type;
     axiom_payload_t payload;
     axiom_err_t err;
 
@@ -117,7 +117,7 @@ main(int argc, char **argv)
 
         /* receive a small message from port*/
         recv_ret =  axiom_recv_small(dev, &src_id, (axiom_port_t *)&recv_port,
-                &flag, &payload);
+                &type, &payload);
         if (recv_ret == AXIOM_RET_ERROR)
         {
             EPRINTF("receive error");
@@ -125,12 +125,12 @@ main(int argc, char **argv)
         }
 
         printf("[node %u] message received on port %u\n", node_id, recv_port);
-        if (flag & AXIOM_SMALL_FLAG_NEIGHBOUR) {
+        if (type == AXIOM_SMALL_TYPE_NEIGHBOUR) {
             printf("\t- local_interface = %u\n", src_id);
-            printf("\t- flag = %s\n", "NEIGHBOUR");
-        } else if (flag & AXIOM_SMALL_FLAG_DATA) {
+            printf("\t- type = %s\n", "NEIGHBOUR");
+        } else if (type == AXIOM_SMALL_TYPE_DATA) {
             printf("\t- source_node_id = %u\n", src_id);
-            printf("\t- flag = %s\n", "DATA");
+            printf("\t- type = %s\n", "DATA");
         }
         printf("\t- payload = %u\n", payload);
 

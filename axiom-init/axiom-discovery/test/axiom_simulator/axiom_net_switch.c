@@ -156,7 +156,7 @@ axiom_net_connect_status(axiom_dev_t *dev, axiom_if_id_t if_number)
  */
 axiom_msg_id_t
 axiom_net_send_small_neighbour(axiom_dev_t *dev, axiom_if_id_t src_interface,
-        axiom_port_t port, axiom_flag_t flag, axiom_payload_t *payload)
+        axiom_port_t port, axiom_type_t type, axiom_payload_t *payload)
 {
     axiom_small_msg_t message;
     axiom_small_eth_t small_eth;
@@ -164,8 +164,8 @@ axiom_net_send_small_neighbour(axiom_dev_t *dev, axiom_if_id_t src_interface,
     int ret;
 
     /* Header */
-    message.header.tx.port_flag.field.port = port;
-    message.header.tx.port_flag.field.flag = flag;
+    message.header.tx.port_type.field.port = port;
+    message.header.tx.port_type.field.type = type;
     message.header.tx.dst = src_interface;
     /* Payload */
     message.payload = *payload;
@@ -204,7 +204,7 @@ axiom_net_send_small_neighbour(axiom_dev_t *dev, axiom_if_id_t src_interface,
  */
 axiom_msg_id_t
 axiom_net_send_small(axiom_dev_t *dev, axiom_if_id_t dest_node_id,
-        axiom_port_t port, axiom_flag_t flag, axiom_payload_t *payload)
+        axiom_port_t port, axiom_type_t type, axiom_payload_t *payload)
 {
     axiom_small_msg_t message;
     axiom_small_eth_t small_eth;
@@ -217,8 +217,8 @@ axiom_net_send_small(axiom_dev_t *dev, axiom_if_id_t dest_node_id,
     }
 
     /* Header message */
-    message.header.tx.port_flag.field.port = port;
-    message.header.tx.port_flag.field.flag = flag;
+    message.header.tx.port_type.field.port = port;
+    message.header.tx.port_type.field.type = type;
     message.header.tx.dst = dest_node_id;
     /* Payload */
     message.payload= *payload;
@@ -255,14 +255,14 @@ axiom_net_send_small(axiom_dev_t *dev, axiom_if_id_t dest_node_id,
  * @param src_interface The source node id that sent the small data or local
  *               interface that received the small data
  * @param port port of the small message
- * @param flag flags of the small message
+ * @param type type of the small message
  * @param payload data received
  * @return Returns a unique positive message id on success, -1 otherwise.
  * XXX: the return type is unsigned!
  */
 axiom_msg_id_t
 axiom_net_recv_small_neighbour(axiom_dev_t *dev, axiom_node_id_t *src_interface,
-        axiom_port_t *port, axiom_flag_t *flag, axiom_payload_t *payload)
+        axiom_port_t *port, axiom_type_t *type, axiom_payload_t *payload)
 {
     axiom_small_eth_t small_eth;
     uint32_t axiom_msg_length;
@@ -303,8 +303,8 @@ axiom_net_recv_small_neighbour(axiom_dev_t *dev, axiom_node_id_t *src_interface,
 
         /* the switch puts the interface from which I have to receive */
         *src_interface = small_eth.small_msg.header.rx.src;
-        *port = small_eth.small_msg.header.rx.port_flag.field.port;
-        *flag = small_eth.small_msg.header.rx.port_flag.field.flag;
+        *port = small_eth.small_msg.header.rx.port_type.field.port;
+        *type = small_eth.small_msg.header.rx.port_type.field.type;
         /* payload */
         *payload = small_eth.small_msg.payload;
     }
@@ -317,13 +317,13 @@ axiom_net_recv_small_neighbour(axiom_dev_t *dev, axiom_node_id_t *src_interface,
  * @param dev The axiom devive private data pointer
  * @param src_node_id Sender node identification
  * @param port port of the small message
- * @param flag flags of the small message
+ * @param type type of the small message
  * @param payload Data to receive
  * return Returns ...
  */
 axiom_msg_id_t
 axiom_net_recv_small(axiom_dev_t *dev, axiom_node_id_t *src_node_id,
-        axiom_port_t *port, axiom_flag_t *flag, axiom_payload_t *payload)
+        axiom_port_t *port, axiom_type_t *type, axiom_payload_t *payload)
 {
     axiom_routing_payload_t rt_message;
     axiom_small_eth_t small_eth;
@@ -361,7 +361,7 @@ axiom_net_recv_small(axiom_dev_t *dev, axiom_node_id_t *src_node_id,
         }
         retry = 0;
 
-        if (small_eth.small_msg.header.rx.port_flag.field.port !=
+        if (small_eth.small_msg.header.rx.port_type.field.port !=
                 AXIOM_SMALL_PORT_INIT)
         {
             continue;
@@ -369,7 +369,7 @@ axiom_net_recv_small(axiom_dev_t *dev, axiom_node_id_t *src_node_id,
 
         memcpy(&rt_message, &small_eth.small_msg.payload, sizeof(rt_message));
 
-        *port = small_eth.small_msg.header.rx.port_flag.field.port;
+        *port = small_eth.small_msg.header.rx.port_type.field.port;
         DPRINTF("routing: received on socket = %d for node %d: (%d,%d) [I'm node %d]",
                 ((axiom_sim_node_args_t*)dev)->net->switch_fd,
                 small_eth.small_msg.header.tx.dst, rt_message.node_id,

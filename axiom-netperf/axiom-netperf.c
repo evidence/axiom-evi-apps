@@ -80,7 +80,7 @@ get_scale(char char_scale) {
 /* receive elapsed time from remote node */
 static axiom_err_t
 axiom_recv_uint64_small(axiom_dev_t *dev, axiom_node_id_t *src,
-        axiom_port_t *port, axiom_flag_t *flag, axiom_init_cmd_t cmd,
+        axiom_port_t *port, axiom_type_t *type, axiom_init_cmd_t cmd,
         uint64_t *data)
 {
     axiom_msg_id_t msg_err;
@@ -89,7 +89,7 @@ axiom_recv_uint64_small(axiom_dev_t *dev, axiom_node_id_t *src,
     uint8_t *data_p = ((uint8_t *)data);
 
     for (i = 0; i < sizeof(*data); i += sizeof(payload.data)) {
-        msg_err =  axiom_recv_small(dev, src, port, flag,
+        msg_err =  axiom_recv_small(dev, src, port, type,
                 (axiom_payload_t *)&payload);
         if (msg_err == AXIOM_RET_ERROR || cmd != payload.command) {
             return AXIOM_RET_ERROR;
@@ -108,7 +108,7 @@ main(int argc, char **argv)
     axiom_msg_id_t msg_err;
     axiom_node_id_t dest_node, src_node;
     axiom_port_t port;
-    axiom_flag_t flag;
+    axiom_type_t type;
     axiom_netperf_payload_t payload;
     struct timespec start_ts, end_ts, elapsed_ts;
     double tx_th, rx_th;
@@ -186,7 +186,7 @@ main(int argc, char **argv)
     payload.data = data_length;
     payload.offset = data_scale;
     msg_err = axiom_send_small(dev, dest_node, AXIOM_SMALL_PORT_INIT,
-            AXIOM_SMALL_FLAG_DATA, (axiom_payload_t *)&payload);
+            AXIOM_SMALL_TYPE_DATA, (axiom_payload_t *)&payload);
     if (msg_err == AXIOM_RET_ERROR) {
         EPRINTF("send error");
         goto err;
@@ -207,7 +207,7 @@ main(int argc, char **argv)
             sent_bytes += sizeof(axiom_small_msg_t)) {
         /* send netperf message */
         msg_err = axiom_send_small(dev, dest_node, AXIOM_SMALL_PORT_INIT,
-                AXIOM_SMALL_FLAG_DATA, (axiom_payload_t *)&payload);
+                AXIOM_SMALL_TYPE_DATA, (axiom_payload_t *)&payload);
         if (msg_err == AXIOM_RET_ERROR) {
             EPRINTF("send error");
             goto err;
@@ -234,7 +234,7 @@ main(int argc, char **argv)
 
     /* receive elapsed rx throughput time form dest_node */
     elapsed_rx_nsec = 0;
-    err = axiom_recv_uint64_small(dev, &src_node, &port, &flag,
+    err = axiom_recv_uint64_small(dev, &src_node, &port, &type,
             AXIOM_CMD_NETPERF_END, &elapsed_rx_nsec);
     if ((err == AXIOM_RET_ERROR) || (src_node != dest_node)) {
         EPRINTF("recv_elapsed_time error");
