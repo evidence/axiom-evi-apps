@@ -125,10 +125,10 @@ main(int argc, char **argv)
         }
 
         printf("[node %u] message received on port %u\n", node_id, recv_port);
-        if (type == AXIOM_SMALL_TYPE_NEIGHBOUR) {
+        if (type == AXIOM_TYPE_NEIGHBOUR) {
             printf("\t- local_interface = %u\n", src_id);
             printf("\t- type = %s\n", "NEIGHBOUR");
-        } else if (type == AXIOM_SMALL_TYPE_DATA) {
+        } else if (type == AXIOM_TYPE_RAW_DATA) {
             printf("\t- source_node_id = %u\n", src_id);
             printf("\t- type = %s\n", "DATA");
         }

@@ -48,7 +48,7 @@ main(int argc, char **argv)
     axiom_port_t port = 1;
     axiom_node_id_t dst_id;
     int port_ok = 0, dst_ok = 0, payload_ok = 0, to_neighbour = 0;
-    axiom_type_t type = AXIOM_SMALL_TYPE_DATA;
+    axiom_type_t type = AXIOM_TYPE_RAW_DATA;
     axiom_payload_t payload;
 
     int long_index =0;
@@ -146,7 +146,7 @@ main(int argc, char **argv)
     /* check neighbour parameter */
     if (to_neighbour == 1)
     {
-        type = AXIOM_SMALL_TYPE_NEIGHBOUR;
+        type = AXIOM_TYPE_NEIGHBOUR;
     }
 
 
@@ -180,10 +180,10 @@ main(int argc, char **argv)
     }
 
     printf("[node %u] message sent to port %u\n", node_id, port);
-    if (type == AXIOM_SMALL_TYPE_NEIGHBOUR) {
+    if (type == AXIOM_TYPE_NEIGHBOUR) {
         printf("\t- local_interface = %u\n", dst_id);
         printf("\t- type = %s\n", "NEIGHBOUR");
-    } else if (type == AXIOM_SMALL_TYPE_DATA) {
+    } else if (type == AXIOM_TYPE_RAW_DATA) {
         printf("\t- destination_node_id = %u\n", dst_id);
         printf("\t- type = %s\n", "DATA");
     }

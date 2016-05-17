@@ -186,7 +186,7 @@ main(int argc, char **argv)
     payload.data = data_length;
     payload.offset = data_scale;
     msg_err = axiom_send_small(dev, dest_node, AXIOM_SMALL_PORT_INIT,
-            AXIOM_SMALL_TYPE_DATA, (axiom_payload_t *)&payload);
+            AXIOM_TYPE_RAW_DATA, (axiom_payload_t *)&payload);
     if (msg_err == AXIOM_RET_ERROR) {
         EPRINTF("send error");
         goto err;
@@ -207,7 +207,7 @@ main(int argc, char **argv)
             sent_bytes += sizeof(axiom_small_msg_t)) {
         /* send netperf message */
         msg_err = axiom_send_small(dev, dest_node, AXIOM_SMALL_PORT_INIT,
-                AXIOM_SMALL_TYPE_DATA, (axiom_payload_t *)&payload);
+                AXIOM_TYPE_RAW_DATA, (axiom_payload_t *)&payload);
         if (msg_err == AXIOM_RET_ERROR) {
             EPRINTF("send error");
             goto err;

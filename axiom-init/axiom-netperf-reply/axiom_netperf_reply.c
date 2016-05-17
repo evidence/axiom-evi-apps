@@ -136,7 +136,7 @@ axiom_netperf_reply(axiom_dev_t *dev, axiom_node_id_t src,
 
         /* send elapsed time to netperf application */
         err = axiom_send_uint64_small(dev, src, AXIOM_SMALL_PORT_NETUTILS,
-                AXIOM_SMALL_TYPE_DATA, AXIOM_CMD_NETPERF_END, elapsed_nsec);
+                AXIOM_TYPE_RAW_DATA, AXIOM_CMD_NETPERF_END, elapsed_nsec);
         if (err == AXIOM_RET_ERROR)
         {
             EPRINTF("send back time error");

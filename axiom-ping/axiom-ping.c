@@ -167,7 +167,7 @@ main(int argc, char **argv)
     payload.packet_id = 0;
     while (!sigint_received &&  (num_ping > 0)) {
         struct timespec start_ts, end_ts, diff_ts;
-        axiom_type_t type = AXIOM_SMALL_TYPE_DATA;
+        axiom_type_t type = AXIOM_TYPE_RAW_DATA;
         int retry;
 
         IPRINTF(verbose,"[node %u] sending ping message...\n", node_id);

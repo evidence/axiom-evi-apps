@@ -339,7 +339,7 @@ void
 
     /* Wait for the neighbour AXIOM_DSCV_CMD_REQ_ID type message */
     do {
-        axiom_type_t type = AXIOM_SMALL_TYPE_NEIGHBOUR;
+        axiom_type_t type = AXIOM_TYPE_NEIGHBOUR;
         axiom_port_t port;
         axiom_err_t ret;
 

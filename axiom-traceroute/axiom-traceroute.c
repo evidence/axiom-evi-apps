@@ -149,7 +149,7 @@ main(int argc, char **argv)
     printf("Node %u, start traceroute to node %u, %d hops max\n", node_id,
             dest_node, AXIOM_MAX_NODES);
 
-    type = AXIOM_SMALL_TYPE_NEIGHBOUR;
+    type = AXIOM_TYPE_NEIGHBOUR;
     port = AXIOM_SMALL_PORT_INIT;
     payload.command = AXIOM_CMD_TRACEROUTE;
     payload.src_id = node_id;
