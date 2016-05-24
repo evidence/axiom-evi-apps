@@ -35,35 +35,6 @@ typedef struct axiom_netperf_status {
 /*! \brief axiom-netperf status array to handle all nodes */
 axiom_netperf_status_t status[AXIOM_MAX_NODES];
 
-static axiom_err_t
-axiom_send_uint64_small(axiom_dev_t *dev, axiom_node_id_t dst,
-        axiom_port_t port, axiom_type_t type, axiom_init_cmd_t cmd,
-        uint64_t data)
-{
-    axiom_msg_id_t msg_err;
-    axiom_netperf_payload_t payload;
-    uint8_t i;
-    uint8_t *data_p = ((uint8_t *)&data);
-
-    payload.command = cmd;
-
-    for (i = 0; i < sizeof(data); i += sizeof(payload.data)) {
-        payload.offset = i;
-        payload.data = *((typeof(payload.data) *)&data_p[i]);
-
-        /* send small neighbour traceroute message */
-        msg_err = axiom_send_small(dev, dst, port, type, sizeof(payload),
-                &payload);
-        if (msg_err == AXIOM_RET_ERROR) {
-            return msg_err;
-        }
-        DPRINTF("payload - offset: 0x%x data: 0x%x", payload.offset,
-                payload.data);
-    }
-
-    return AXIOM_RET_OK;
-}
-
 void
 axiom_netperf_reply(axiom_dev_t *dev, axiom_node_id_t src,
         axiom_init_payload_t *payload, int verbose)
@@ -81,8 +52,7 @@ axiom_netperf_reply(axiom_dev_t *dev, axiom_node_id_t src,
 
     if (recv_payload->command == AXIOM_CMD_NETPERF_START) {
         /* TODO: define a macro */
-        cur_status->expected_bytes = recv_payload->data <<
-            recv_payload->offset;
+        cur_status->expected_bytes = recv_payload->total_bytes;
         /* reset start time */
         //memset(&cur_status->start_ts, 0, sizeof(cur_status->start_ts));
         cur_status->received_bytes = 0;
@@ -119,6 +89,7 @@ axiom_netperf_reply(axiom_dev_t *dev, axiom_node_id_t src,
     if (cur_status->received_bytes >= cur_status->expected_bytes)
     {
         axiom_err_t err;
+        axiom_netperf_payload_t payload;
         struct timespec elapsed_ts;
         uint64_t elapsed_nsec;
         double rx_th;
@@ -134,10 +105,12 @@ axiom_netperf_reply(axiom_dev_t *dev, axiom_node_id_t src,
                 rx_th / 1024, (long long unsigned)elapsed_nsec);
 
         /* send elapsed time to netperf application */
-        err = axiom_send_uint64_small(dev, src, AXIOM_SMALL_PORT_NETUTILS,
-                AXIOM_TYPE_SMALL_DATA, AXIOM_CMD_NETPERF_END, elapsed_nsec);
-        if (err == AXIOM_RET_ERROR)
-        {
+        payload.command = AXIOM_CMD_NETPERF_END;
+        payload.total_bytes = cur_status->received_bytes;
+        payload.elapsed_time = elapsed_nsec;
+        err = axiom_send_small(dev, src, AXIOM_SMALL_PORT_NETUTILS,
+                AXIOM_TYPE_SMALL_DATA, sizeof(payload), &payload);
+        if (err == AXIOM_RET_ERROR) {
             EPRINTF("send back time error");
             return;
         }

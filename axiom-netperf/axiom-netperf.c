@@ -77,31 +77,6 @@ get_scale(char char_scale) {
     return scale;
 }
 
-/* receive elapsed time from remote node */
-static axiom_err_t
-axiom_recv_uint64_small(axiom_dev_t *dev, axiom_node_id_t *src,
-        axiom_port_t *port, axiom_type_t *type, axiom_init_cmd_t cmd,
-        uint64_t *data)
-{
-    axiom_msg_id_t msg_err;
-    axiom_netperf_payload_t payload;
-    uint8_t i;
-    uint8_t *data_p = ((uint8_t *)data);
-
-    for (i = 0; i < sizeof(*data); i += sizeof(payload.data)) {
-        axiom_payload_size_t payload_size = sizeof(axiom_netperf_payload_t);
-        msg_err =  axiom_recv_small(dev, src, port, type, &payload_size,
-                &payload);
-        if (msg_err == AXIOM_RET_ERROR || cmd != payload.command) {
-            return AXIOM_RET_ERROR;
-        }
-        *((typeof(payload.data) *)&data_p[payload.offset]) = payload.data;
-        DPRINTF("payload - offset: 0x%x data: 0x%x", payload.offset, payload.data);
-    }
-
-    return AXIOM_RET_OK;
-}
-
 int
 main(int argc, char **argv)
 {
@@ -111,6 +86,7 @@ main(int argc, char **argv)
     axiom_port_t port;
     axiom_type_t type;
     axiom_netperf_payload_t payload;
+    axiom_payload_size_t payload_size;
     struct timespec start_ts, end_ts, elapsed_ts;
     double tx_th, rx_th;
     int dest_node_ok = 0, err, ret, long_index, opt;
@@ -184,8 +160,7 @@ main(int argc, char **argv)
 
     /* send start message */
     payload.command = AXIOM_CMD_NETPERF_START;
-    payload.data = data_length;
-    payload.offset = data_scale;
+    payload.total_bytes = total_bytes;
     msg_err = axiom_send_small(dev, dest_node, AXIOM_SMALL_PORT_INIT,
             AXIOM_TYPE_SMALL_DATA, sizeof(payload), &payload);
     if (msg_err == AXIOM_RET_ERROR) {
@@ -235,12 +210,16 @@ main(int argc, char **argv)
 
     /* receive elapsed rx throughput time form dest_node */
     elapsed_rx_nsec = 0;
-    err = axiom_recv_uint64_small(dev, &src_node, &port, &type,
-            AXIOM_CMD_NETPERF_END, &elapsed_rx_nsec);
-    if ((err == AXIOM_RET_ERROR) || (src_node != dest_node)) {
+    payload_size = sizeof(payload);
+    err =  axiom_recv_small(dev, &src_node, &port, &type, &payload_size,
+            &payload);
+    if (err == AXIOM_RET_ERROR || (src_node != dest_node) ||
+            payload.command != AXIOM_CMD_NETPERF_END) {
         EPRINTF("recv_elapsed_time error");
         goto err;
     }
+
+    elapsed_rx_nsec = payload.elapsed_time;
 
     tx_th = (double)(sent_bytes / nsec2sec(elapsed_nsec));
     rx_th = (double)(sent_bytes / nsec2sec(elapsed_rx_nsec));
