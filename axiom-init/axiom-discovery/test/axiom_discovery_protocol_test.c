@@ -22,14 +22,14 @@
 #include "axiom_net.h"
 #include "axiom_nic_discovery.h"
 
-axiom_sim_node_args_t axiom_nodes[AXIOM_MAX_NODES];
+axiom_sim_node_args_t axiom_nodes[AXIOM_NODES_MAX];
 
 axiom_sim_topology_t final_topology = {
-    .num_nodes = AXIOM_MAX_NODES,
-    .num_interfaces = AXIOM_MAX_INTERFACES
+    .num_nodes = AXIOM_NODES_MAX,
+    .num_interfaces = AXIOM_INTERFACES_MAX
 };
 
-extern axiom_node_id_t topology[AXIOM_MAX_NODES][AXIOM_MAX_INTERFACES];
+extern axiom_node_id_t topology[AXIOM_NODES_MAX][AXIOM_INTERFACES_MAX];
 
 static void
 usage(void)
@@ -67,8 +67,8 @@ axiom_topology_from_file(axiom_topology_t *start_topology, char *filename) {
        /* printf("%s", line); */
 
        line_count++;
-       if (line_count > AXIOM_MAX_NODES) {
-           printf ("The topology contains more than %d nodes\n", AXIOM_MAX_NODES);
+       if (line_count > AXIOM_NODES_MAX) {
+           printf ("The topology contains more than %d nodes\n", AXIOM_NODES_MAX);
            return -1;
        }
        if_index = 0;
@@ -82,12 +82,12 @@ axiom_topology_from_file(axiom_topology_t *start_topology, char *filename) {
                    printf ("Error in converting nodes id read from file\n");
                    return -1;
                }
-               if ((val < 0) || (val > AXIOM_MAX_NODES)) {
-                   printf ("The topology contains nodes with id greater than %d\n", AXIOM_MAX_NODES);
+               if ((val < 0) || (val > AXIOM_NODES_MAX)) {
+                   printf ("The topology contains nodes with id greater than %d\n", AXIOM_NODES_MAX);
                    return -1;
                }
-               if (if_index >= AXIOM_MAX_INTERFACES) {
-                   printf ("The topology contains nodes with more than  than %d interfaces\n", AXIOM_MAX_INTERFACES);
+               if (if_index >= AXIOM_INTERFACES_MAX) {
+                   printf ("The topology contains nodes with more than  than %d interfaces\n", AXIOM_INTERFACES_MAX);
                    return -1;
                }
                start_topology->topology[line_count-1][if_index] = (uint8_t)val;
@@ -100,7 +100,7 @@ axiom_topology_from_file(axiom_topology_t *start_topology, char *filename) {
        }
     }
     start_topology->num_nodes = line_count;
-    start_topology->num_interfaces = AXIOM_MAX_INTERFACES;
+    start_topology->num_interfaces = AXIOM_INTERFACES_MAX;
     free(line);
     fclose(file);
 
@@ -134,13 +134,13 @@ void
 axiom_init_topology(axiom_topology_t *start_topology) {
     int i,j;
 
-    for (i = 0; i < AXIOM_MAX_NODES; i++) {
-        for (j = 0; j < AXIOM_MAX_INTERFACES; j++) {
+    for (i = 0; i < AXIOM_NODES_MAX; i++) {
+        for (j = 0; j < AXIOM_INTERFACES_MAX; j++) {
             start_topology->topology[i][j] = AXIOM_NULL_NODE;
         }
     }
-    start_topology->num_nodes =  AXIOM_MAX_NODES;
-    start_topology->num_interfaces =  AXIOM_MAX_INTERFACES;
+    start_topology->num_nodes =  AXIOM_NODES_MAX;
+    start_topology->num_interfaces =  AXIOM_INTERFACES_MAX;
 }
 
 /* Initialize a ring of 'num_nodes' nodes */
@@ -162,7 +162,7 @@ axiom_make_ring_toplogy(axiom_topology_t *start_topology, int num_nodes)
     }
 
     start_topology->num_nodes =  num_nodes;
-    start_topology->num_interfaces =  AXIOM_MAX_INTERFACES;
+    start_topology->num_interfaces =  AXIOM_INTERFACES_MAX;
 }
 
 /* Initialize a ring of 'num_nodes' nodes */
@@ -236,7 +236,7 @@ axiom_make_mesh_toplogy(axiom_topology_t *start_topology, int num_nodes,
     }
 
     start_topology->num_nodes =  num_nodes;
-    start_topology->num_interfaces =  AXIOM_MAX_INTERFACES;
+    start_topology->num_interfaces =  AXIOM_INTERFACES_MAX;
 }
 
 
@@ -249,7 +249,7 @@ axiom_compute_intermediate_final_topology(axiom_topology_t *start_topology,
     int iface;
     uint8_t node, old_id;
 
-    for (iface = 0; iface < AXIOM_MAX_INTERFACES; iface++)
+    for (iface = 0; iface < AXIOM_INTERFACES_MAX; iface++)
     {
         if (start_topology->topology[start_node_id][iface] != AXIOM_NULL_NODE)
         {
@@ -292,7 +292,7 @@ axiom_compute_final_topology(axiom_topology_t *start_topology,
     {
         memcpy(end_test_topology->topology[nodes_match[i]],
                end_test_topology_copy->topology[i],
-                sizeof(uint8_t) * AXIOM_MAX_INTERFACES);
+                sizeof(uint8_t) * AXIOM_INTERFACES_MAX);
     }
 }
 
@@ -372,7 +372,7 @@ main(int argc, char **argv)
     int long_index =0;
     int opt = 0, num_nodes;
     uint8_t max_node_id = 0;
-    uint8_t nodes_match[AXIOM_MAX_NODES];
+    uint8_t nodes_match[AXIOM_NODES_MAX];
     static struct option long_options[] = {
         {"file", required_argument, 0, 'f'},
         {"ring", no_argument, 0, 'r'},
@@ -468,10 +468,10 @@ main(int argc, char **argv)
             /* make ring toplogy with the inserted nuber of nodes */
             if (n_ok == 1)
             {
-                if ((n < 2) || (n > AXIOM_MAX_NODES))
+                if ((n < 2) || (n > AXIOM_NODES_MAX))
                 {
                     printf("Please, for RING topology insert number between 2 and %d\n",
-                            AXIOM_MAX_NODES);
+                            AXIOM_NODES_MAX);
                     exit (-1);
                 }
                 else
@@ -499,10 +499,10 @@ main(int argc, char **argv)
 
             if (n_ok == 1)
             {
-                if ((n < 4) || (n > AXIOM_MAX_NODES))
+                if ((n < 4) || (n > AXIOM_NODES_MAX))
                 {
                     printf("Please, for MESH topology insert a simulation number between 4 and %d\n",
-                            AXIOM_MAX_NODES);
+                            AXIOM_NODES_MAX);
                     exit (-1);
                 }
                 err = check_mesh_number_of_nodes(n, &row, &columns);
@@ -538,10 +538,10 @@ main(int argc, char **argv)
     }
 
     /* Initilaization of variable for ended toplogy computataion */
-    for (i = 0; i < AXIOM_MAX_NODES; i++)
+    for (i = 0; i < AXIOM_NODES_MAX; i++)
     {
         nodes_match[i] = AXIOM_NULL_NODE;
-        for (j = 0; j < AXIOM_MAX_INTERFACES; j++)
+        for (j = 0; j < AXIOM_INTERFACES_MAX; j++)
         {
             end_test_topology.topology[i][j] = AXIOM_NULL_NODE;
         }
@@ -576,7 +576,7 @@ main(int argc, char **argv)
     printf("\n************* TEST RESULTS *******************");
     /* ************ TOPOLOGY *****************/
     cmp = memcmp(&end_test_topology.topology, &final_topology.topology,
-                  sizeof(uint8_t) * AXIOM_MAX_NODES * AXIOM_MAX_INTERFACES);
+                  sizeof(uint8_t) * AXIOM_NODES_MAX * AXIOM_INTERFACES_MAX);
     if (cmp == 0)
     {
         printf("\nDiscovered Topology OK\n");

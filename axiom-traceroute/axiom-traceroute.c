@@ -149,7 +149,7 @@ main(int argc, char **argv)
     }
 
     printf("Node %u, start traceroute to node %u, %d hops max\n", node_id,
-            dest_node, AXIOM_MAX_NODES);
+            dest_node, AXIOM_NODES_MAX);
 
     type = AXIOM_TYPE_SMALL_NEIGHBOUR;
     port = AXIOM_SMALL_PORT_INIT;
@@ -168,7 +168,7 @@ main(int argc, char **argv)
         goto err;
     }
 
-    expected_reply = AXIOM_MAX_NODES;
+    expected_reply = AXIOM_NODES_MAX;
     do
     {
         recv_err = recv_tracereoute_reply(dev, &recv_node, &port,

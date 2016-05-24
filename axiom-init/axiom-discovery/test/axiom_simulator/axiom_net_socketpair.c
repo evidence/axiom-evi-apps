@@ -15,7 +15,7 @@
 #include "axiom_net.h"
 
 typedef struct axiom_net {
-    int node_if_fd[AXIOM_MAX_INTERFACES];
+    int node_if_fd[AXIOM_INTERFACES_MAX];
     int num_of_ended_rt;
     /* If send_recv_small_sim == 0 , axiom_net_send_small() and
      * axiom_net_send_small() must manage the flow of the message from MASTER to
@@ -23,7 +23,7 @@ typedef struct axiom_net {
      * otherwise it must manage the flow of the message from Slaves to MASTER
      * (AXIOM_RT_CMD_RT_REPLY messages) */
     int send_recv_small_sim;
-    int num_recv_reply[AXIOM_MAX_INTERFACES];
+    int num_recv_reply[AXIOM_INTERFACES_MAX];
 } axiom_net_t;
 
 /*
@@ -60,7 +60,7 @@ send_from_master_to_slave(axiom_dev_t *dev, axiom_if_id_t dest_node_id,
     /* Payload */
     message.payload= *payload;
 
-    for (if_index = 0; if_index < AXIOM_MAX_INTERFACES; if_index ++)
+    for (if_index = 0; if_index < AXIOM_INTERFACES_MAX; if_index ++)
     {
         if (((axiom_sim_node_args_t*)dev)->local_routing[dest_node_id][if_index] == 1)
         {
@@ -90,9 +90,9 @@ send_from_master_to_slave(axiom_dev_t *dev, axiom_if_id_t dest_node_id,
     if (rt_payload.command == AXIOM_RT_CMD_END_INFO)
     {
         /* check if the node is the last into the topology */
-        if (dest_node_id != (AXIOM_MAX_NODES -1))
+        if (dest_node_id != (AXIOM_NODES_MAX -1))
         {
-            for (if_i = 0; if_i < AXIOM_MAX_INTERFACES; if_i ++)
+            for (if_i = 0; if_i < AXIOM_INTERFACES_MAX; if_i ++)
             {
                 if (((axiom_sim_node_args_t*)dev)->local_routing[dest_node_id+1][if_i] == 1)
                 {
@@ -102,7 +102,7 @@ send_from_master_to_slave(axiom_dev_t *dev, axiom_if_id_t dest_node_id,
             }
         }
 
-        if ((last_node == 1) || (dest_node_id == (AXIOM_MAX_NODES -1)))
+        if ((last_node == 1) || (dest_node_id == (AXIOM_NODES_MAX -1)))
         {
             /* the next axiom_net_recv_small() simulation has to be different
                (AXIO_RT_CMD_RT_REPLY) */
@@ -140,14 +140,14 @@ recv_from_master_to_slave(axiom_dev_t *dev, axiom_node_id_t *src_node_id,
        into local local routing table; they represent the nodes to which I have
        to send packets that Master has to send them through me */
     num_nodes_after_me = 1;
-    for (node_index = node_id + 1; node_index < AXIOM_MAX_NODES; node_index++)
+    for (node_index = node_id + 1; node_index < AXIOM_NODES_MAX; node_index++)
     {
-        for (if_index = 0; if_index < AXIOM_MAX_INTERFACES; if_index ++)
+        for (if_index = 0; if_index < AXIOM_INTERFACES_MAX; if_index ++)
         {
             if (((axiom_sim_node_args_t*)dev)->local_routing[node_index][if_index] == 1)
             {
                 num_nodes_after_me++;
-                if_index = AXIOM_MAX_INTERFACES;
+                if_index = AXIOM_INTERFACES_MAX;
             }
         }
     }
@@ -157,7 +157,7 @@ recv_from_master_to_slave(axiom_dev_t *dev, axiom_node_id_t *src_node_id,
     do_flag = 1;
     for (node_index = 0; (node_index < node_id) && (do_flag == 1); node_index++)
     {
-        for (if_index = 0; (if_index < AXIOM_MAX_INTERFACES) && (do_flag == 1);
+        for (if_index = 0; (if_index < AXIOM_INTERFACES_MAX) && (do_flag == 1);
                 if_index ++)
         {
             if (((axiom_sim_node_args_t*)dev)->local_routing[node_index][if_index] == 1)
@@ -257,7 +257,7 @@ send_from_slave_to_master(axiom_dev_t *dev, axiom_if_id_t dest_node_id,
     axiom_small_msg_t message;
     ssize_t write_ret;
     uint8_t if_index;
-    uint8_t recv_if[AXIOM_MAX_INTERFACES];
+    uint8_t recv_if[AXIOM_INTERFACES_MAX];
 
     if (port != AXIOM_SMALL_PORT_INIT)
     {
@@ -281,15 +281,15 @@ send_from_slave_to_master(axiom_dev_t *dev, axiom_if_id_t dest_node_id,
      * into local local routing table; they represent the nodes from which I have
      * to receive packets reply that them send to Master through me */
     num_nodes_after_me = 0;
-    for (node_index = node_id + 1; node_index < AXIOM_MAX_NODES; node_index++)
+    for (node_index = node_id + 1; node_index < AXIOM_NODES_MAX; node_index++)
     {
-        for (if_index = 0; if_index < AXIOM_MAX_INTERFACES; if_index ++)
+        for (if_index = 0; if_index < AXIOM_INTERFACES_MAX; if_index ++)
         {
             if (((axiom_sim_node_args_t*)dev)->local_routing[node_index][if_index] == 1)
             {
                 recv_if[if_index]++;
                 num_nodes_after_me++;
-                if_index = AXIOM_MAX_INTERFACES;
+                if_index = AXIOM_INTERFACES_MAX;
             }
         }
     }
@@ -300,7 +300,7 @@ send_from_slave_to_master(axiom_dev_t *dev, axiom_if_id_t dest_node_id,
     do_flag = 1;
     for (node_index = 0; (node_index < node_id) && (do_flag == 1); node_index++)
     {
-        for (if_index = 0; (if_index < AXIOM_MAX_INTERFACES) && (do_flag == 1);
+        for (if_index = 0; (if_index < AXIOM_INTERFACES_MAX) && (do_flag == 1);
                 if_index ++)
         {
             if (((axiom_sim_node_args_t*)dev)->local_routing[node_index][if_index] == 1)
@@ -378,7 +378,7 @@ static axiom_msg_id_t recv_from_slave_to_master (axiom_dev_t *dev,
     axiom_node_id_t node_id, node_index;
     uint8_t if_index;
     ssize_t read_bytes;
-    uint8_t recv_if = AXIOM_MAX_INTERFACES;
+    uint8_t recv_if = AXIOM_INTERFACES_MAX;
     axiom_small_msg_t message;
 
     node_id = axiom_get_node_id(dev);
@@ -386,13 +386,13 @@ static axiom_msg_id_t recv_from_slave_to_master (axiom_dev_t *dev,
     /* cycle to found the node with id > node_id that connected to me
        into local local routing table; it represents the node from which I have
        to receive packets reply that each node send to me  */
-    for (node_index = node_id + 1; node_index < AXIOM_MAX_NODES; node_index++)
+    for (node_index = node_id + 1; node_index < AXIOM_NODES_MAX; node_index++)
     {
-        for (if_index = 0; if_index < AXIOM_MAX_INTERFACES; if_index++)
+        for (if_index = 0; if_index < AXIOM_INTERFACES_MAX; if_index++)
         {
             if (((axiom_sim_node_args_t*)dev)->local_routing[node_index][if_index] == 1)
             {
-                if (recv_if == AXIOM_MAX_INTERFACES)
+                if (recv_if == AXIOM_INTERFACES_MAX)
                 {
                     /* memorize if from wich I have to receive */
                     recv_if = if_index;
@@ -494,7 +494,7 @@ axiom_net_setup(axiom_sim_node_args_t *nodes, axiom_sim_topology_t *tpl)
             axiom_net_free(nodes, tpl);
             return -ENOMEM;
         }
-        memset(nodes[i].net->node_if_fd, 0, sizeof(int) * AXIOM_MAX_INTERFACES);
+        memset(nodes[i].net->node_if_fd, 0, sizeof(int) * AXIOM_INTERFACES_MAX);
         nodes[i].net->num_of_ended_rt = 0;
         nodes[i].net->send_recv_small_sim = 0;
     }
@@ -629,14 +629,14 @@ axiom_net_recv_small_neighbour(axiom_dev_t *dev, axiom_node_id_t *src_interface,
         axiom_port_t *port, axiom_type_t *type, axiom_payload_t *payload)
 {
     axiom_small_msg_t message;
-    struct pollfd fds[AXIOM_MAX_INTERFACES];
+    struct pollfd fds[AXIOM_INTERFACES_MAX];
     int i, read_counter, interface_counter;
     ssize_t read_bytes;
 
     NDPRINTF("Wait to receive from the following interfaces:");
 
     interface_counter = 0;
-    for (i = 0; i < AXIOM_MAX_INTERFACES; i++)
+    for (i = 0; i < AXIOM_INTERFACES_MAX; i++)
     {
         /* get the socket descriptor (or zero value) of each node interface */
         fds[i].fd =  ((axiom_sim_node_args_t*)dev)->net->node_if_fd[i];

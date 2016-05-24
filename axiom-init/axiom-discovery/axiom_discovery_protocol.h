@@ -31,7 +31,7 @@
  */
 int
 axiom_master_node_discovery(axiom_dev_t *dev,
-        axiom_node_id_t topology[][AXIOM_MAX_INTERFACES],
+        axiom_node_id_t topology[][AXIOM_INTERFACES_MAX],
         axiom_node_id_t *total_nodes);
 
 /*
@@ -47,7 +47,7 @@ axiom_master_node_discovery(axiom_dev_t *dev,
  */
 int
 axiom_slave_node_discovery (axiom_dev_t *dev,
-        axiom_node_id_t topology[][AXIOM_MAX_INTERFACES],
+        axiom_node_id_t topology[][AXIOM_INTERFACES_MAX],
         axiom_node_id_t *node_id,
         axiom_if_id_t first_interface, axiom_discovery_payload_t *first_msg);
 

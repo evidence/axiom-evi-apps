@@ -45,8 +45,8 @@ main(int argc, char **argv)
 {
     int master = 0, run = 1;
     axiom_dev_t *dev = NULL;
-    axiom_node_id_t topology[AXIOM_MAX_NODES][AXIOM_MAX_INTERFACES];
-    axiom_if_id_t final_routing_table[AXIOM_MAX_NODES];
+    axiom_node_id_t topology[AXIOM_NODES_MAX][AXIOM_INTERFACES_MAX];
+    axiom_if_id_t final_routing_table[AXIOM_NODES_MAX];
     axiom_err_t ret;
 
     int long_index =0;

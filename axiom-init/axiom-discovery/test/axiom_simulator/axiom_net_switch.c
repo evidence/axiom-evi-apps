@@ -18,7 +18,7 @@
 
 typedef struct axiom_net {
     int switch_fd;
-    int connected_if[AXIOM_MAX_INTERFACES];
+    int connected_if[AXIOM_INTERFACES_MAX];
 } axiom_net_t;
 
 #define AXSW_PORT_START         33300   /* first port to listen */

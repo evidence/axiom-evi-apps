@@ -17,6 +17,7 @@
 
 #include "dprintf.h"
 #include "axiom_nic_types.h"
+#include "axiom_nic_limits.h"
 #include "axiom_nic_api_user.h"
 #include "axiom_nic_regs.h"
 
@@ -156,7 +157,7 @@ print_routing_table(axiom_dev_t *dev, int all_nodes)
 
     printf("\n\t\tnode\tIF0\tIF1\tIF2\tIF3\n");
 
-    for (i = 0; i < AXIOM_MAX_NODES; i++) {
+    for (i = 0; i < AXIOM_NODES_MAX; i++) {
         err = axiom_get_routing(dev, i, &enabled_mask);
         if (err) {
             EPRINTF("err: %x enabled_mask: %x", err, enabled_mask);
@@ -168,7 +169,7 @@ print_routing_table(axiom_dev_t *dev, int all_nodes)
 
         printf("\t\t%d\t",i);
 
-        for (j = 0; j < AXIOM_MAX_INTERFACES; j++) {
+        for (j = 0; j < AXIOM_INTERFACES_MAX; j++) {
             int on = ((enabled_mask & (1 << j)) != 0);
 
             printf("%d\t", on);

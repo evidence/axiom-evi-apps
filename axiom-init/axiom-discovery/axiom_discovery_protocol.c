@@ -16,13 +16,13 @@
 
 /* Initializes the gloabl Topology matrix of a node */
 static void
-axiom_topology_init(axiom_node_id_t topology[][AXIOM_MAX_INTERFACES])
+axiom_topology_init(axiom_node_id_t topology[][AXIOM_INTERFACES_MAX])
 {
     int i,j;
 
-    for (i = 0; i < AXIOM_MAX_NODES; i++)
+    for (i = 0; i < AXIOM_NODES_MAX; i++)
     {
-        for (j = 0; j < AXIOM_MAX_INTERFACES; j++)
+        for (j = 0; j < AXIOM_INTERFACES_MAX; j++)
         {
             topology[i][j] = AXIOM_NULL_NODE;
         }
@@ -39,7 +39,7 @@ axiom_codify_routing_mask(axiom_if_id_t if_id)
 /* Master and Slave common part of the discover algorithm */
 static int
 discover_phase(axiom_dev_t *dev, axiom_node_id_t *next_id,
-        axiom_node_id_t topology[][AXIOM_MAX_INTERFACES])
+        axiom_node_id_t topology[][AXIOM_INTERFACES_MAX])
 {
     axiom_if_id_t num_interface = 0;
     uint8_t if_features = 0;
@@ -63,7 +63,7 @@ discover_phase(axiom_dev_t *dev, axiom_node_id_t *next_id,
     DPRINTF("Number of interface = %d", num_interface);
 
     /* For each interface */
-    for (i = 0; i < AXIOM_MAX_INTERFACES; i++)
+    for (i = 0; i < AXIOM_INTERFACES_MAX; i++)
     {
         /* get interface feature*/
         axiom_get_if_info (dev, i, &if_features);
@@ -253,9 +253,9 @@ discover_phase(axiom_dev_t *dev, axiom_node_id_t *next_id,
                     axiom_set_routing(dev, node_index, b_mask);
                 }
                 NDPRINTF("Node:%d TOPOLOGY\n", node_id);
-                for (a = 0; a < AXIOM_MAX_NODES; a++)
+                for (a = 0; a < AXIOM_NODES_MAX; a++)
                 {
-                    for (b = 0; b < AXIOM_MAX_INTERFACES; b++)
+                    for (b = 0; b < AXIOM_INTERFACES_MAX; b++)
                         NDPRINTF("%d ", topology[a][b]);
                 }
             }
@@ -268,7 +268,7 @@ discover_phase(axiom_dev_t *dev, axiom_node_id_t *next_id,
 /* Master node Discovery Algorithm code */
 int
 axiom_master_node_discovery(axiom_dev_t *dev,
-        axiom_node_id_t topology[][AXIOM_MAX_INTERFACES],
+        axiom_node_id_t topology[][AXIOM_INTERFACES_MAX],
         axiom_node_id_t *number_of_total_nodes)
 {
     axiom_node_id_t next_id = AXIOM_MASTER_ID;
@@ -288,7 +288,7 @@ axiom_master_node_discovery(axiom_dev_t *dev,
 /* Slave nodes Discovery Algorithm code */
 int
 axiom_slave_node_discovery (axiom_dev_t *dev,
-        axiom_node_id_t topology[][AXIOM_MAX_INTERFACES],
+        axiom_node_id_t topology[][AXIOM_INTERFACES_MAX],
         axiom_node_id_t *node_id, axiom_if_id_t first_interface,
         axiom_discovery_payload_t *first_msg)
 {
@@ -402,16 +402,16 @@ axiom_slave_node_discovery (axiom_dev_t *dev,
             "on local interface:%d", *node_id, src_node_id, src_interface);
 
     /* Send topology list to the node which sent me the start message */
-    for (i = 0; i < AXIOM_MAX_NODES; i ++)
+    for (i = 0; i < AXIOM_NODES_MAX; i ++)
     {
-        for (j = 0; j < AXIOM_MAX_INTERFACES; j++)
+        for (j = 0; j < AXIOM_INTERFACES_MAX; j++)
         {
             if (topology[i][j] == AXIOM_NULL_NODE)
             {
                 continue;
             }
             /* find the remote node interface */
-            for(w = 0; w < AXIOM_MAX_INTERFACES; w++)
+            for(w = 0; w < AXIOM_INTERFACES_MAX; w++)
             {
                 if (topology[topology[i][j]][w] == i)
                     break;
