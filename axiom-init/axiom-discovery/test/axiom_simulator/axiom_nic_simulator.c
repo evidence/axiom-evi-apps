@@ -145,7 +145,7 @@ axiom_send_small(axiom_dev_t *dev, axiom_node_id_t dst_id,
 {
     axiom_msg_id_t ret = AXIOM_RET_ERROR;
 
-    if (type == AXIOM_TYPE_NEIGHBOUR) {
+    if (type == AXIOM_TYPE_SMALL_NEIGHBOUR) {
         ret = axiom_net_send_small_neighbour(dev, (axiom_if_id_t)dst_id, port,
                 type, payload);
     } else {
@@ -172,7 +172,7 @@ axiom_recv_small(axiom_dev_t *dev, axiom_node_id_t *src_id,
 {
     axiom_msg_id_t ret = AXIOM_RET_ERROR;
 
-    if (*type == AXIOM_TYPE_NEIGHBOUR) {
+    if (*type == AXIOM_TYPE_SMALL_NEIGHBOUR) {
         /* discovery and set routing neighbour messages management */
         ret = axiom_net_recv_small_neighbour(dev, src_id, port, type, payload);
     } else {

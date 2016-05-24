@@ -9,6 +9,7 @@
  * This file contains the functions used in the axiom-init deamon to handle
  * the control axiom messages.
  */
+#include "axiom_nic_init.h"
 
 /*!
  * \brief Discovery algorithm and routing table delivery for the master node
@@ -35,7 +36,7 @@ axiom_discovery_master(axiom_dev_t *dev,
  */
 void
 axiom_discovery_slave(axiom_dev_t *dev,
-        axiom_node_id_t first_src, axiom_payload_t first_payload,
+        axiom_node_id_t first_src, axiom_init_payload_t *first_payload,
         axiom_node_id_t topology[][AXIOM_MAX_INTERFACES],
         axiom_if_id_t routing_table[AXIOM_MAX_NODES], int verbose);
 
@@ -49,7 +50,7 @@ axiom_discovery_slave(axiom_dev_t *dev,
  */
 void
 axiom_pong(axiom_dev_t *dev, axiom_if_id_t first_src,
-        axiom_payload_t first_payload, int verbose);
+        axiom_init_payload_t *first_payload, int verbose);
 
 /*!
  * \brief This function implements the reply to the netperf message.
@@ -61,7 +62,7 @@ axiom_pong(axiom_dev_t *dev, axiom_if_id_t first_src,
  */
 void
 axiom_netperf_reply(axiom_dev_t *dev, axiom_node_id_t src,
-        axiom_payload_t payload, int verbose);
+        axiom_init_payload_t *payload, int verbose);
 
 /*!
  * \brief This function implements the reply to the traceroute message.
@@ -73,6 +74,6 @@ axiom_netperf_reply(axiom_dev_t *dev, axiom_node_id_t src,
  */
 void
 axiom_traceroute_reply(axiom_dev_t *dev, axiom_if_id_t src,
-        axiom_payload_t payload, int verbose);
+        axiom_init_payload_t *payload, int verbose);
 
 #endif /*! AXIOM_INIT_h*/

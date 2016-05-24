@@ -12,6 +12,7 @@
 #include "axiom_nic_types.h"
 #include "axiom_nic_api_user.h"
 #include "axiom_nic_packets.h"
+#include "axiom_nic_discovery.h"
 #include "axiom_sim_topology.h"
 
 /*! \brief Master node ID */
@@ -48,6 +49,6 @@ int
 axiom_slave_node_discovery (axiom_dev_t *dev,
         axiom_node_id_t topology[][AXIOM_MAX_INTERFACES],
         axiom_node_id_t *node_id,
-        axiom_if_id_t first_interface, axiom_payload_t first_msg);
+        axiom_if_id_t first_interface, axiom_discovery_payload_t *first_msg);
 
 #endif  /* !AXIOM_DSCV_PROTOCOL_H */

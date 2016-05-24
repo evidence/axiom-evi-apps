@@ -52,8 +52,8 @@ axiom_send_uint64_small(axiom_dev_t *dev, axiom_node_id_t dst,
         payload.data = *((typeof(payload.data) *)&data_p[i]);
 
         /* send small neighbour traceroute message */
-        msg_err = axiom_send_small(dev, dst, port, type,
-                (axiom_payload_t *)&payload);
+        msg_err = axiom_send_small(dev, dst, port, type, sizeof(payload),
+                &payload);
         if (msg_err == AXIOM_RET_ERROR) {
             return msg_err;
         }
@@ -66,10 +66,10 @@ axiom_send_uint64_small(axiom_dev_t *dev, axiom_node_id_t dst,
 
 void
 axiom_netperf_reply(axiom_dev_t *dev, axiom_node_id_t src,
-        axiom_payload_t payload, int verbose)
+        axiom_init_payload_t *payload, int verbose)
 {
     axiom_netperf_payload_t *recv_payload =
-            ((axiom_netperf_payload_t *) &payload);
+            ((axiom_netperf_payload_t *) payload);
     axiom_netperf_status_t *cur_status = &status[src];
     struct timespec cur_ts;
 
@@ -109,7 +109,7 @@ axiom_netperf_reply(axiom_dev_t *dev, axiom_node_id_t src,
 #endif
 
     /* XXX tbv: does all 8 bytes of small messagge arrive? */
-    cur_status->received_bytes += (uint16_t)sizeof(axiom_small_msg_t);
+    cur_status->received_bytes += (uint16_t)sizeof(*recv_payload);
 
     DPRINTF("NETPERF msg received from: %u - expected_bytes: %llu "
             "received_bytes: %llu", src,
@@ -123,7 +123,6 @@ axiom_netperf_reply(axiom_dev_t *dev, axiom_node_id_t src,
         uint64_t elapsed_nsec;
         double rx_th;
 
-        /* get time of the last netperf message received */
         IPRINTF(verbose,"End timestamp: %ld sec %ld nanosec\n", cur_ts.tv_sec,
                 cur_ts.tv_nsec);
 
@@ -136,7 +135,7 @@ axiom_netperf_reply(axiom_dev_t *dev, axiom_node_id_t src,
 
         /* send elapsed time to netperf application */
         err = axiom_send_uint64_small(dev, src, AXIOM_SMALL_PORT_NETUTILS,
-                AXIOM_TYPE_RAW_DATA, AXIOM_CMD_NETPERF_END, elapsed_nsec);
+                AXIOM_TYPE_SMALL_DATA, AXIOM_CMD_NETPERF_END, elapsed_nsec);
         if (err == AXIOM_RET_ERROR)
         {
             EPRINTF("send back time error");

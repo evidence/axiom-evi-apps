@@ -290,7 +290,7 @@ int
 axiom_slave_node_discovery (axiom_dev_t *dev,
         axiom_node_id_t topology[][AXIOM_MAX_INTERFACES],
         axiom_node_id_t *node_id, axiom_if_id_t first_interface,
-        axiom_payload_t first_msg)
+        axiom_discovery_payload_t *first_msg)
 {
     axiom_node_id_t next_id;
     axiom_discovery_cmd_t msg_cmd ;
@@ -302,8 +302,8 @@ axiom_slave_node_discovery (axiom_dev_t *dev,
 
     /* called when received the first AXIOM_DSCV_CMD_REQ_ID type message */
     src_interface = first_interface;
-    src_node_id = ((axiom_discovery_payload_t *) &first_msg)->src_node;
-    msg_cmd = ((axiom_discovery_payload_t *) &first_msg)->command;
+    src_node_id = first_msg->src_node;
+    msg_cmd = first_msg->command;
 
     if (msg_cmd != AXIOM_DSCV_CMD_REQ_ID)
     {

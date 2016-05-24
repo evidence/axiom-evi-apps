@@ -112,12 +112,15 @@ main(int argc, char **argv)
     }
 
     do {
+        axiom_payload_size_t payload_size = sizeof(&payload);
+        int i;
+
         printf("[node %u] receiving small message on port %u...\n",
                 node_id, port);
 
         /* receive a small message from port*/
         recv_ret =  axiom_recv_small(dev, &src_id, (axiom_port_t *)&recv_port,
-                &type, &payload);
+                &type, &payload_size, &payload);
         if (recv_ret == AXIOM_RET_ERROR)
         {
             EPRINTF("receive error");
@@ -125,14 +128,20 @@ main(int argc, char **argv)
         }
 
         printf("[node %u] message received on port %u\n", node_id, recv_port);
-        if (type == AXIOM_TYPE_NEIGHBOUR) {
+        if (type == AXIOM_TYPE_SMALL_NEIGHBOUR) {
             printf("\t- local_interface = %u\n", src_id);
             printf("\t- type = %s\n", "NEIGHBOUR");
-        } else if (type == AXIOM_TYPE_RAW_DATA) {
+        } else if (type == AXIOM_TYPE_SMALL_DATA) {
             printf("\t- source_node_id = %u\n", src_id);
             printf("\t- type = %s\n", "DATA");
         }
-        printf("\t- payload = %u\n", payload);
+
+        printf("\t- payload_size = %u\n", payload_size);
+        printf("\t- payload = ");
+        for (i = 0; i < payload_size; i++)
+            printf("0x%x ", payload.raw[i]);
+
+        printf("\n");
 
     } while (!once);
 

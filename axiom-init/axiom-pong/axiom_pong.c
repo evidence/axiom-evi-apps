@@ -22,10 +22,10 @@
 
 void
 axiom_pong(axiom_dev_t *dev, axiom_if_id_t first_src,
-        axiom_payload_t first_payload, int verbose)
+        axiom_init_payload_t *first_payload, int verbose)
 {
     axiom_err_t ret;
-    axiom_ping_payload_t *payload = ((axiom_ping_payload_t *) &first_payload);
+    axiom_ping_payload_t *payload = ((axiom_ping_payload_t *) first_payload);
 
     if (payload->command != AXIOM_CMD_PING) {
         EPRINTF("receive a not AXIOM_PING message");
@@ -38,7 +38,7 @@ axiom_pong(axiom_dev_t *dev, axiom_if_id_t first_src,
     /* send back the message */
     payload->command = AXIOM_CMD_PONG;
     ret =  axiom_send_small(dev, first_src, AXIOM_SMALL_PORT_NETUTILS,
-            AXIOM_TYPE_RAW_DATA, (axiom_payload_t *)payload);
+            AXIOM_TYPE_SMALL_DATA, sizeof(*payload), payload);
     if (ret == AXIOM_RET_ERROR) {
         EPRINTF("receive error");
         return;

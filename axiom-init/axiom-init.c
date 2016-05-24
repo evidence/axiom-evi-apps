@@ -97,7 +97,7 @@ main(int argc, char **argv)
         axiom_node_id_t src;
         axiom_type_t type;
         axiom_init_cmd_t cmd;
-        axiom_payload_t payload;
+        axiom_init_payload_t payload;
 
         ret = axiom_recv_small_init(dev, &src, &type, &cmd, &payload);
         if (ret == AXIOM_RET_ERROR) {
@@ -106,20 +106,20 @@ main(int argc, char **argv)
         }
         switch (cmd) {
             case AXIOM_DSCV_CMD_REQ_ID:
-                axiom_discovery_slave(dev, src, payload, topology,
+                axiom_discovery_slave(dev, src, &payload, topology,
                         final_routing_table, verbose);
                 break;
 
             case AXIOM_CMD_PING:
-                axiom_pong(dev, src, payload, verbose);
+                axiom_pong(dev, src, &payload, verbose);
                 break;
 
             case AXIOM_CMD_TRACEROUTE:
-                axiom_traceroute_reply(dev, src, payload, verbose);
+                axiom_traceroute_reply(dev, src, &payload, verbose);
                 break;
 
             case AXIOM_CMD_NETPERF: case AXIOM_CMD_NETPERF_START:
-                axiom_netperf_reply(dev, src, payload, verbose);
+                axiom_netperf_reply(dev, src, &payload, verbose);
                 break;
 
             default:

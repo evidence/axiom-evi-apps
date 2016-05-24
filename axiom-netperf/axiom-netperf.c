@@ -89,8 +89,9 @@ axiom_recv_uint64_small(axiom_dev_t *dev, axiom_node_id_t *src,
     uint8_t *data_p = ((uint8_t *)data);
 
     for (i = 0; i < sizeof(*data); i += sizeof(payload.data)) {
-        msg_err =  axiom_recv_small(dev, src, port, type,
-                (axiom_payload_t *)&payload);
+        axiom_payload_size_t payload_size = sizeof(axiom_netperf_payload_t);
+        msg_err =  axiom_recv_small(dev, src, port, type, &payload_size,
+                &payload);
         if (msg_err == AXIOM_RET_ERROR || cmd != payload.command) {
             return AXIOM_RET_ERROR;
         }
@@ -186,7 +187,7 @@ main(int argc, char **argv)
     payload.data = data_length;
     payload.offset = data_scale;
     msg_err = axiom_send_small(dev, dest_node, AXIOM_SMALL_PORT_INIT,
-            AXIOM_TYPE_RAW_DATA, (axiom_payload_t *)&payload);
+            AXIOM_TYPE_SMALL_DATA, sizeof(payload), &payload);
     if (msg_err == AXIOM_RET_ERROR) {
         EPRINTF("send error");
         goto err;
@@ -204,10 +205,10 @@ main(int argc, char **argv)
 
     payload.command = AXIOM_CMD_NETPERF;
     for (sent_bytes = 0; sent_bytes < total_bytes;
-            sent_bytes += sizeof(axiom_small_msg_t)) {
+            sent_bytes += sizeof(payload)) {
         /* send netperf message */
         msg_err = axiom_send_small(dev, dest_node, AXIOM_SMALL_PORT_INIT,
-                AXIOM_TYPE_RAW_DATA, (axiom_payload_t *)&payload);
+                AXIOM_TYPE_SMALL_DATA, sizeof(payload), &payload);
         if (msg_err == AXIOM_RET_ERROR) {
             EPRINTF("send error");
             goto err;
