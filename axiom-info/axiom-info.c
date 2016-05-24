@@ -27,6 +27,7 @@
 #define PRINT_ROUTING_ALL       0x0010
 #define PRINT_STATUS            0x0020
 #define PRINT_CONTROL           0x0040
+#define PRINT_NUMNODES          0x0080
 
 #define PRINT_ALL               0xFFFF
 
@@ -44,6 +45,7 @@ usage(void)
     printf("-n, --nodeid                print node id\n");
     printf("-i, --ifnumber              print number of interfaces\n");
     printf("-f, --ifinfo      if_id     print information of given interface (if_id)\n");
+    printf("-N, --numnodes              print number of nodes in the network\n");
     printf("-r, --routing               print routing table (only reachable nodes)\n");
     printf("-R, --routing-all           print routing table (all nodes)\n");
     printf("-s, --status                print status register\n");
@@ -126,6 +128,19 @@ print_ifinfo_all(axiom_dev_t *dev)
 }
 
 static void
+print_num_nodes(axiom_dev_t *dev)
+{
+    int num_nodes;
+
+    num_nodes = axiom_get_num_nodes(dev);
+    if (num_nodes < 0) {
+        EPRINTF("err: %d", num_nodes);
+    }
+
+    printf("\tnumber of nodes = %d\n\n", num_nodes);
+}
+
+static void
 print_routing_table(axiom_dev_t *dev, int all_nodes)
 {
     axiom_err_t err;
@@ -141,7 +156,7 @@ print_routing_table(axiom_dev_t *dev, int all_nodes)
 
     printf("\n\t\tnode\tIF0\tIF1\tIF2\tIF3\n");
 
-    for (i = 0; i <= AXIOM_MAX_NODES; i++) {
+    for (i = 0; i < AXIOM_MAX_NODES; i++) {
         err = axiom_get_routing(dev, i, &enabled_mask);
         if (err) {
             EPRINTF("err: %x enabled_mask: %x", err, enabled_mask);
@@ -209,6 +224,7 @@ main(int argc, char **argv)
         {"nodeid", no_argument, 0, 'n'},
         {"ifnumber", no_argument, 0, 'i'},
         {"ifinfo", required_argument, 0, 'f'},
+        {"numnodes", no_argument, 0, 'N'},
         {"routing", no_argument, 0, 'r'},
         {"routing-all", no_argument, 0, 'R'},
         {"status", no_argument, 0, 's'},
@@ -234,6 +250,10 @@ main(int argc, char **argv)
 
             case 'f':
                 print_bitmap |= PRINT_IFINFO;
+                break;
+
+            case 'N':
+                print_bitmap |= PRINT_NUMNODES;
                 break;
 
             case 'r':
@@ -280,6 +300,9 @@ main(int argc, char **argv)
 
     if (print_bitmap & PRINT_IFINFO)
         print_ifinfo_all(dev);
+
+    if (print_bitmap & PRINT_NUMNODES)
+        print_num_nodes(dev);
 
     if (print_bitmap & PRINT_ROUTING)
         print_routing_table(dev, (print_bitmap & PRINT_ROUTING_ALL));
