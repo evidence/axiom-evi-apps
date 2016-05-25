@@ -57,11 +57,13 @@ axiom_pong(axiom_dev_t *dev, axiom_if_id_t first_src,
  *
  * \param dev                   The axiom device private data pointer
  * \param src                   Source node of netperf message
+ * \param payload_size          Size of payload of netperf message
  * \param payload               Payload of netperf message
  * \param verbose               enable verbose output
  */
 void
 axiom_netperf_reply(axiom_dev_t *dev, axiom_node_id_t src,
+        axiom_payload_size_t payload_size,
         axiom_init_payload_t *payload, int verbose);
 
 /*!

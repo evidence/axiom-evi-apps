@@ -32,6 +32,7 @@
 #define AXIOM_NETPERF_DEF_DATA_SCALE    10
 #define AXIOM_NETPERF_DEF_CHAR_SCALE    'B'
 #define AXIOM_NETPERF_DEF_DATA_LENGTH   512
+#define AXIOM_NETPERF_DEF_PAYLOAD_SIZE  128
 
 int verbose = 0;
 
@@ -45,6 +46,8 @@ usage(void)
     printf("-d, --dest      dest_node   destination node id of axiom-netperf\n");
     printf("-l, --length    x[B|K|M|G]  bytes to send to the destination node\n");
     printf("                            The suffix specifies the length unit\n");
+    printf("-p, --payload   size        payload size [1:128] in bytes (def: %d)\n",
+            AXIOM_NETPERF_DEF_PAYLOAD_SIZE);
     printf("-v, --verbose               verbose output\n");
     printf("-h, --help                  print this help\n\n");
 }
@@ -86,11 +89,13 @@ main(int argc, char **argv)
     axiom_port_t port;
     axiom_type_t type;
     axiom_netperf_payload_t payload;
-    axiom_payload_size_t payload_size;
+    axiom_payload_size_t pld_recv_size;
+    axiom_payload_size_t payload_size = AXIOM_NETPERF_DEF_PAYLOAD_SIZE;
     struct timespec start_ts, end_ts, elapsed_ts;
-    double tx_th, rx_th;
+    double tx_th, rx_th, tx_pps, rx_pps;
     int dest_node_ok = 0, err, ret, long_index, opt;
-    uint64_t elapsed_nsec, elapsed_rx_nsec, sent_bytes, total_bytes;
+    uint64_t elapsed_nsec, elapsed_rx_nsec, sent_bytes;
+    uint64_t total_packets = 0, total_bytes;
     uint16_t data_length = AXIOM_NETPERF_DEF_DATA_LENGTH;
     uint8_t data_scale = AXIOM_NETPERF_DEF_DATA_SCALE;
     char char_scale = AXIOM_NETPERF_DEF_CHAR_SCALE;
@@ -98,13 +103,14 @@ main(int argc, char **argv)
     static struct option long_options[] = {
         {"dest", required_argument, 0, 'd'},
         {"length", required_argument, 0, 'l'},
+        {"payload", required_argument, 0, 'p'},
         {"verbose", no_argument, 0, 'v'},
         {"help", no_argument, 0, 'h'},
         {0, 0, 0, 0}
     };
 
 
-    while ((opt = getopt_long(argc, argv,"vhd:l:",
+    while ((opt = getopt_long(argc, argv,"vhd:l:p:",
                          long_options, &long_index )) != -1) {
         switch (opt) {
             case 'd' :
@@ -125,6 +131,14 @@ main(int argc, char **argv)
                 data_scale = get_scale(char_scale);
                 break;
 
+            case 'p' :
+                if (sscanf(optarg, "%" SCNu8, &payload_size) != 1) {
+                    EPRINTF("wrong number of payload size");
+                    usage();
+                    exit(-1);
+                }
+                break;
+
             case 'v':
                 verbose = 1;
                 break;
@@ -139,6 +153,11 @@ main(int argc, char **argv)
     /* check if dest_node parameter has been inserted */
     if (dest_node_ok != 1) {
         usage();
+        return 0;
+    }
+
+    if (payload_size < 1 || payload_size > 128) {
+        EPRINTF("payload size must be between 1 and 128 bytes");
         return 0;
     }
 
@@ -167,7 +186,10 @@ main(int argc, char **argv)
         EPRINTF("send error");
         goto err;
     }
-    printf("Starting send %" PRIu64 " bytes to node %u...\n", total_bytes, dest_node);
+    printf("Starting axiom-netperf to node %u\n", dest_node);
+    printf("   message type: RAW\n");
+    printf("   payload size: %u bytes\n", payload_size);
+    printf("   total bytes: %" PRIu64 " bytes\n", total_bytes);
 
     /* get time of the first sent netperf message */
     ret = clock_gettime(CLOCK_REALTIME, &start_ts);
@@ -180,14 +202,15 @@ main(int argc, char **argv)
 
     payload.command = AXIOM_CMD_NETPERF;
     for (sent_bytes = 0; sent_bytes < total_bytes;
-            sent_bytes += sizeof(payload)) {
+            sent_bytes += payload_size) {
         /* send netperf message */
         msg_err = axiom_send_small(dev, dest_node, AXIOM_SMALL_PORT_INIT,
-                AXIOM_TYPE_SMALL_DATA, sizeof(payload), &payload);
+                AXIOM_TYPE_SMALL_DATA, payload_size, &payload);
         if (msg_err == AXIOM_RET_ERROR) {
             EPRINTF("send error");
             goto err;
         }
+        total_packets++;
         DPRINTF("NETPERF msg sent to: %u - total_bytes: %" PRIu64
                 " sent_bytes: %" PRIu64, dest_node, total_bytes,
                 sent_bytes + sizeof(axiom_small_msg_t));
@@ -202,16 +225,17 @@ main(int argc, char **argv)
     IPRINTF(verbose,"End timestamp: %ld sec %ld nanosec\n", end_ts.tv_sec,
             end_ts.tv_nsec);
 
-    printf("Sent %" PRIu64 " bytes to node %u\n", total_bytes, dest_node);
-
     /* compute time elapsed ms */
     elapsed_ts = timespec_sub(end_ts, start_ts);
     elapsed_nsec = timespec2nsec(elapsed_ts);
 
+    printf("Sent %" PRIu64 " bytes to node %u in %3.3f s\n", total_bytes,
+            dest_node, nsec2sec(elapsed_nsec));
+
     /* receive elapsed rx throughput time form dest_node */
     elapsed_rx_nsec = 0;
-    payload_size = sizeof(payload);
-    err =  axiom_recv_small(dev, &src_node, &port, &type, &payload_size,
+    pld_recv_size = sizeof(payload);
+    err =  axiom_recv_small(dev, &src_node, &port, &type, &pld_recv_size,
             &payload);
     if (err == AXIOM_RET_ERROR || (src_node != dest_node) ||
             payload.command != AXIOM_CMD_NETPERF_END) {
@@ -221,14 +245,18 @@ main(int argc, char **argv)
 
     elapsed_rx_nsec = payload.elapsed_time;
 
-    tx_th = (double)(sent_bytes / nsec2sec(elapsed_nsec));
-    rx_th = (double)(sent_bytes / nsec2sec(elapsed_rx_nsec));
+    tx_th = (double)(sent_bytes) / nsec2sec(elapsed_nsec);
+    rx_th = (double)(sent_bytes) / nsec2sec(elapsed_rx_nsec);
+    tx_pps = (double)(total_packets) / nsec2sec(elapsed_nsec);
+    rx_pps = (double)(total_packets) / nsec2sec(elapsed_rx_nsec);
 
     IPRINTF(verbose, "elapsed_tx_nsec = %" PRIu64 " - elapsed_rx_nsec = %"
             PRIu64, elapsed_nsec, elapsed_rx_nsec);
 
-    printf("Throughput TX %3.3f KB/s - RX %3.3f KB/s\n", tx_th / 1024,
-            rx_th / 1024);
+    printf("Throughput bytes/Sec    TX %3.3f KB/s - RX %3.3f KB/s\n",
+            tx_th / 1024, rx_th / 1024);
+    printf("Throughput packets/Sec  TX %3.3f Kpps - RX %3.3f Kpps\n",
+            tx_pps / 1000, rx_pps / 1000);
 
 err:
     axiom_close(dev);

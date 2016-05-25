@@ -98,8 +98,10 @@ main(int argc, char **argv)
         axiom_type_t type;
         axiom_init_cmd_t cmd;
         axiom_init_payload_t payload;
+        axiom_payload_size_t payload_size = sizeof(payload);
 
-        ret = axiom_recv_small_init(dev, &src, &type, &cmd, &payload);
+        ret = axiom_recv_small_init(dev, &src, &type, &cmd, &payload_size,
+                &payload);
         if (ret == AXIOM_RET_ERROR) {
             EPRINTF("error receiving message");
             break;
@@ -119,7 +121,7 @@ main(int argc, char **argv)
                 break;
 
             case AXIOM_CMD_NETPERF: case AXIOM_CMD_NETPERF_START:
-                axiom_netperf_reply(dev, src, &payload, verbose);
+                axiom_netperf_reply(dev, src, payload_size, &payload, verbose);
                 break;
 
             default:

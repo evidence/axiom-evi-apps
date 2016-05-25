@@ -36,8 +36,8 @@ typedef struct axiom_netperf_status {
 axiom_netperf_status_t status[AXIOM_NODES_MAX];
 
 void
-axiom_netperf_reply(axiom_dev_t *dev, axiom_node_id_t src,
-        axiom_init_payload_t *payload, int verbose)
+axiom_netperf_reply(axiom_dev_t *dev, axiom_node_id_t src, axiom_payload_size_t
+        payload_size, axiom_init_payload_t *payload, int verbose)
 {
     axiom_netperf_payload_t *recv_payload =
             ((axiom_netperf_payload_t *) payload);
@@ -79,7 +79,7 @@ axiom_netperf_reply(axiom_dev_t *dev, axiom_node_id_t src,
 #endif
 
     /* XXX tbv: does all 8 bytes of small messagge arrive? */
-    cur_status->received_bytes += (uint16_t)sizeof(*recv_payload);
+    cur_status->received_bytes += payload_size;
 
     DPRINTF("NETPERF msg received from: %u - expected_bytes: %llu "
             "received_bytes: %llu", src,
