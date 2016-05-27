@@ -92,9 +92,9 @@ main(int argc, char **argv)
     axiom_payload_size_t pld_recv_size;
     axiom_payload_size_t payload_size = AXIOM_NETPERF_DEF_PAYLOAD_SIZE;
     struct timespec start_ts, end_ts, elapsed_ts;
-    double tx_th, rx_th, tx_pps, rx_pps;
+    double tx_th, rx_th, tx_raw_th, rx_raw_th, tx_pps, rx_pps;
     int dest_node_ok = 0, err, ret, long_index, opt;
-    uint64_t elapsed_nsec, elapsed_rx_nsec, sent_bytes;
+    uint64_t elapsed_nsec, elapsed_rx_nsec, sent_bytes, sent_raw_bytes;
     uint64_t total_packets = 0, total_bytes;
     uint16_t data_length = AXIOM_NETPERF_DEF_DATA_LENGTH;
     uint8_t data_scale = AXIOM_NETPERF_DEF_DATA_SCALE;
@@ -244,17 +244,23 @@ main(int argc, char **argv)
     }
 
     elapsed_rx_nsec = payload.elapsed_time;
+    
+    /* raw bytes include also the header */
+    sent_raw_bytes = sent_bytes + (total_packets * sizeof(axiom_small_hdr_t));
 
     tx_th = (double)(sent_bytes) / nsec2sec(elapsed_nsec);
     rx_th = (double)(sent_bytes) / nsec2sec(elapsed_rx_nsec);
+    tx_raw_th = (double)(sent_raw_bytes) / nsec2sec(elapsed_nsec);
+    rx_raw_th = (double)(sent_raw_bytes) / nsec2sec(elapsed_rx_nsec);
     tx_pps = (double)(total_packets) / nsec2sec(elapsed_nsec);
     rx_pps = (double)(total_packets) / nsec2sec(elapsed_rx_nsec);
 
     IPRINTF(verbose, "elapsed_tx_nsec = %" PRIu64 " - elapsed_rx_nsec = %"
             PRIu64, elapsed_nsec, elapsed_rx_nsec);
 
-    printf("Throughput bytes/Sec    TX %3.3f KB/s - RX %3.3f KB/s\n",
-            tx_th / 1024, rx_th / 1024);
+    printf("Throughput bytes/Sec    TX %3.3f (raw %3.3f) KB/s - "
+            "RX %3.3f (raw %3.3f) KB/s\n",
+            tx_th / 1024, tx_raw_th / 1024, rx_th / 1024, rx_raw_th / 1024);
     printf("Throughput packets/Sec  TX %3.3f Kpps - RX %3.3f Kpps\n",
             tx_pps / 1000, rx_pps / 1000);
 
