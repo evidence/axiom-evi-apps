@@ -129,55 +129,55 @@ axiom_get_routing(axiom_dev_t *dev, axiom_node_id_t node_id,
 
 
 /*
- * @brief This function sends small data to a remote node.
+ * @brief This function sends raw data to a remote node.
  * @param dev The axiom devive private data pointer
- * @param dst_id The remote node id that will receive the small data or local
- *               interface that will send the small data
- * @param port port of the small message
- * @param type type of the small message
+ * @param dst_id The remote node id that will receive the raw data or local
+ *               interface that will send the raw data
+ * @param port port of the raw message
+ * @param type type of the raw message
  * @param payload data to be sent
  * @return Returns a unique positive message id on success, -1 otherwise.
  * XXX: the return type is unsigned!
  */
 axiom_msg_id_t
-axiom_send_small(axiom_dev_t *dev, axiom_node_id_t dst_id,
+axiom_send_raw(axiom_dev_t *dev, axiom_node_id_t dst_id,
         axiom_port_t port, axiom_type_t type, axiom_payload_t *payload)
 {
     axiom_msg_id_t ret = AXIOM_RET_ERROR;
 
-    if (type == AXIOM_TYPE_SMALL_NEIGHBOUR) {
-        ret = axiom_net_send_small_neighbour(dev, (axiom_if_id_t)dst_id, port,
+    if (type == AXIOM_TYPE_RAW_NEIGHBOUR) {
+        ret = axiom_net_send_raw_neighbour(dev, (axiom_if_id_t)dst_id, port,
                 type, payload);
     } else {
-        ret = axiom_net_send_small(dev, dst_id, port, type, payload);
+        ret = axiom_net_send_raw(dev, dst_id, port, type, payload);
     }
 
     return ret;
 }
 
 /*
- * @brief This function receives small data.
+ * @brief This function receives raw data.
  * @param dev The axiom devive private data pointer
- * @param src_id The source node id that sent the small data or local
- *               interface that received the small data
- * @param port port of the small message
- * @param type type of the small message
+ * @param src_id The source node id that sent the raw data or local
+ *               interface that received the raw data
+ * @param port port of the raw message
+ * @param type type of the raw message
  * @param payload data received
  * @return Returns a unique positive message id on success, -1 otherwise.
  * XXX: the return type is unsigned!
  */
 axiom_msg_id_t
-axiom_recv_small(axiom_dev_t *dev, axiom_node_id_t *src_id,
+axiom_recv_raw(axiom_dev_t *dev, axiom_node_id_t *src_id,
         axiom_port_t *port, axiom_type_t *type, axiom_payload_t *payload)
 {
     axiom_msg_id_t ret = AXIOM_RET_ERROR;
 
-    if (*type == AXIOM_TYPE_SMALL_NEIGHBOUR) {
+    if (*type == AXIOM_TYPE_RAW_NEIGHBOUR) {
         /* discovery and set routing neighbour messages management */
-        ret = axiom_net_recv_small_neighbour(dev, src_id, port, type, payload);
+        ret = axiom_net_recv_raw_neighbour(dev, src_id, port, type, payload);
     } else {
-        /* delivery small messages management */
-        ret = axiom_net_recv_small(dev, src_id, port, type, payload);
+        /* delivery raw messages management */
+        ret = axiom_net_recv_raw(dev, src_id, port, type, payload);
     }
 
     return ret;

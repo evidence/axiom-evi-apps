@@ -339,12 +339,12 @@ void
 
     /* Wait for the neighbour AXIOM_DSCV_CMD_REQ_ID type message */
     do {
-        axiom_type_t type = AXIOM_TYPE_SMALL_NEIGHBOUR;
+        axiom_type_t type = AXIOM_TYPE_RAW_NEIGHBOUR;
         axiom_port_t port;
         axiom_err_t ret;
 
         DPRINTF("Slave: Wait for AXIOM_DSCV_CMD_REQ_ID message");
-        ret = axiom_recv_small(dev, &first_interface, &port, &type, &first_msg);
+        ret = axiom_recv_raw(dev, &first_interface, &port, &type, &first_msg);
         if (ret == AXIOM_RET_ERROR)
         {
             EPRINTF("Slave: Error receiving AXIOM_DSCV_CMD_REQ_ID message");

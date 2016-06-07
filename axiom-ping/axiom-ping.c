@@ -63,8 +63,8 @@ main(int argc, char **argv)
 {
     axiom_dev_t *dev = NULL;
     axiom_msg_id_t send_ret, recv_ret, node_id;
-    axiom_port_t remote_port = AXIOM_SMALL_PORT_INIT, recv_port;
-    axiom_port_t port = AXIOM_SMALL_PORT_NETUTILS;
+    axiom_port_t remote_port = AXIOM_RAW_PORT_INIT, recv_port;
+    axiom_port_t port = AXIOM_RAW_PORT_NETUTILS;
     axiom_node_id_t dst_id, src_id;
     axiom_ping_payload_t payload, recv_payload;
     axiom_err_t err;
@@ -167,15 +167,15 @@ main(int argc, char **argv)
     payload.packet_id = 0;
     while (!sigint_received &&  (num_ping > 0)) {
         struct timespec start_ts, end_ts, diff_ts;
-        axiom_type_t type = AXIOM_TYPE_SMALL_DATA;
+        axiom_type_t type = AXIOM_TYPE_RAW_DATA;
         int retry;
 
         IPRINTF(verbose,"[node %u] sending ping message...\n", node_id);
 #ifndef AXIOM_NO_TX
-        /* send a small message*/
+        /* send a raw message*/
         payload.command = AXIOM_CMD_PING;
         payload.packet_id = payload.packet_id + 1;
-        send_ret =  axiom_send_small(dev, (axiom_node_id_t)dst_id,
+        send_ret =  axiom_send_raw(dev, (axiom_node_id_t)dst_id,
                 remote_port, type, sizeof(payload), &payload);
         if (send_ret == AXIOM_RET_ERROR) {
             EPRINTF("send error");
@@ -200,7 +200,7 @@ main(int argc, char **argv)
             axiom_payload_size_t payload_size = sizeof(recv_payload);
 #ifndef AXIOM_NO_TX
             /* receive a ping reply (pong) */
-            recv_ret =  axiom_recv_small(dev, &src_id, (axiom_port_t *)&recv_port,
+            recv_ret =  axiom_recv_raw(dev, &src_id, (axiom_port_t *)&recv_port,
                     &type, &payload_size, &recv_payload);
 #else
             usleep(1);

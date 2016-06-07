@@ -17,7 +17,7 @@
 
 #include "axiom_nic_types.h"
 #include "axiom_nic_packets.h"
-#include "axiom_nic_small_commands.h"
+#include "axiom_nic_raw_commands.h"
 #include "axiom_nic_api_user.h"
 #include "axiom_nic_init.h"
 #include "axiom_utility.h"
@@ -78,7 +78,7 @@ axiom_netperf_reply(axiom_dev_t *dev, axiom_node_id_t src, axiom_payload_size_t
     }
 #endif
 
-    /* XXX tbv: does all 8 bytes of small messagge arrive? */
+    /* XXX tbv: does all 8 bytes of raw messagge arrive? */
     cur_status->received_bytes += payload_size;
 
     DPRINTF("NETPERF msg received from: %u - expected_bytes: %llu "
@@ -108,8 +108,8 @@ axiom_netperf_reply(axiom_dev_t *dev, axiom_node_id_t src, axiom_payload_size_t
         payload.command = AXIOM_CMD_NETPERF_END;
         payload.total_bytes = cur_status->received_bytes;
         payload.elapsed_time = elapsed_nsec;
-        err = axiom_send_small(dev, src, AXIOM_SMALL_PORT_NETUTILS,
-                AXIOM_TYPE_SMALL_DATA, sizeof(payload), &payload);
+        err = axiom_send_raw(dev, src, AXIOM_RAW_PORT_NETUTILS,
+                AXIOM_TYPE_RAW_DATA, sizeof(payload), &payload);
         if (err == AXIOM_RET_ERROR) {
             EPRINTF("send back time error");
             return;

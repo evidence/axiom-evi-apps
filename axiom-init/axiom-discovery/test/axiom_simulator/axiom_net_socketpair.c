@@ -17,22 +17,22 @@
 typedef struct axiom_net {
     int node_if_fd[AXIOM_INTERFACES_MAX];
     int num_of_ended_rt;
-    /* If send_recv_small_sim == 0 , axiom_net_send_small() and
-     * axiom_net_send_small() must manage the flow of the message from MASTER to
+    /* If send_recv_raw_sim == 0 , axiom_net_send_raw() and
+     * axiom_net_send_raw() must manage the flow of the message from MASTER to
      * the Slave (AXIOM_RT_CMD_INFO and AXIOM_RT_CMD_END_INFO messages),
      * otherwise it must manage the flow of the message from Slaves to MASTER
      * (AXIOM_RT_CMD_RT_REPLY messages) */
-    int send_recv_small_sim;
+    int send_recv_raw_sim;
     int num_recv_reply[AXIOM_INTERFACES_MAX];
 } axiom_net_t;
 
 /*
- * @brief This function manages a small message send from Master
+ * @brief This function manages a raw message send from Master
  *        to a slave (using local routing table of the node).
  * @param dev The axiom device private data pointer
  * @param dest_node_id Receiver node identification
- * @param port port the small message
- * @param type type the small message
+ * @param port port the raw message
+ * @param type type the raw message
  * @param payload Data to receive
  * return Returns ...
  */
@@ -40,13 +40,13 @@ static axiom_msg_id_t
 send_from_master_to_slave(axiom_dev_t *dev, axiom_if_id_t dest_node_id,
         axiom_port_t port, axiom_type_t type, axiom_payload_t *payload)
 {
-    axiom_small_msg_t message;
+    axiom_raw_msg_t message;
     ssize_t write_ret;
     int last_node = 1;
     uint8_t if_i;
     axiom_routing_payload_t rt_payload;
 
-    if (port != AXIOM_SMALL_PORT_INIT)
+    if (port != AXIOM_RAW_PORT_INIT)
     {
         return AXIOM_RET_ERROR;
     }
@@ -81,7 +81,7 @@ send_from_master_to_slave(axiom_dev_t *dev, axiom_if_id_t dest_node_id,
     }
 
 
-    /* MASTER changing of axiom_net_send_small() simulation mode */
+    /* MASTER changing of axiom_net_send_raw() simulation mode */
     if (((axiom_sim_node_args_t*)dev)->node_id != AXIOM_MASTER_ID)
     {
         return AXIOM_RET_OK;
@@ -104,21 +104,21 @@ send_from_master_to_slave(axiom_dev_t *dev, axiom_if_id_t dest_node_id,
 
         if ((last_node == 1) || (dest_node_id == (AXIOM_NODES_MAX -1)))
         {
-            /* the next axiom_net_recv_small() simulation has to be different
+            /* the next axiom_net_recv_raw() simulation has to be different
                (AXIO_RT_CMD_RT_REPLY) */
-            ((axiom_sim_node_args_t*)dev)->net->send_recv_small_sim = 1;
+            ((axiom_sim_node_args_t*)dev)->net->send_recv_raw_sim = 1;
         }
     }
     return AXIOM_RET_OK;
 }
 
 /*
- * @brief This function manages a small message receiption
+ * @brief This function manages a raw message receiption
  *          during routing table delivery.
  * @param dev The axiom devive private data pointer
  * @param src_node_id The node which has sent the received message
- * @param port port of the small message
- * @param type type of the small message
+ * @param port port of the raw message
+ * @param type type of the raw message
  * @param payload data received
  * @return Returns -1 on error!
  */
@@ -126,7 +126,7 @@ static axiom_msg_id_t
 recv_from_master_to_slave(axiom_dev_t *dev, axiom_node_id_t *src_node_id,
         axiom_port_t *port, axiom_type_t *type, axiom_payload_t *payload)
 {
-    axiom_small_msg_t message;
+    axiom_raw_msg_t message;
     axiom_routing_payload_t rt_message;
     ssize_t read_bytes;
 
@@ -182,7 +182,7 @@ recv_from_master_to_slave(axiom_dev_t *dev, axiom_node_id_t *src_node_id,
         {
             return AXIOM_RET_ERROR;
         }
-        if (message.header.rx.port_type.field.port != AXIOM_SMALL_PORT_INIT)
+        if (message.header.rx.port_type.field.port != AXIOM_RAW_PORT_INIT)
         {
             continue;
         }
@@ -204,7 +204,7 @@ recv_from_master_to_slave(axiom_dev_t *dev, axiom_node_id_t *src_node_id,
                 return AXIOM_RET_OK;
             }
             /* I have to forward this info to recipient node*/
-            axiom_net_send_small(dev, message.header.tx.dst,
+            axiom_net_send_raw(dev, message.header.tx.dst,
                     message.header.rx.port_type.field.port,
                     message.header.rx.port_type.field.type,
                     &(message.payload));
@@ -216,7 +216,7 @@ recv_from_master_to_slave(axiom_dev_t *dev, axiom_node_id_t *src_node_id,
 
             if (message.header.tx.dst != node_id)
             {
-                axiom_net_send_small(dev, message.header.tx.dst,
+                axiom_net_send_raw(dev, message.header.tx.dst,
                         message.header.rx.port_type.field.port,
                         message.header.rx.port_type.field.type,
                         &(message.payload));
@@ -229,8 +229,8 @@ recv_from_master_to_slave(axiom_dev_t *dev, axiom_node_id_t *src_node_id,
     rt_message.command = AXIOM_RT_CMD_END_INFO;
     *payload = message.payload;
 
-    /* Slave changing of axiom_net_send_small() simulation mode */
-    ((axiom_sim_node_args_t*)dev)->net->send_recv_small_sim = 1;
+    /* Slave changing of axiom_net_send_raw() simulation mode */
+    ((axiom_sim_node_args_t*)dev)->net->send_recv_raw_sim = 1;
     /* reset of num_of_ended_rt */
     ((axiom_sim_node_args_t*)dev)->net->num_of_ended_rt = 0;
 
@@ -238,12 +238,12 @@ recv_from_master_to_slave(axiom_dev_t *dev, axiom_node_id_t *src_node_id,
 }
 
 /*
- * @brief This function manages a small message send from Master
+ * @brief This function manages a raw message send from Master
  *        to a slave (using local routing table of the node).
  * @param dev The axiom device private data pointer
  * @param dest_node_id Receiver node identification
- * @param port port the small message
- * @param type type the small message
+ * @param port port the raw message
+ * @param type type the raw message
  * @param payload Data to receive
  * return Returns ...
  */
@@ -254,12 +254,12 @@ send_from_slave_to_master(axiom_dev_t *dev, axiom_if_id_t dest_node_id,
     axiom_node_id_t node_id, node_index;
     int do_flag, num_nodes_after_me, i;
     ssize_t read_bytes;
-    axiom_small_msg_t message;
+    axiom_raw_msg_t message;
     ssize_t write_ret;
     uint8_t if_index;
     uint8_t recv_if[AXIOM_INTERFACES_MAX];
 
-    if (port != AXIOM_SMALL_PORT_INIT)
+    if (port != AXIOM_RAW_PORT_INIT)
     {
         return AXIOM_RET_ERROR;
     }
@@ -347,7 +347,7 @@ send_from_slave_to_master(axiom_dev_t *dev, axiom_if_id_t dest_node_id,
             ((axiom_sim_node_args_t*)dev)->net->num_of_ended_rt++;
 
             /* I have to forward this back to the Master */
-            axiom_net_send_small(dev, message.header.tx.dst,
+            axiom_net_send_raw(dev, message.header.tx.dst,
                     message.header.rx.port_type.field.port,
                     message.header.rx.port_type.field.type,
                     &(message.payload));
@@ -362,12 +362,12 @@ send_from_slave_to_master(axiom_dev_t *dev, axiom_if_id_t dest_node_id,
 }
 
 /*
- * @brief This function manages a small message receiption from slave
+ * @brief This function manages a raw message receiption from slave
  *        to master (using local routing table of the node).
  * @param dev The axiom devive private data pointer
  * @param src_node_id The node which has sent the received message
- * @param port port of the small message
- * @param type type of the small message
+ * @param port port of the raw message
+ * @param type type of the raw message
  * @param payload data received
  * @return Returns -1 on error!
  */
@@ -379,7 +379,7 @@ static axiom_msg_id_t recv_from_slave_to_master (axiom_dev_t *dev,
     uint8_t if_index;
     ssize_t read_bytes;
     uint8_t recv_if = AXIOM_INTERFACES_MAX;
-    axiom_small_msg_t message;
+    axiom_raw_msg_t message;
 
     node_id = axiom_get_node_id(dev);
 
@@ -496,7 +496,7 @@ axiom_net_setup(axiom_sim_node_args_t *nodes, axiom_sim_topology_t *tpl)
         }
         memset(nodes[i].net->node_if_fd, 0, sizeof(int) * AXIOM_INTERFACES_MAX);
         nodes[i].net->num_of_ended_rt = 0;
-        nodes[i].net->send_recv_small_sim = 0;
+        nodes[i].net->send_recv_raw_sim = 0;
     }
 
     for (i = 0; i < tpl->num_nodes; i++) {
@@ -547,20 +547,20 @@ axiom_net_connect_status(axiom_dev_t *dev, axiom_if_id_t if_number)
 }
 
 /*
- * @brief This function sends a small message to a neighbour on a specific
+ * @brief This function sends a raw message to a neighbour on a specific
  *        interface.
  * @param dev The axiom device private data pointer
  * @param src_interface Sender interface identification
- * @param port port the small message
- * @param type type the small message
+ * @param port port the raw message
+ * @param type type the raw message
  * @param payload Data to send
  * return Returns ...
  */
 axiom_msg_id_t
-axiom_net_send_small_neighbour(axiom_dev_t *dev, axiom_if_id_t src_interface,
+axiom_net_send_raw_neighbour(axiom_dev_t *dev, axiom_if_id_t src_interface,
         axiom_port_t port, axiom_type_t type, axiom_payload_t *payload)
 {
-    axiom_small_msg_t message;
+    axiom_raw_msg_t message;
     ssize_t write_ret;
 
     /* Header */
@@ -584,21 +584,21 @@ axiom_net_send_small_neighbour(axiom_dev_t *dev, axiom_if_id_t src_interface,
 }
 
 /*
- * @brief This function sends a small message to a node.
+ * @brief This function sends a raw message to a node.
  * @param dev The axiom device private data pointer
  * @param dest_node_id Receiver node identification
- * @param port port the small message
- * @param type type the small message
+ * @param port port the raw message
+ * @param type type the raw message
  * @param payload Data to receive
  * return Returns ...
  */
 axiom_msg_id_t
-axiom_net_send_small(axiom_dev_t *dev, axiom_if_id_t dest_node_id,
+axiom_net_send_raw(axiom_dev_t *dev, axiom_if_id_t dest_node_id,
         axiom_port_t port, axiom_type_t type, axiom_payload_t *payload)
 {
     axiom_msg_id_t ret;
 
-    if (((axiom_sim_node_args_t*)dev)->net->send_recv_small_sim == 0)
+    if (((axiom_sim_node_args_t*)dev)->net->send_recv_raw_sim == 0)
     {
         /* management of messages sent from MASTER to all nodes with each node
            routing table*/
@@ -616,19 +616,19 @@ axiom_net_send_small(axiom_dev_t *dev, axiom_if_id_t dest_node_id,
 
 
 /*
- * @brief This function receives small neighbour data.
+ * @brief This function receives raw neighbour data.
  * @param dev The axiom device private data pointer
  * @param src_interface The interface on which the message is recevied
- * @param port port of the small message
- * @param type type of the small message
+ * @param port port of the raw message
+ * @param type type of the raw message
  * @param payload data received
  * @return Returns -1 on error!
  */
 axiom_msg_id_t
-axiom_net_recv_small_neighbour(axiom_dev_t *dev, axiom_node_id_t *src_interface,
+axiom_net_recv_raw_neighbour(axiom_dev_t *dev, axiom_node_id_t *src_interface,
         axiom_port_t *port, axiom_type_t *type, axiom_payload_t *payload)
 {
-    axiom_small_msg_t message;
+    axiom_raw_msg_t message;
     struct pollfd fds[AXIOM_INTERFACES_MAX];
     int i, read_counter, interface_counter;
     ssize_t read_bytes;
@@ -699,21 +699,21 @@ axiom_net_recv_small_neighbour(axiom_dev_t *dev, axiom_node_id_t *src_interface,
 }
 
 /*
- * @brief This function receives small data.
+ * @brief This function receives raw data.
  * @param dev The axiom devive private data pointer
  * @param src_node_id The node which has sent the received message
- * @param port port of the small message
- * @param type type of the small message
+ * @param port port of the raw message
+ * @param type type of the raw message
  * @param payload data received
  * @return Returns -1 on error!
  */
 axiom_msg_id_t
-axiom_net_recv_small(axiom_dev_t *dev, axiom_node_id_t *src_node_id,
+axiom_net_recv_raw(axiom_dev_t *dev, axiom_node_id_t *src_node_id,
         axiom_port_t *port, axiom_type_t *type, axiom_payload_t *payload)
 {
     axiom_msg_id_t ret;
 
-    if (((axiom_sim_node_args_t*)dev)->net->send_recv_small_sim == 0)
+    if (((axiom_sim_node_args_t*)dev)->net->send_recv_raw_sim == 0)
     {
         /* management of messages sent from MASTER to all nodes with each node
            routing table*/

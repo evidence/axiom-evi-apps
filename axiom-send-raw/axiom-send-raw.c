@@ -1,12 +1,12 @@
 /*!
- * \file axiom-send-small.c
+ * \file axiom-send-raw.c
  *
  * \version     v0.5
  * \date        2016-05-03
  *
- * This file contains the implementation of axiom-send-small application.
+ * This file contains the implementation of axiom-send-raw application.
  *
- * axiom-send-small sends AXIOM small raw message to a specified remote node.
+ * axiom-send-raw sends AXIOM raw message to a specified remote node.
  */
 #include <ctype.h>
 #include <stdio.h>
@@ -28,8 +28,8 @@
 static void
 usage(void)
 {
-    printf("usage: axiom-send-small [arguments] -d dest -l payload\n");
-    printf("Send AXIOM small raw message to specified dest (dest can be remote node\n");
+    printf("usage: axiom-send-raw [arguments] -d dest -l payload\n");
+    printf("Send AXIOM raw message to specified dest (dest can be remote node\n");
     printf("or local interface, if you send a message to neighbour [-n])\n\n");
     printf("Arguments:\n");
     printf("-d, --dest      dest     dest node id or local if (TO_NEIGHBOUR) \n");
@@ -48,7 +48,7 @@ main(int argc, char **argv)
     axiom_port_t port = 1;
     axiom_node_id_t dst_id;
     int port_ok = 0, dst_ok = 0, payload_ok = 0, to_neighbour = 0;
-    axiom_type_t type = AXIOM_TYPE_SMALL_DATA;
+    axiom_type_t type = AXIOM_TYPE_RAW_DATA;
     uint32_t payload; /* XXX: maybe we can use string */
 
     int long_index =0;
@@ -146,7 +146,7 @@ main(int argc, char **argv)
     /* check neighbour parameter */
     if (to_neighbour == 1)
     {
-        type = AXIOM_TYPE_SMALL_NEIGHBOUR;
+        type = AXIOM_TYPE_RAW_NEIGHBOUR;
     }
 
     /* open the axiom device */
@@ -166,9 +166,9 @@ main(int argc, char **argv)
     }
 #endif
 
-    printf("[node %u] sending small message...\n", node_id);
-    /* send a small message*/
-    recv_ret =  axiom_send_small(dev, (axiom_node_id_t)dst_id,
+    printf("[node %u] sending raw message...\n", node_id);
+    /* send a raw message*/
+    recv_ret =  axiom_send_raw(dev, (axiom_node_id_t)dst_id,
             (axiom_port_t)port, type, sizeof(payload), &payload);
     if (recv_ret == AXIOM_RET_ERROR)
     {
@@ -177,10 +177,10 @@ main(int argc, char **argv)
     }
 
     printf("[node %u] message sent to port %u\n", node_id, port);
-    if (type == AXIOM_TYPE_SMALL_NEIGHBOUR) {
+    if (type == AXIOM_TYPE_RAW_NEIGHBOUR) {
         printf("\t- local_interface = %u\n", dst_id);
         printf("\t- type = %s\n", "NEIGHBOUR");
-    } else if (type == AXIOM_TYPE_SMALL_DATA) {
+    } else if (type == AXIOM_TYPE_RAW_DATA) {
         printf("\t- destination_node_id = %u\n", dst_id);
         printf("\t- type = %s\n", "DATA");
     }

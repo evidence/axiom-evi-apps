@@ -227,7 +227,7 @@ axiom_delivery_routing_tables(axiom_dev_t *dev,
             {
                  /* (node, ifaces codified) to send to dest_node_id*/
                 /* (node, if) to send to dest_node_id*/
-                ret = axiom_send_small_delivery(dev, dest_node_index,
+                ret = axiom_send_raw_delivery(dev, dest_node_index,
                         AXIOM_RT_CMD_INFO, rt_node_index, ifaces);
                 if (ret == AXIOM_RET_ERROR)
                 {
@@ -245,7 +245,7 @@ axiom_delivery_routing_tables(axiom_dev_t *dev,
             dest_node_index++)
 	{
         /* end of sending routing tables */
-        ret = axiom_send_small_delivery(dev, dest_node_index,
+        ret = axiom_send_raw_delivery(dev, dest_node_index,
                 AXIOM_RT_CMD_END_INFO, 0, 0);
         if (ret == AXIOM_RET_ERROR)
         {
@@ -275,7 +275,7 @@ axiom_wait_rt_received(axiom_dev_t *dev, axiom_node_id_t total_nodes)
         axiom_node_id_t src_node_id;
 
         /* receive reply from node which have received the routing table */
-        ret = axiom_recv_small_delivery(dev, &src_node_id,
+        ret = axiom_recv_raw_delivery(dev, &src_node_id,
                 &cmd, &payload_node_id, &payload_if_id);
         if ((ret != AXIOM_RET_OK) || (cmd != AXIOM_RT_CMD_RT_REPLY))
         {
@@ -312,7 +312,7 @@ axiom_receive_routing_tables(axiom_dev_t *dev, axiom_node_id_t node_id,
     while (cmd != AXIOM_RT_CMD_END_INFO)
     {
         /* receive routing info with raw messages */
-        ret = axiom_recv_small_delivery(dev, &src_node_id,
+        ret = axiom_recv_raw_delivery(dev, &src_node_id,
                 &cmd, &node_to_set, &if_to_set);
 
         if (ret == AXIOM_RET_ERROR)
@@ -347,7 +347,7 @@ axiom_receive_routing_tables(axiom_dev_t *dev, axiom_node_id_t node_id,
             }
 
             /* reply to MASTER that I'have received local routing table */
-            ret = axiom_send_small_delivery(dev, AXIOM_MASTER_ID,
+            ret = axiom_send_raw_delivery(dev, AXIOM_MASTER_ID,
                     AXIOM_RT_CMD_RT_REPLY, node_id, 0);
 
             if (ret == AXIOM_RET_ERROR)
@@ -425,7 +425,7 @@ axiom_set_routing_table(axiom_dev_t *dev,
                         node_id, if_index);
 
                 /* Say over interface 'if_index': Set your routing table */
-                ret = axiom_send_small_set_routing(dev, if_index,
+                ret = axiom_send_raw_set_routing(dev, if_index,
                         AXIOM_RT_CMD_SET_ROUTING);
                 if (ret == AXIOM_RET_ERROR)
                 {
@@ -448,7 +448,7 @@ axiom_set_routing_table(axiom_dev_t *dev,
             if ((if_features & 0x01) != 0)
             {
                 /* Wait answers */
-                ret = axiom_recv_small_set_routing(dev, &src_interface, &cmd);
+                ret = axiom_recv_raw_set_routing(dev, &src_interface, &cmd);
                 if (ret == AXIOM_RET_ERROR)
                 {
                     EPRINTF("Node:%d, error receiving AXIOM_RAW_TYPE_SET_ROUTING message",
@@ -469,7 +469,7 @@ axiom_set_routing_table(axiom_dev_t *dev,
             DPRINTF("Node %d: Wait for AXIOM_RAW_TYPE_SET_ROUTING message",
                     node_id);
 
-            ret = axiom_recv_small_set_routing(dev, &src_interface, &cmd);
+            ret = axiom_recv_raw_set_routing(dev, &src_interface, &cmd);
             if (ret == AXIOM_RET_ERROR)
             {
                 EPRINTF("Node:%d, error receiving AXIOM_RAW_TYPE_SET_ROUTING message",
@@ -501,7 +501,7 @@ axiom_set_routing_table(axiom_dev_t *dev,
                         node_id, if_index);
 
                 /* Say over interface 'if_index': Set your routing table */
-                ret = axiom_send_small_set_routing(dev, if_index,
+                ret = axiom_send_raw_set_routing(dev, if_index,
                         AXIOM_RT_CMD_SET_ROUTING);
                 if (ret == AXIOM_RET_ERROR)
                 {
@@ -519,7 +519,7 @@ axiom_set_routing_table(axiom_dev_t *dev,
         while ((num_interface > 1) && (ret == AXIOM_RET_OK))
         {
             /* Wait answer */
-            ret = axiom_recv_small_set_routing(dev, &src_interface, &cmd);
+            ret = axiom_recv_raw_set_routing(dev, &src_interface, &cmd);
             if (ret == AXIOM_RET_ERROR)
             {
                 EPRINTF("Node:%d, axiom_recv_raw_set_routing() error",

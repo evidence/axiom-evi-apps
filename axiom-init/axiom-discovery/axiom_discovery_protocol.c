@@ -86,7 +86,7 @@ discover_phase(axiom_dev_t *dev, axiom_node_id_t *next_id,
                 "the AXIOM_DSCV_CMD_REQ_ID message", node_id, i);
 
         /* Say over interface 'i': 'I am node node_id give me your node id' */
-        ret = axiom_send_small_discovery(dev, i, AXIOM_DSCV_CMD_REQ_ID,
+        ret = axiom_send_raw_discovery(dev, i, AXIOM_DSCV_CMD_REQ_ID,
                 node_id, 0, 0, 0);
         if (ret == AXIOM_RET_ERROR)
         {
@@ -98,7 +98,7 @@ discover_phase(axiom_dev_t *dev, axiom_node_id_t *next_id,
                 node_id, i);
 
         /* Wait for the neighbour response */
-        ret = axiom_recv_small_discovery(dev, &src_interface, &msg_cmd,
+        ret = axiom_recv_raw_discovery(dev, &src_interface, &msg_cmd,
                 &src_node_id, &dst_node_id, &data_src_if, &data_dst_if);
 
         if (ret == AXIOM_RET_ERROR)
@@ -144,7 +144,7 @@ discover_phase(axiom_dev_t *dev, axiom_node_id_t *next_id,
                 "message, id_node=%d", node_id, i, *next_id);
 
         /* Say over interface 'i': you are node 'nextid' */
-        ret = axiom_send_small_discovery(dev, i, AXIOM_DSCV_CMD_SETID,
+        ret = axiom_send_raw_discovery(dev, i, AXIOM_DSCV_CMD_SETID,
                 node_id, *next_id, 0, 0);
         if (ret == AXIOM_RET_ERROR)
         {
@@ -173,7 +173,7 @@ discover_phase(axiom_dev_t *dev, axiom_node_id_t *next_id,
         DPRINTF("Node:%d, Send to interface number = %d the AXIOM_DSCV_CMD_START "
                 "message", node_id, i);
         /* Say over interface 'i': start discovery protocol, nextid */
-        ret = axiom_send_small_discovery(dev, i, AXIOM_DSCV_CMD_START,
+        ret = axiom_send_raw_discovery(dev, i, AXIOM_DSCV_CMD_START,
                 node_id, *next_id, 0, 0);
         if (ret == AXIOM_RET_ERROR)
         {
@@ -192,7 +192,7 @@ discover_phase(axiom_dev_t *dev, axiom_node_id_t *next_id,
 
             /* Receive back the  next_id neighbour node topology data
              * structure and the new updated nextid or an ID request */
-            ret = axiom_recv_small_discovery(dev, &src_interface, &msg_cmd,
+            ret = axiom_recv_raw_discovery(dev, &src_interface, &msg_cmd,
                     &src_node_id, &dst_node_id, &data_src_if, &data_dst_if);
             if (ret == AXIOM_RET_ERROR)
             {
@@ -209,7 +209,7 @@ discover_phase(axiom_dev_t *dev, axiom_node_id_t *next_id,
                  * connceted to local 'src_interface' interface */
 
                 /* Reply 'I am node 'node_id', I'm on interface 'src_interface' */
-                ret = axiom_send_small_discovery(dev, src_interface,
+                ret = axiom_send_raw_discovery(dev, src_interface,
                         AXIOM_DSCV_CMD_RSP_ID,
                         node_id, src_node_id, src_interface, 0);
                 DPRINTF("Node:%d, Send AXIOM_DSCV_CMD_RSP_ID on if %d",
@@ -331,7 +331,7 @@ axiom_slave_node_discovery (axiom_dev_t *dev,
     if (*node_id != 0)
     {
         /* Reply 'I am node 'node_id', I'm on interface 'src_interface' */
-        ret = axiom_send_small_discovery(dev, src_interface, AXIOM_DSCV_CMD_RSP_ID,
+        ret = axiom_send_raw_discovery(dev, src_interface, AXIOM_DSCV_CMD_RSP_ID,
                 *node_id, src_node_id, src_interface, 0);
         if (ret == AXIOM_RET_ERROR)
         {
@@ -344,7 +344,7 @@ axiom_slave_node_discovery (axiom_dev_t *dev,
             src_interface);
 
     /* Reply 'I do not have an id, I'm on interface src_interface' */
-    ret = axiom_send_small_discovery(dev, src_interface, AXIOM_DSCV_CMD_RSP_NOID,
+    ret = axiom_send_raw_discovery(dev, src_interface, AXIOM_DSCV_CMD_RSP_NOID,
             *node_id, src_node_id, src_interface, 0);
     if (ret == AXIOM_RET_ERROR)
     {
@@ -358,7 +358,7 @@ axiom_slave_node_discovery (axiom_dev_t *dev,
     ret = AXIOM_RET_OK;
     while ((msg_cmd != AXIOM_DSCV_CMD_SETID) && (ret == AXIOM_RET_OK))
     {
-        ret = axiom_recv_small_discovery(dev, &src_interface, &msg_cmd,
+        ret = axiom_recv_raw_discovery(dev, &src_interface, &msg_cmd,
                 &src_node_id, &dst_node_id, &data_src_if, &data_dst_if);
     }
     if (ret == AXIOM_RET_ERROR)
@@ -381,7 +381,7 @@ axiom_slave_node_discovery (axiom_dev_t *dev,
         DPRINTF("Slave: Wait for AXIOM_DSCV_CMD_START message - msg_cmd: %x",
                 msg_cmd);
 
-        ret = axiom_recv_small_discovery(dev, &src_interface, &msg_cmd,
+        ret = axiom_recv_raw_discovery(dev, &src_interface, &msg_cmd,
                 &src_node_id, &dst_node_id, &data_src_if, &data_dst_if);
     }
     if (ret == AXIOM_RET_ERROR)
@@ -417,7 +417,7 @@ axiom_slave_node_discovery (axiom_dev_t *dev,
                     break;
             }
             /* there is a link to return */
-            ret = axiom_send_small_discovery(dev, src_interface,
+            ret = axiom_send_raw_discovery(dev, src_interface,
                     AXIOM_DSCV_CMD_TOPOLOGY, i, topology[i][j], j, w);
             if (ret == AXIOM_RET_ERROR)
             {
@@ -434,7 +434,7 @@ axiom_slave_node_discovery (axiom_dev_t *dev,
 
     /* Says: <<Finished sending the topology structure,
      * I send back actual next_id>> */
-    ret = axiom_send_small_discovery(dev, src_interface,
+    ret = axiom_send_raw_discovery(dev, src_interface,
             AXIOM_DSCV_CMD_END_TOPOLOGY, next_id, 0, 0, 0);
     if (ret == AXIOM_RET_ERROR)
     {

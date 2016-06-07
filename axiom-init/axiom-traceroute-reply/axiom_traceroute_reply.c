@@ -13,7 +13,7 @@
 
 #include "axiom_nic_types.h"
 #include "axiom_nic_packets.h"
-#include "axiom_nic_small_commands.h"
+#include "axiom_nic_raw_commands.h"
 #include "axiom_nic_api_user.h"
 #include "axiom_nic_init.h"
 #include "dprintf.h"
@@ -44,8 +44,8 @@ axiom_traceroute_reply(axiom_dev_t *dev, axiom_if_id_t src,
 
     /* send reply to the node who has started the traceroute */
     recv_payload->command = AXIOM_CMD_TRACEROUTE_REPLY;
-    ret = axiom_send_small(dev, recv_payload->src_id, AXIOM_SMALL_PORT_NETUTILS,
-            AXIOM_TYPE_SMALL_DATA, sizeof(*recv_payload), recv_payload);
+    ret = axiom_send_raw(dev, recv_payload->src_id, AXIOM_RAW_PORT_NETUTILS,
+            AXIOM_TYPE_RAW_DATA, sizeof(*recv_payload), recv_payload);
     if (ret == AXIOM_RET_ERROR) {
         EPRINTF("send error");
         return;
@@ -62,12 +62,12 @@ axiom_traceroute_reply(axiom_dev_t *dev, axiom_if_id_t src,
             EPRINTF("axiom_next_hop error");
             return;
         }
-        /* send small neighbour traceroute message */
-        msg_err = axiom_send_small_init(dev, if_id, AXIOM_TYPE_SMALL_NEIGHBOUR,
+        /* send raw neighbour traceroute message */
+        msg_err = axiom_send_raw_init(dev, if_id, AXIOM_TYPE_RAW_NEIGHBOUR,
                                         &send_payload);
 
         if (msg_err == AXIOM_RET_ERROR) {
-            EPRINTF("send small init error");
+            EPRINTF("send raw init error");
             return;
         }
     }

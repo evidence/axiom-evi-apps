@@ -146,7 +146,7 @@ axiom_net_connect_status(axiom_dev_t *dev, axiom_if_id_t if_number)
 }
 
 /*
- * @brief This function sends a small message to a neighbour on a specific
+ * @brief This function sends a raw message to a neighbour on a specific
  *        interface.
  * @param dev The axiom devive private data pointer
  * @param src_interface Sender interface identification
@@ -155,12 +155,12 @@ axiom_net_connect_status(axiom_dev_t *dev, axiom_if_id_t if_number)
  * return Returns ...
  */
 axiom_msg_id_t
-axiom_net_send_small_neighbour(axiom_dev_t *dev, axiom_if_id_t src_interface,
+axiom_net_send_raw_neighbour(axiom_dev_t *dev, axiom_if_id_t src_interface,
         axiom_port_t port, axiom_type_t type, axiom_payload_t *payload)
 {
-    axiom_small_msg_t message;
-    axiom_small_eth_t small_eth;
-    uint32_t axiom_msg_length = sizeof(axiom_small_eth_t);
+    axiom_raw_msg_t message;
+    axiom_raw_eth_t raw_eth;
+    uint32_t axiom_msg_length = sizeof(axiom_raw_eth_t);
     int ret;
 
     /* Header */
@@ -179,12 +179,12 @@ axiom_net_send_small_neighbour(axiom_dev_t *dev, axiom_if_id_t src_interface,
         EPRINTF("axiom_msg_length send error - return: %d", ret);
         return AXIOM_RET_ERROR;
     }
-    small_eth.eth_hdr.type = htons(AXIOM_ETH_TYPE_SMALL);
-    memcpy(&small_eth.small_msg, &message, sizeof(message));
+    raw_eth.eth_hdr.type = htons(AXIOM_ETH_TYPE_RAW);
+    memcpy(&raw_eth.raw_msg, &message, sizeof(message));
 
     /* send the ethernet packet */
     axiom_msg_length = ntohl(axiom_msg_length);
-    ret = send( ((axiom_sim_node_args_t*)dev)->net->switch_fd, &small_eth,
+    ret = send( ((axiom_sim_node_args_t*)dev)->net->switch_fd, &raw_eth,
             axiom_msg_length, 0);
 
     if (ret <= 0) {
@@ -194,7 +194,7 @@ axiom_net_send_small_neighbour(axiom_dev_t *dev, axiom_if_id_t src_interface,
 }
 
 /*
- * @brief This function sends a small message to a node
+ * @brief This function sends a raw message to a node
  * @param dev The axiom devive private data pointer
  * @param src_node_id Sender node identification
  * @param dest_node_id Recipient node identification
@@ -203,15 +203,15 @@ axiom_net_send_small_neighbour(axiom_dev_t *dev, axiom_if_id_t src_interface,
  * return Returns ...
  */
 axiom_msg_id_t
-axiom_net_send_small(axiom_dev_t *dev, axiom_if_id_t dest_node_id,
+axiom_net_send_raw(axiom_dev_t *dev, axiom_if_id_t dest_node_id,
         axiom_port_t port, axiom_type_t type, axiom_payload_t *payload)
 {
-    axiom_small_msg_t message;
-    axiom_small_eth_t small_eth;
-    uint32_t axiom_msg_length = sizeof(axiom_small_eth_t);
+    axiom_raw_msg_t message;
+    axiom_raw_eth_t raw_eth;
+    uint32_t axiom_msg_length = sizeof(axiom_raw_eth_t);
     int ret;
 
-    if (port != AXIOM_SMALL_PORT_INIT)
+    if (port != AXIOM_RAW_PORT_INIT)
     {
         return AXIOM_RET_ERROR;
     }
@@ -231,12 +231,12 @@ axiom_net_send_small(axiom_dev_t *dev, axiom_if_id_t dest_node_id,
         EPRINTF("axiom_msg_length send error - return: %d", ret);
         return AXIOM_RET_ERROR;
     }
-    small_eth.eth_hdr.type = htons(AXIOM_ETH_TYPE_SMALL);
-    memcpy(&small_eth.small_msg, &message, sizeof(message));
+    raw_eth.eth_hdr.type = htons(AXIOM_ETH_TYPE_RAW);
+    memcpy(&raw_eth.raw_msg, &message, sizeof(message));
 
     /* Send the ethernet packet */
     axiom_msg_length = ntohl(axiom_msg_length);
-    ret = send( ((axiom_sim_node_args_t*)dev)->net->switch_fd, &small_eth,
+    ret = send( ((axiom_sim_node_args_t*)dev)->net->switch_fd, &raw_eth,
             axiom_msg_length, 0);
     if (ret <= 0) {
         return AXIOM_RET_ERROR;
@@ -250,21 +250,21 @@ axiom_net_send_small(axiom_dev_t *dev, axiom_if_id_t dest_node_id,
 }
 
 /*
- * @brief This function receives small neighbour data.
+ * @brief This function receives raw neighbour data.
  * @param dev The axiom devive private data pointer
- * @param src_interface The source node id that sent the small data or local
- *               interface that received the small data
- * @param port port of the small message
- * @param type type of the small message
+ * @param src_interface The source node id that sent the raw data or local
+ *               interface that received the raw data
+ * @param port port of the raw message
+ * @param type type of the raw message
  * @param payload data received
  * @return Returns a unique positive message id on success, -1 otherwise.
  * XXX: the return type is unsigned!
  */
 axiom_msg_id_t
-axiom_net_recv_small_neighbour(axiom_dev_t *dev, axiom_node_id_t *src_interface,
+axiom_net_recv_raw_neighbour(axiom_dev_t *dev, axiom_node_id_t *src_interface,
         axiom_port_t *port, axiom_type_t *type, axiom_payload_t *payload)
 {
-    axiom_small_eth_t small_eth;
+    axiom_raw_eth_t raw_eth;
     uint32_t axiom_msg_length;
     int ret, retry = 1;
 
@@ -277,13 +277,13 @@ axiom_net_recv_small_neighbour(axiom_dev_t *dev, axiom_node_id_t *src_interface,
         }
 
         axiom_msg_length = ntohl(axiom_msg_length);
-        if (axiom_msg_length > sizeof(small_eth)) {
+        if (axiom_msg_length > sizeof(raw_eth)) {
             EPRINTF("too long message - len: %d", axiom_msg_length);
             return AXIOM_RET_ERROR;
         }
 
         /* receive ethernet packet */
-        ret = recv(((axiom_sim_node_args_t*)dev)->net->switch_fd, &small_eth,
+        ret = recv(((axiom_sim_node_args_t*)dev)->net->switch_fd, &raw_eth,
                 axiom_msg_length, MSG_WAITALL);
         if (ret != axiom_msg_length) {
             EPRINTF("unexpected length - expected: %d received: %d",
@@ -294,7 +294,7 @@ axiom_net_recv_small_neighbour(axiom_dev_t *dev, axiom_node_id_t *src_interface,
         NDPRINTF("Receive from socket number = %d",
                 ((axiom_sim_node_args_t*)dev)->net->switch_fd);
 
-        if (small_eth.eth_hdr.type != htons(AXIOM_ETH_TYPE_SMALL)) {
+        if (raw_eth.eth_hdr.type != htons(AXIOM_ETH_TYPE_RAW)) {
             retry = 1;
             DPRINTF("packet discarded");
             continue;
@@ -302,31 +302,31 @@ axiom_net_recv_small_neighbour(axiom_dev_t *dev, axiom_node_id_t *src_interface,
         retry = 0;
 
         /* the switch puts the interface from which I have to receive */
-        *src_interface = small_eth.small_msg.header.rx.src;
-        *port = small_eth.small_msg.header.rx.port_type.field.port;
-        *type = small_eth.small_msg.header.rx.port_type.field.type;
+        *src_interface = raw_eth.raw_msg.header.rx.src;
+        *port = raw_eth.raw_msg.header.rx.port_type.field.port;
+        *type = raw_eth.raw_msg.header.rx.port_type.field.type;
         /* payload */
-        *payload = small_eth.small_msg.payload;
+        *payload = raw_eth.raw_msg.payload;
     }
 
     return AXIOM_RET_OK;
 }
 
 /*
- * @brief This function receives a small message from a node
+ * @brief This function receives a raw message from a node
  * @param dev The axiom devive private data pointer
  * @param src_node_id Sender node identification
- * @param port port of the small message
- * @param type type of the small message
+ * @param port port of the raw message
+ * @param type type of the raw message
  * @param payload Data to receive
  * return Returns ...
  */
 axiom_msg_id_t
-axiom_net_recv_small(axiom_dev_t *dev, axiom_node_id_t *src_node_id,
+axiom_net_recv_raw(axiom_dev_t *dev, axiom_node_id_t *src_node_id,
         axiom_port_t *port, axiom_type_t *type, axiom_payload_t *payload)
 {
     axiom_routing_payload_t rt_message;
-    axiom_small_eth_t small_eth;
+    axiom_raw_eth_t raw_eth;
     uint32_t axiom_msg_length;
     int ret, retry = 1;
 
@@ -339,13 +339,13 @@ axiom_net_recv_small(axiom_dev_t *dev, axiom_node_id_t *src_node_id,
         }
 
         axiom_msg_length = ntohl(axiom_msg_length);
-        if (axiom_msg_length > sizeof(small_eth)) {
+        if (axiom_msg_length > sizeof(raw_eth)) {
             EPRINTF("too long message - len: %d", axiom_msg_length);
             return AXIOM_RET_ERROR;
         }
 
         /* receive ethernet packet */
-        ret = recv(((axiom_sim_node_args_t*)dev)->net->switch_fd, &small_eth,
+        ret = recv(((axiom_sim_node_args_t*)dev)->net->switch_fd, &raw_eth,
                 axiom_msg_length, MSG_WAITALL);
         if (ret != axiom_msg_length)
         {
@@ -354,40 +354,40 @@ axiom_net_recv_small(axiom_dev_t *dev, axiom_node_id_t *src_node_id,
             return AXIOM_RET_ERROR;
         }
 
-        if (small_eth.eth_hdr.type != htons(AXIOM_ETH_TYPE_SMALL)) {
+        if (raw_eth.eth_hdr.type != htons(AXIOM_ETH_TYPE_RAW)) {
             retry = 1;
             DPRINTF("packet discarded");
             continue;
         }
         retry = 0;
 
-        if (small_eth.small_msg.header.rx.port_type.field.port !=
-                AXIOM_SMALL_PORT_INIT)
+        if (raw_eth.raw_msg.header.rx.port_type.field.port !=
+                AXIOM_RAW_PORT_INIT)
         {
             continue;
         }
 
-        memcpy(&rt_message, &small_eth.small_msg.payload, sizeof(rt_message));
+        memcpy(&rt_message, &raw_eth.raw_msg.payload, sizeof(rt_message));
 
-        *port = small_eth.small_msg.header.rx.port_type.field.port;
+        *port = raw_eth.raw_msg.header.rx.port_type.field.port;
         DPRINTF("routing: received on socket = %d for node %d: (%d,%d) [I'm node %d]",
                 ((axiom_sim_node_args_t*)dev)->net->switch_fd,
-                small_eth.small_msg.header.tx.dst, rt_message.node_id,
+                raw_eth.raw_msg.header.tx.dst, rt_message.node_id,
                 rt_message.if_mask, axiom_get_node_id(dev));
 
         if (rt_message.command ==  AXIOM_RT_CMD_INFO)
         {
             /* it is local routing table, return the info to the caller */
-            *src_node_id = small_eth.small_msg.header.rx.src;
-            *payload = small_eth.small_msg.payload;
+            *src_node_id = raw_eth.raw_msg.header.rx.src;
+            *payload = raw_eth.raw_msg.payload;
         }
         else if (rt_message.command == AXIOM_RT_CMD_END_INFO)
         {
-            *payload = small_eth.small_msg.payload;
+            *payload = raw_eth.raw_msg.payload;
         }
         else if (rt_message.command ==  AXIOM_RT_CMD_RT_REPLY)
         {
-            *payload = small_eth.small_msg.payload;
+            *payload = raw_eth.raw_msg.payload;
         }
     }
 

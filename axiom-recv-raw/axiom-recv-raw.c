@@ -1,12 +1,12 @@
 /*!
- * \file axiom-recv-small.c
+ * \file axiom-recv-raw.c
  *
  * \version     v0.5
  * \date        2016-05-03
  *
- * This file contains the implementation of axiom-recv-small application.
+ * This file contains the implementation of axiom-recv-raw application.
  *
- * axiom-recv-small receives AXIOM small raw message
+ * axiom-recv-raw receives AXIOM raw message
  */
 #include <ctype.h>
 #include <stdio.h>
@@ -28,8 +28,8 @@
 static void
 usage(void)
 {
-    printf("usage: axiom-recv-small [arguments]\n");
-    printf("Receive AXIOM small raw message\n\n");
+    printf("usage: axiom-recv-raw [arguments]\n");
+    printf("Receive AXIOM raw message\n\n");
     printf("Arguments:\n");
     printf("-p, --port  port     port used for receiving\n");
     printf("-o, --once           receive one message and exit\n");
@@ -115,11 +115,11 @@ main(int argc, char **argv)
         axiom_payload_size_t payload_size = sizeof(&payload);
         int i;
 
-        printf("[node %u] receiving small message on port %u...\n",
+        printf("[node %u] receiving raw message on port %u...\n",
                 node_id, port);
 
-        /* receive a small message from port*/
-        recv_ret =  axiom_recv_small(dev, &src_id, (axiom_port_t *)&recv_port,
+        /* receive a raw message from port*/
+        recv_ret =  axiom_recv_raw(dev, &src_id, (axiom_port_t *)&recv_port,
                 &type, &payload_size, &payload);
         if (recv_ret == AXIOM_RET_ERROR)
         {
@@ -128,10 +128,10 @@ main(int argc, char **argv)
         }
 
         printf("[node %u] message received on port %u\n", node_id, recv_port);
-        if (type == AXIOM_TYPE_SMALL_NEIGHBOUR) {
+        if (type == AXIOM_TYPE_RAW_NEIGHBOUR) {
             printf("\t- local_interface = %u\n", src_id);
             printf("\t- type = %s\n", "NEIGHBOUR");
-        } else if (type == AXIOM_TYPE_SMALL_DATA) {
+        } else if (type == AXIOM_TYPE_RAW_DATA) {
             printf("\t- source_node_id = %u\n", src_id);
             printf("\t- type = %s\n", "DATA");
         }

@@ -60,19 +60,19 @@ This repository contains the following user space application:
         # Print the hops needed to reach the node 1
         axiom-traceroute -d 1
 ```
- * axiom-[send|recv]-small
-     + send/receive Axiom RAW SMALL data to/from a node
+ * axiom-[send|recv]-raw
+     + send/receive Axiom RAW data to/from a node
 ```
         examples:
-        # receive RAW SMALL message
-        axiom-recv-small
+        # receive RAW message
+        axiom-recv-raw
 ```
 ```
-        # send RAW SMALL data to node (node_id=4) with a specified payload
-        axiom-send-small -d 4 --payload 987654
+        # send RAW data to node (node_id=4) with a specified payload
+        axiom-send-raw -d 4 --payload 987654
 ```
 ```
-        # send RAW SMALL data to a neighbour directly connected on a local
+        # send RAW data to a neighbour directly connected on a local
         # interface (if_id=1) with a specified payload
-        axiom-send-small -d 1 --neighbour --payload 987654
+        axiom-send-raw -d 1 --neighbour --payload 987654
 ```

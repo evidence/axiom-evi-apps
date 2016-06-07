@@ -169,7 +169,7 @@ main(int argc, char **argv)
     }
 
     /* bind the current process on port */
-    err = axiom_bind(dev, AXIOM_SMALL_PORT_NETUTILS);
+    err = axiom_bind(dev, AXIOM_RAW_PORT_NETUTILS);
     if (err == AXIOM_RET_ERROR) {
         EPRINTF("axiom_bind error");
         goto err;
@@ -180,8 +180,8 @@ main(int argc, char **argv)
     /* send start message */
     payload.command = AXIOM_CMD_NETPERF_START;
     payload.total_bytes = total_bytes;
-    msg_err = axiom_send_small(dev, dest_node, AXIOM_SMALL_PORT_INIT,
-            AXIOM_TYPE_SMALL_DATA, sizeof(payload), &payload);
+    msg_err = axiom_send_raw(dev, dest_node, AXIOM_RAW_PORT_INIT,
+            AXIOM_TYPE_RAW_DATA, sizeof(payload), &payload);
     if (msg_err == AXIOM_RET_ERROR) {
         EPRINTF("send error");
         goto err;
@@ -204,8 +204,8 @@ main(int argc, char **argv)
     for (sent_bytes = 0; sent_bytes < total_bytes;
             sent_bytes += payload_size) {
         /* send netperf message */
-        msg_err = axiom_send_small(dev, dest_node, AXIOM_SMALL_PORT_INIT,
-                AXIOM_TYPE_SMALL_DATA, payload_size, &payload);
+        msg_err = axiom_send_raw(dev, dest_node, AXIOM_RAW_PORT_INIT,
+                AXIOM_TYPE_RAW_DATA, payload_size, &payload);
         if (msg_err == AXIOM_RET_ERROR) {
             EPRINTF("send error");
             goto err;
@@ -213,7 +213,7 @@ main(int argc, char **argv)
         total_packets++;
         DPRINTF("NETPERF msg sent to: %u - total_bytes: %" PRIu64
                 " sent_bytes: %" PRIu64, dest_node, total_bytes,
-                sent_bytes + sizeof(axiom_small_msg_t));
+                sent_bytes + sizeof(axiom_raw_msg_t));
     }
 
     /* get time of the last sent netperf message */
@@ -235,7 +235,7 @@ main(int argc, char **argv)
     /* receive elapsed rx throughput time form dest_node */
     elapsed_rx_nsec = 0;
     pld_recv_size = sizeof(payload);
-    err =  axiom_recv_small(dev, &src_node, &port, &type, &pld_recv_size,
+    err =  axiom_recv_raw(dev, &src_node, &port, &type, &pld_recv_size,
             &payload);
     if (err == AXIOM_RET_ERROR || (src_node != dest_node) ||
             payload.command != AXIOM_CMD_NETPERF_END) {
@@ -246,7 +246,7 @@ main(int argc, char **argv)
     elapsed_rx_nsec = payload.elapsed_time;
     
     /* raw bytes include also the header */
-    sent_raw_bytes = sent_bytes + (total_packets * sizeof(axiom_small_hdr_t));
+    sent_raw_bytes = sent_bytes + (total_packets * sizeof(axiom_raw_hdr_t));
 
     tx_th = (double)(sent_bytes) / nsec2sec(elapsed_nsec);
     rx_th = (double)(sent_bytes) / nsec2sec(elapsed_rx_nsec);
