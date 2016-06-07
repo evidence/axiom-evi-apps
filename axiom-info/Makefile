@@ -20,7 +20,7 @@ CFLAGS += -Wall $(DFLAGS) -I$(PWD)/$(AXIOM_INCLUDE)
 
 all: $(APPS)
 
-axiom-info: axiom-info.o $(AXIOM_NIC_UL)/axiom_user_api.a
+axiom-info: axiom-info.o $(AXIOM_NIC_UL)/libaxiom_user_api.a
 
 axiom-info.o: axiom-info.c
 

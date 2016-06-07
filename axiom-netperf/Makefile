@@ -21,7 +21,7 @@ CFLAGS += -Wall $(DFLAGS) -I$(PWD)/$(AXIOM_INCLUDE)
 
 all: $(APPS)
 
-axiom-netperf: axiom-netperf.o $(AXIOM_NIC_UL)/axiom_user_api.a
+axiom-netperf: axiom-netperf.o $(AXIOM_NIC_UL)/libaxiom_user_api.a
 
 axiom-netperf.o: axiom-netperf.c $(HEADERS)
 

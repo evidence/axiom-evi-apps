@@ -21,7 +21,7 @@ CFLAGS += -Wall $(DFLAGS) -I$(PWD)/$(AXIOM_INCLUDE)
 
 all: $(APPS)
 
-axiom-ping: axiom-ping.o $(AXIOM_NIC_UL)/axiom_user_api.a
+axiom-ping: axiom-ping.o $(AXIOM_NIC_UL)/libaxiom_user_api.a
 
 axiom-ping.o: axiom-ping.c $(HEADERS)
 

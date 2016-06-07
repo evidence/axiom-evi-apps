@@ -22,7 +22,7 @@ CFLAGS += -Wall $(DFLAGS) -I$(PWD)/$(AXIOM_INCLUDE)
 
 all: $(APPS)
 
-axiom-traceroute: axiom-traceroute.o $(AXIOM_NIC_UL)/axiom_user_api.a
+axiom-traceroute: axiom-traceroute.o $(AXIOM_NIC_UL)/libaxiom_user_api.a
 
 axiom-traceroute.o: axiom-traceroute.c $(HEADERS)
 
