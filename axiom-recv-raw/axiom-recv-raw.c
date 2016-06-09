@@ -141,7 +141,15 @@ main(int argc, char **argv)
 
     do {
         axiom_payload_size_t payload_size = sizeof(&payload);
-        int i;
+        int i, avail;
+
+        if (no_blocking) {
+            avail = axiom_recv_raw_avail(dev);
+            IPRINTF(verbose, "packets available: %d", avail);
+            if (avail > 0) {
+                printf("[node %u] packets available: %d \n", node_id, avail);
+            }
+        }
 
         /* receive a raw message from port*/
         recv_ret =  axiom_recv_raw(dev, &src_id, (axiom_port_t *)&recv_port,
