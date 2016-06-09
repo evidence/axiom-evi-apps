@@ -33,6 +33,9 @@ usage(void)
     printf("Arguments:\n");
     printf("-p, --port  port     port used for receiving\n");
     printf("-o, --once           receive one message and exit\n");
+    printf("-n, --noblocking     use no blocking receive\n");
+    printf("-s, --sleep sec      set second to sleep between two recv\n");
+    printf("-v, --verbose        verbose\n");
     printf("-h, --help           print this help\n\n");
 }
 
@@ -47,33 +50,51 @@ main(int argc, char **argv)
     axiom_type_t type;
     axiom_payload_t payload;
     axiom_err_t err;
+    float sleep_time = 1;
+    int no_blocking = 0;
+    int verbose = 0;
 
     int long_index =0;
     int opt = 0;
     static struct option long_options[] = {
-            {"port", required_argument, 0, 'p'},
-            {"once", no_argument,       0, 'o'},
-            {"help", no_argument,       0, 'h'},
+            {"port", required_argument,  0, 'p'},
+            {"once", no_argument,        0, 'o'},
+            {"sleep", required_argument, 0, 's'},
+            {"noblocking", no_argument,  0, 'n'},
+            {"verbose", no_argument,     0, 'v'},
+            {"help", no_argument,        0, 'h'},
             {0, 0, 0, 0}
     };
 
 
-    while ((opt = getopt_long(argc, argv,"hop:",
-                         long_options, &long_index )) != -1)
-    {
-        switch (opt)
-        {
+    while ((opt = getopt_long(argc, argv,"hop:s:nv",
+                         long_options, &long_index )) != -1) {
+        switch (opt) {
             case 'o':
                 once = 1;
                 break;
 
-            case 'p' :
-                if (sscanf(optarg, "%" SCNu8, &port) != 1)
-                {
+            case 'p':
+                if (sscanf(optarg, "%" SCNu8, &port) != 1) {
                     usage();
                     exit(-1);
                 }
                 port_ok = 1;
+                break;
+
+            case 'n':
+                no_blocking = 1;
+                break;
+
+            case 's':
+                if (sscanf(optarg, "%f", &sleep_time) != 1) {
+                    usage();
+                    exit(-1);
+                }
+                break;
+
+            case 'v':
+                verbose = 1;
                 break;
 
             case 'h':
@@ -83,11 +104,9 @@ main(int argc, char **argv)
         }
     }
 
-    if (port_ok == 1)
-    {
+    if (port_ok == 1) {
         /* port arameter inserted */
-        if ((port < 0) || (port > 255))
-        {
+        if ((port < 0) || (port > 255)) {
             printf("Port not allowed [%u]; [0 < port < 256]\n", port);
             exit(-1);
         }
@@ -95,8 +114,7 @@ main(int argc, char **argv)
 
     /* open the axiom device */
     dev = axiom_open(NULL);
-    if (dev == NULL)
-    {
+    if (dev == NULL) {
         perror("axiom_open()");
         exit(-1);
     }
@@ -105,24 +123,36 @@ main(int argc, char **argv)
 
     /* bind the current process on port */
     err = axiom_bind(dev, port);
-    if (err == AXIOM_RET_ERROR)
-    {
+    if (err != AXIOM_RET_OK) {
         EPRINTF("bind error");
         exit(-1);
     }
+
+    if (no_blocking) {
+        err = axiom_set_blocking(dev, 0);
+        if (err != AXIOM_RET_OK) {
+            EPRINTF("axiom_set_noblocking error");
+            exit(-1);
+        }
+    }
+
+    printf("[node %u] receiving raw messages on port %u...\n",
+            node_id, port);
 
     do {
         axiom_payload_size_t payload_size = sizeof(&payload);
         int i;
 
-        printf("[node %u] receiving raw message on port %u...\n",
-                node_id, port);
-
         /* receive a raw message from port*/
         recv_ret =  axiom_recv_raw(dev, &src_id, (axiom_port_t *)&recv_port,
                 &type, &payload_size, &payload);
-        if (recv_ret == AXIOM_RET_ERROR)
-        {
+        if (recv_ret != AXIOM_RET_OK) {
+            if (no_blocking && (recv_ret == AXIOM_RET_NOTAVAIL)) {
+                IPRINTF(verbose, "no packets available, waiting %f secs",
+                        sleep_time);
+                usleep(sleep_time * 1000000);
+                continue;
+            }
             EPRINTF("receive error");
             break;
         }
