@@ -64,13 +64,10 @@ main(int argc, char **argv)
 
 
     while ((opt = getopt_long(argc, argv,"hp:d:nl:",
-                         long_options, &long_index )) != -1)
-    {
-        switch (opt)
-        {
+                         long_options, &long_index )) != -1) {
+        switch (opt) {
             case 'p' :
-                if (sscanf(optarg, "%" SCNu8, &port) != 1)
-                {
+                if (sscanf(optarg, "%" SCNu8, &port) != 1) {
                     EPRINTF("wrong port");
                     usage();
                     exit(-1);
@@ -79,8 +76,7 @@ main(int argc, char **argv)
                 break;
 
             case 'd' :
-                if (sscanf(optarg, "%" SCNu8, &dst_id) != 1)
-                {
+                if (sscanf(optarg, "%" SCNu8, &dst_id) != 1) {
                     EPRINTF("wrong destination");
                     usage();
                     exit(-1);
@@ -93,8 +89,7 @@ main(int argc, char **argv)
                 break;
 
             case 'l' :
-                if (sscanf(optarg, "%" SCNu32, &payload) != 1)
-                {
+                if (sscanf(optarg, "%" SCNu32, &payload) != 1) {
                     EPRINTF("wrong payload");
                     usage();
                     exit(-1);
@@ -110,49 +105,41 @@ main(int argc, char **argv)
     }
 
     /* check port parameter */
-    if (port_ok == 1)
-    {
+    if (port_ok == 1) {
         /* port arameter inserted */
-        if ((port < 0) || (port > 255))
-        {
+        if ((port < 0) || (port > 255)) {
             printf("Port not allowed [%u]; [0 < port < 256]\n", port);
             exit(-1);
         }
     }
 
     /* check destination node parameter */
-    if (dst_ok == 1)
-    {
+    if (dst_ok == 1) {
         /* port arameter inserted */
-        if ((dst_id < 0) || (dst_id > 255))
-        {
+        if ((dst_id < 0) || (dst_id > 255)) {
             printf("Destination node id not allowed [%u]; [0 <= dst_id < 256]\n", dst_id);
             exit(-1);
         }
     }
-    else
-    {
+    else {
         usage();
         exit(-1);
     }
 
     /* check payload parameter */
-    if (payload_ok != 1)
-    {
+    if (payload_ok != 1) {
         EPRINTF("payload required");
         exit(-1);
     }
 
     /* check neighbour parameter */
-    if (to_neighbour == 1)
-    {
+    if (to_neighbour == 1) {
         type = AXIOM_TYPE_RAW_NEIGHBOUR;
     }
 
     /* open the axiom device */
     dev = axiom_open(NULL);
-    if (dev == NULL)
-    {
+    if (dev == NULL) {
         perror("axiom_open()");
         exit(-1);
     }
@@ -170,8 +157,7 @@ main(int argc, char **argv)
     /* send a raw message*/
     recv_ret =  axiom_send_raw(dev, (axiom_node_id_t)dst_id,
             (axiom_port_t)port, type, sizeof(payload), &payload);
-    if (recv_ret == AXIOM_RET_ERROR)
-    {
+    if (recv_ret != AXIOM_RET_OK) {
            EPRINTF("receive error");
            goto err;
     }

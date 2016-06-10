@@ -84,7 +84,7 @@ main(int argc, char **argv)
 
     /* TODO: bind the current process on port 0 */
     ret = axiom_bind(dev, AXIOM_RAW_PORT_INIT);
-    if (ret == AXIOM_RET_ERROR) {
+    if (ret != AXIOM_RET_OK) {
         EPRINTF("error binding port");
         exit(-1);
     }
@@ -102,7 +102,7 @@ main(int argc, char **argv)
 
         ret = axiom_recv_raw_init(dev, &src, &type, &cmd, &payload_size,
                 &payload);
-        if (ret == AXIOM_RET_ERROR) {
+        if (ret != AXIOM_RET_OK) {
             EPRINTF("error receiving message");
             break;
         }

@@ -157,7 +157,7 @@ main(int argc, char **argv)
 
     /* bind the current process on local port */
     err = axiom_bind(dev, port);
-    if (err == AXIOM_RET_ERROR) {
+    if (err != AXIOM_RET_OK) {
         EPRINTF("bind error");
         goto err;
     }
@@ -177,7 +177,7 @@ main(int argc, char **argv)
         payload.packet_id = payload.packet_id + 1;
         send_ret =  axiom_send_raw(dev, (axiom_node_id_t)dst_id,
                 remote_port, type, sizeof(payload), &payload);
-        if (send_ret == AXIOM_RET_ERROR) {
+        if (send_ret != AXIOM_RET_OK) {
             EPRINTF("send error");
             goto err;
         }
@@ -219,7 +219,7 @@ main(int argc, char **argv)
                 goto exit;
             }
 
-            if (recv_ret == AXIOM_RET_ERROR) {
+            if (recv_ret != AXIOM_RET_OK) {
                 EPRINTF("receive error");
                 goto err;
             }

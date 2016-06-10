@@ -39,7 +39,7 @@ axiom_pong(axiom_dev_t *dev, axiom_if_id_t first_src,
     payload->command = AXIOM_CMD_PONG;
     ret =  axiom_send_raw(dev, first_src, AXIOM_RAW_PORT_NETUTILS,
             AXIOM_TYPE_RAW_DATA, sizeof(*payload), payload);
-    if (ret == AXIOM_RET_ERROR) {
+    if (ret != AXIOM_RET_OK) {
         EPRINTF("receive error");
         return;
     }

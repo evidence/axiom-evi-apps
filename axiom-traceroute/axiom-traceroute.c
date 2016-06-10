@@ -51,13 +51,11 @@ recv_tracereoute_reply(axiom_dev_t *dev, axiom_node_id_t *recv_node,
     msg_err =  axiom_recv_raw(dev, recv_node, port, type, &payload_size,
             recv_payload);
 
-    if (msg_err == AXIOM_RET_ERROR)
-    {
+    if (msg_err != AXIOM_RET_OK) {
         EPRINTF("receive error");
         return -1;
     }
-    if (recv_payload->command != AXIOM_CMD_TRACEROUTE_REPLY)
-    {
+    if (recv_payload->command != AXIOM_CMD_TRACEROUTE_REPLY) {
         EPRINTF("command received [%x] != AXIOM_CMD_TRACEROUTE_REPLY [%x]",
                 recv_payload->command, AXIOM_CMD_TRACEROUTE_REPLY);
         return -1;
@@ -91,13 +89,10 @@ main(int argc, char **argv)
     };
 
     while ((opt = getopt_long(argc, argv,"vhd:",
-                         long_options, &long_index )) != -1)
-    {
-        switch (opt)
-        {
+                         long_options, &long_index )) != -1) {
+        switch (opt) {
             case 'd' :
-                if (sscanf(optarg, "%" SCNu8, &dest_node) != 1)
-                {
+                if (sscanf(optarg, "%" SCNu8, &dest_node) != 1) {
                     EPRINTF("wrong number of nodes");
                     usage();
                     exit(-1);
@@ -117,8 +112,7 @@ main(int argc, char **argv)
     }
 
     /* check if dest_node parameter has been inserted */
-    if (dest_node_ok != 1)
-    {
+    if (dest_node_ok != 1) {
         usage();
         exit(-1);
     }
@@ -134,16 +128,14 @@ main(int argc, char **argv)
 
     /* bind the current process on port */
     err = axiom_bind(dev, AXIOM_RAW_PORT_NETUTILS);
-    if (err == AXIOM_RET_ERROR)
-    {
+    if (err != AXIOM_RET_OK) {
         EPRINTF("axiom_bind error");
         exit(-1);
     }
 
     /* get interface to reach next hop for dest_node */
     err = axiom_next_hop(dev, dest_node, &if_id);
-    if (err == AXIOM_RET_ERROR)
-    {
+    if (err != AXIOM_RET_OK) {
         EPRINTF("node[%u] is unreachable", dest_node);
         exit(-1);
     }
@@ -162,19 +154,16 @@ main(int argc, char **argv)
     msg_err = axiom_send_raw(dev, if_id, port, type, sizeof(payload),
             &payload);
 
-    if (msg_err == AXIOM_RET_ERROR)
-    {
+    if (msg_err != AXIOM_RET_OK) {
         EPRINTF("send error");
         goto err;
     }
 
     expected_reply = AXIOM_NODES_MAX;
-    do
-    {
+    do {
         recv_err = recv_tracereoute_reply(dev, &recv_node, &port,
                 &type, &recv_payload);
-        if (recv_err == -1)
-        {
+        if (recv_err == -1) {
             goto err;
         }
         received_reply++;

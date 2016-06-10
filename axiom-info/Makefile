@@ -15,12 +15,14 @@ CC := ${CCPREFIX}gcc
 
 DFLAGS := -g -DPDEBUG
 CFLAGS += -Wall $(DFLAGS) -I$(PWD)/$(AXIOM_INCLUDE)
+LDFLAGS += -L $(AXIOM_NIC_UL)
+LDLIBS += -laxiom_user_api
 
 .PHONY: all clean
 
 all: $(APPS)
 
-axiom-info: axiom-info.o $(AXIOM_NIC_UL)/libaxiom_user_api.a
+axiom-info: axiom-info.o
 
 axiom-info.o: axiom-info.c
 
