@@ -78,4 +78,20 @@ void
 axiom_traceroute_reply(axiom_dev_t *dev, axiom_if_id_t src,
         axiom_init_payload_t *payload, int verbose);
 
+/*!
+ * \brief This function initialize the internal structures used by the barrier service implementation.
+ */
+void axiom_barrier_init();
+
+/*!
+ * \brief This function implement the barrier request handling.
+ *
+ * \param dev                   The axiom device private data pointer
+ * \param src                   Source node of barrier sync request
+ * \param payload_size          Size of payload of barrier request message
+ * \param payload               Payload of barrier request message
+ * \param verbose               enable verbose output
+ */
+void axiom_barrier_req(axiom_dev_t *dev, axiom_node_id_t src, axiom_payload_size_t payload_size, axiom_init_payload_t *payload, int verbose);
+
 #endif /*! AXIOM_INIT_h*/
