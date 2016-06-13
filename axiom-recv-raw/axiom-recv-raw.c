@@ -31,12 +31,14 @@ usage(void)
     printf("usage: axiom-recv-raw [arguments]\n");
     printf("Receive AXIOM raw message\n\n");
     printf("Arguments:\n");
-    printf("-p, --port  port     port used for receiving\n");
-    printf("-o, --once           receive one message and exit\n");
-    printf("-n, --noblocking     use no blocking receive\n");
-    printf("-s, --sleep sec      set second to sleep between two recv\n");
-    printf("-v, --verbose        verbose\n");
-    printf("-h, --help           print this help\n\n");
+    printf("-p, --port       port   port used for receiving\n");
+    printf("-o, --once              receive one message and exit\n");
+    printf("-n, --noblocking        use no blocking receive\n");
+    printf("-f, --flush             flush all messages previously received\n");
+    printf("-s, --sleep      sec    second to sleep between two recv (only in"
+                                    "noblocking)\n");
+    printf("-v, --verbose           verbose\n");
+    printf("-h, --help              print this help\n\n");
 }
 
 int
@@ -51,8 +53,8 @@ main(int argc, char **argv)
     axiom_payload_t payload;
     axiom_err_t err;
     float sleep_time = 1;
-    int no_blocking = 0;
-    int verbose = 0;
+    int no_blocking = 0, verbose = 0, flush = 0;
+    int msg_id = 0;
 
     int long_index =0;
     int opt = 0;
@@ -61,13 +63,14 @@ main(int argc, char **argv)
             {"once", no_argument,        0, 'o'},
             {"sleep", required_argument, 0, 's'},
             {"noblocking", no_argument,  0, 'n'},
+            {"flush", no_argument,  0, 'f'},
             {"verbose", no_argument,     0, 'v'},
             {"help", no_argument,        0, 'h'},
             {0, 0, 0, 0}
     };
 
 
-    while ((opt = getopt_long(argc, argv,"hop:s:nv",
+    while ((opt = getopt_long(argc, argv,"hop:s:nfv",
                          long_options, &long_index )) != -1) {
         switch (opt) {
             case 'o':
@@ -84,6 +87,10 @@ main(int argc, char **argv)
 
             case 'n':
                 no_blocking = 1;
+                break;
+
+            case 'f':
+                flush = 1;
                 break;
 
             case 's':
@@ -136,6 +143,16 @@ main(int argc, char **argv)
         }
     }
 
+    if (flush) {
+        printf("[node %u] flushing raw messages on port %u\n",
+                node_id, port);
+        err = axiom_flush_raw(dev);
+        if (err != AXIOM_RET_OK) {
+            EPRINTF("axiom_flush_raw error");
+            exit(-1);
+        }
+    }
+
     printf("[node %u] receiving raw messages on port %u...\n",
             node_id, port);
 
@@ -165,21 +182,27 @@ main(int argc, char **argv)
             break;
         }
 
-        printf("[node %u] message received on port %u\n", node_id, recv_port);
-        if (type == AXIOM_TYPE_RAW_NEIGHBOUR) {
-            printf("\t- local_interface = %u\n", src_id);
-            printf("\t- type = %s\n", "NEIGHBOUR");
-        } else if (type == AXIOM_TYPE_RAW_DATA) {
-            printf("\t- source_node_id = %u\n", src_id);
-            printf("\t- type = %s\n", "DATA");
+        msg_id++;
+
+        printf("[node %u msg_id %d] message received on port %u\n", node_id,
+                msg_id, recv_port);
+
+        if (verbose) {
+            if (type == AXIOM_TYPE_RAW_NEIGHBOUR) {
+                printf("\t- local_interface = %u\n", src_id);
+                printf("\t- type = %s\n", "NEIGHBOUR");
+            } else if (type == AXIOM_TYPE_RAW_DATA) {
+                printf("\t- source_node_id = %u\n", src_id);
+                printf("\t- type = %s\n", "DATA");
+            }
+
+            printf("\t- payload_size = %u\n", payload_size);
+            printf("\t- payload = ");
+            for (i = 0; i < payload_size; i++)
+                printf("0x%x ", payload.raw[i]);
+
+            printf("\n");
         }
-
-        printf("\t- payload_size = %u\n", payload_size);
-        printf("\t- payload = ");
-        for (i = 0; i < payload_size; i++)
-            printf("0x%x ", payload.raw[i]);
-
-        printf("\n");
 
     } while (!once);
 
