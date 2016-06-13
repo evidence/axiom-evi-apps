@@ -140,7 +140,7 @@ main(int argc, char **argv)
             node_id, port);
 
     do {
-        axiom_payload_size_t payload_size = sizeof(&payload);
+        axiom_payload_size_t payload_size = sizeof(payload);
         int i, avail;
 
         if (no_blocking) {

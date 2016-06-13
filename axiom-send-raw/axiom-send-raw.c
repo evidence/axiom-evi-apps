@@ -28,12 +28,12 @@
 static void
 usage(void)
 {
-    printf("usage: axiom-send-raw [arguments] -d dest -l payload\n");
+    printf("usage: axiom-send-raw [arguments] -d dest   payload (list of bytes)\n");
     printf("Send AXIOM raw message to specified dest (dest can be remote node\n");
     printf("or local interface, if you send a message to neighbour [-n])\n\n");
     printf("Arguments:\n");
     printf("-d, --dest      dest     dest node id or local if (TO_NEIGHBOUR) \n");
-    printf("-l, --payload   payload  message to send (uint32_t)\n");
+    printf("-r, --repeat    rep      repeat rep times the payload specified\n");
     printf("-p, --port      port     port used for sending this message\n");
     printf("-n, --neighbour          send message to neighbour (dest is used\n");
     printf("                         to specify the local interface)\n");
@@ -47,26 +47,27 @@ main(int argc, char **argv)
     axiom_msg_id_t recv_ret, node_id;
     axiom_port_t port = 1;
     axiom_node_id_t dst_id;
-    int port_ok = 0, dst_ok = 0, payload_ok = 0, to_neighbour = 0;
+    int i, repeat = 0, port_ok = 0, dst_ok = 0, to_neighbour = 0;
     axiom_type_t type = AXIOM_TYPE_RAW_DATA;
-    uint32_t payload; /* XXX: maybe we can use string */
+    axiom_payload_t payload; /* XXX: maybe we can use string */
+    axiom_payload_size_t payload_size = 0;
 
     int long_index =0;
     int opt = 0;
     static struct option long_options[] = {
         {"dest", required_argument, 0, 'd'},
+        {"repeat", required_argument, 0, 'r'},
         {"port", required_argument, 0, 'p'},
-        {"payload", required_argument, 0, 'l'},
         {"neighbour", no_argument, 0, 'n'},
         {"help", no_argument, 0, 'h'},
         {0, 0, 0, 0}
     };
 
 
-    while ((opt = getopt_long(argc, argv,"hp:d:nl:",
+    while ((opt = getopt_long(argc, argv,"hp:d:nr:",
                          long_options, &long_index )) != -1) {
         switch (opt) {
-            case 'p' :
+            case 'p':
                 if (sscanf(optarg, "%" SCNu8, &port) != 1) {
                     EPRINTF("wrong port");
                     usage();
@@ -75,7 +76,7 @@ main(int argc, char **argv)
                 port_ok = 1;
                 break;
 
-            case 'd' :
+            case 'd':
                 if (sscanf(optarg, "%" SCNu8, &dst_id) != 1) {
                     EPRINTF("wrong destination");
                     usage();
@@ -84,17 +85,16 @@ main(int argc, char **argv)
                 dst_ok = 1;
                 break;
 
-            case 'n' :
+            case 'n':
                 to_neighbour = 1;
                 break;
 
-            case 'l' :
-                if (sscanf(optarg, "%" SCNu32, &payload) != 1) {
-                    EPRINTF("wrong payload");
+            case 'r':
+                if (sscanf(optarg, "%d" SCNu8, &repeat) != 1) {
+                    EPRINTF("wrong repeat parameter");
                     usage();
                     exit(-1);
                 }
-                payload_ok = 1;
                 break;
 
             case 'h':
@@ -106,9 +106,8 @@ main(int argc, char **argv)
 
     /* check port parameter */
     if (port_ok == 1) {
-        /* port arameter inserted */
-        if ((port < 0) || (port > 255)) {
-            printf("Port not allowed [%u]; [0 < port < 256]\n", port);
+        if ((port < 0) || (port > 7)) {
+            printf("Port not allowed [%u]; [0 <= port <= 7]\n", port);
             exit(-1);
         }
     }
@@ -126,10 +125,28 @@ main(int argc, char **argv)
         exit(-1);
     }
 
-    /* check payload parameter */
-    if (payload_ok != 1) {
-        EPRINTF("payload required");
+    /* read payload list */
+    for (i = 0; (i < (argc - optind)) && (i < sizeof(payload)); i++) {
+        if (sscanf(argv[i + optind], "%" SCNu8, &payload.raw[i]) != 1) {
+            EPRINTF("wrong payload byte [index = %d]", i);
+            exit(-1);
+        }
+        payload_size++;
+    }
+
+    if (payload_size == 0) {
+        EPRINTF("payload empty");
         exit(-1);
+    }
+
+    if (repeat) {
+        int orig_psize = payload_size;
+
+        for (i = 1; i < repeat &&
+                (payload_size + orig_psize <= sizeof(payload)); i++){
+            memcpy(&payload.raw[payload_size], &payload.raw[0], orig_psize);
+            payload_size += orig_psize;
+        }
     }
 
     /* check neighbour parameter */
@@ -156,7 +173,7 @@ main(int argc, char **argv)
     printf("[node %u] sending raw message...\n", node_id);
     /* send a raw message*/
     recv_ret =  axiom_send_raw(dev, (axiom_node_id_t)dst_id,
-            (axiom_port_t)port, type, sizeof(payload), &payload);
+            (axiom_port_t)port, type, payload_size, &payload);
     if (recv_ret != AXIOM_RET_OK) {
            EPRINTF("receive error");
            goto err;
@@ -170,8 +187,13 @@ main(int argc, char **argv)
         printf("\t- destination_node_id = %u\n", dst_id);
         printf("\t- type = %s\n", "DATA");
     }
-    printf("\t- payload_size = %u\n", (unsigned)sizeof(payload));
-    printf("\t- payload = %u\n", payload);
+
+    printf("\t- payload_size = %u\n", payload_size);
+    printf("\t- payload = ");
+    for (i = 0; i < payload_size; i++)
+        printf("0x%x ", payload.raw[i]);
+
+    printf("\n");
 
 err:
     axiom_close(dev);
