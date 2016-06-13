@@ -373,14 +373,7 @@ axiom_write_routing_table(axiom_dev_t *dev,
     /* set final routing table */
     for (node_id_index = 0; node_id_index < AXIOM_NODES_MAX; node_id_index++)
     {
-        uint8_t enabled_mask = 0;
-        enabled_mask = routing_table[node_id_index];
-        if (enabled_mask != 0)
-        {
-            /* only if the node is connected to me
-               I update local routing table */
-            axiom_set_routing(dev, node_id_index, enabled_mask);
-        }
+        axiom_set_routing(dev, node_id_index, routing_table[node_id_index]);
     }
 
 }
