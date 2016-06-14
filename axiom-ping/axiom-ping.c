@@ -18,6 +18,7 @@
 #include <inttypes.h>
 #include <signal.h>
 #include <time.h>
+#include <pthread.h>
 
 #include <sys/types.h>
 #include <sys/time.h>
@@ -30,7 +31,15 @@
 #include "axiom_utility.h"
 #include "dprintf.h"
 
-//#define AXIOM_NO_TX
+struct sender_param {
+    axiom_dev_t *dev;
+    axiom_node_id_t dst_id;
+    axiom_node_id_t node_id;
+    int num_ping_set;
+    int num_ping;
+    uint32_t unique_id;
+    double interval;
+};
 
 int verbose = 0;
 
@@ -49,6 +58,7 @@ usage(void)
 }
 
 static volatile sig_atomic_t sigint_received = 0;
+static int sent_packets = 0, recv_packets = 0;
 
 /* control-C handler */
 static void
@@ -57,25 +67,81 @@ sigint_handler(int sig)
     sigint_received = 1;
 }
 
+void *
+sender_body(void *opaque)
+{
+    struct sender_param *p = (struct sender_param *)opaque;
+    axiom_port_t remote_port = AXIOM_RAW_PORT_INIT;
+    axiom_ping_payload_t payload;
+
+    payload.command = AXIOM_CMD_PING;
+    payload.unique_id = p->unique_id;
+    payload.seq_num = 0;
+    while (!sigint_received &&  (p->num_ping > 0)) {
+        axiom_type_t type = AXIOM_TYPE_RAW_DATA;
+        axiom_msg_id_t send_ret;
+        struct timespec start_ts;
+        int ret;
+
+        IPRINTF(verbose,"[node %u] sending ping message...\n", p->node_id);
+
+        /* get actual time */
+        ret = clock_gettime(CLOCK_REALTIME, &start_ts);
+        if (ret == -1) {
+            EPRINTF("gettime error");
+            goto err;
+        }
+
+        /* send a raw ping  message*/
+        payload.seq_num = payload.seq_num + 1;
+        payload.timestamp = timespec2nsec(start_ts);
+        send_ret =  axiom_send_raw(p->dev, (axiom_node_id_t)p->dst_id,
+                remote_port, type, sizeof(payload), &payload);
+        if (send_ret != AXIOM_RET_OK) {
+            IPRINTF(verbose, "send error");
+            goto err;
+        }
+
+        sent_packets++;
+
+        IPRINTF(verbose,"[node %u] message sent to port %u\n", p->node_id,
+                remote_port);
+        IPRINTF(verbose,"\t- destination_node_id = %u\n", p->dst_id);
+
+
+        if (p->interval && !sigint_received)
+            usleep(p->interval * 1000000);
+
+        if (p->num_ping_set == 1) {
+            p->num_ping--;
+        }
+    }
+
+err:
+
+    return NULL;
+}
 
 int
 main(int argc, char **argv)
 {
     axiom_dev_t *dev = NULL;
-    axiom_msg_id_t send_ret, recv_ret, node_id;
-    axiom_port_t remote_port = AXIOM_RAW_PORT_INIT, recv_port;
+    axiom_msg_id_t recv_ret, node_id;
+    axiom_port_t recv_port;
     axiom_port_t port = AXIOM_RAW_PORT_NETUTILS;
     axiom_node_id_t dst_id, src_id;
-    axiom_ping_payload_t payload, recv_payload;
+    axiom_ping_payload_t recv_payload;
     axiom_err_t err;
     struct sigaction sig;
     double interval = 1; /* default interval 1 sec */
     unsigned int num_ping = 1;
-    int dst_ok = 0, num_ping_ok = 0;
-    uint64_t diff_nsec, sum_nsec = 0, max_nsec = 0, min_nsec = -1;
+    int dst_ok = 0, num_ping_set = 0;
+    uint32_t unique_id;
+    uint64_t sum_nsec = 0, max_nsec = 0, min_nsec = -1;
     double avg_nsec, packet_loss;
-    int sent_packets = 0, recv_packets = 0;
     int ret;
+    struct sender_param sender_param;
+    pthread_t sender_thread;
 
     int long_index =0;
     int opt = 0;
@@ -119,7 +185,7 @@ main(int argc, char **argv)
                     usage();
                     exit(-1);
                 }
-                num_ping_ok = 1;
+                num_ping_set = 1;
                 break;
 
             case 'v':
@@ -145,7 +211,7 @@ main(int argc, char **argv)
         usage();
         exit(-1);
     }
-#ifndef AXIOM_NO_TX
+
     /* open the axiom device */
     dev = axiom_open(NULL);
     if (dev == NULL) {
@@ -161,72 +227,68 @@ main(int argc, char **argv)
         EPRINTF("bind error");
         goto err;
     }
-#endif
+
+    /* generate random packet id */
+    srand(time(NULL));
+    unique_id = rand();
+
     printf("PING node %d.\n", dst_id);
 
-    payload.packet_id = 0;
+    sender_param.dev = dev;
+    sender_param.node_id = node_id;
+    sender_param.dst_id = dst_id;
+    sender_param.unique_id = unique_id;
+    sender_param.interval = interval;
+    sender_param.num_ping = num_ping;
+    sender_param.num_ping_set = num_ping_set;
+
+    /* start sender thread */
+    if (pthread_create(&sender_thread, NULL, sender_body, &sender_param)) {
+        EPRINTF("error creating sender thread");
+        goto err;
+    }
+
     while (!sigint_received &&  (num_ping > 0)) {
-        struct timespec start_ts, end_ts, diff_ts;
+        struct timespec end_ts;
         axiom_type_t type = AXIOM_TYPE_RAW_DATA;
+        uint64_t diff_ns, start_ns, end_ns;
         int retry;
 
-        IPRINTF(verbose,"[node %u] sending ping message...\n", node_id);
-#ifndef AXIOM_NO_TX
-        /* send a raw message*/
-        payload.command = AXIOM_CMD_PING;
-        payload.packet_id = payload.packet_id + 1;
-        send_ret =  axiom_send_raw(dev, (axiom_node_id_t)dst_id,
-                remote_port, type, sizeof(payload), &payload);
-        if (send_ret != AXIOM_RET_OK) {
-            EPRINTF("send error");
-            goto err;
-        }
-#endif
-        /* get actual time */
-        ret = clock_gettime(CLOCK_REALTIME, &start_ts);
-        if (ret == -1) {
-            EPRINTF("gettime error");
-            goto err;
-        }
-        sent_packets++;
+        IPRINTF(verbose,"[node %u] receiving ping message...\n", node_id);
 
-        IPRINTF(verbose,"[node %u] message sent to port %u\n", node_id,
-                remote_port);
-        IPRINTF(verbose,"\t- destination_node_id = %u\n", dst_id);
 
         /* ********************* receive the reply ************************ */
         retry = 1;
         do {
             axiom_payload_size_t payload_size = sizeof(recv_payload);
-#ifndef AXIOM_NO_TX
+
             /* receive a ping reply (pong) */
             recv_ret =  axiom_recv_raw(dev, &src_id, (axiom_port_t *)&recv_port,
                     &type, &payload_size, &recv_payload);
-#else
-            usleep(1);
-#endif
+
             /* get actual time */
             ret = clock_gettime(CLOCK_REALTIME, &end_ts);
             if (ret == -1) {
                 EPRINTF("gettime error");
                 goto err;
             }
-#ifdef AXIOM_NO_TX
-            break;
-#endif
-            if (sigint_received) {
-                sent_packets--;
-                goto exit;
-            }
 
             if (recv_ret != AXIOM_RET_OK) {
+                /* recv interrupted by the SIGINT signal */
+                if (recv_ret == AXIOM_RET_INTR) {
+                    goto exit;
+                }
+
                 EPRINTF("receive error");
                 goto err;
             }
 
             if (recv_payload.command != AXIOM_CMD_PONG ||
-                    recv_payload.packet_id != payload.packet_id) {
-                IPRINTF(verbose, "receive a no AXIOM-PONG message");
+                    recv_payload.unique_id != unique_id) {
+                IPRINTF(verbose, "received a no AXIOM-PONG message - "
+                        "command: 0x%x [0x%x] unique_id 0x%x [0x%x]",
+                        recv_payload.command, AXIOM_CMD_PONG,
+                        recv_payload.unique_id, unique_id);
                 retry = 1;
             } else {
                 retry = 0;
@@ -238,41 +300,44 @@ main(int argc, char **argv)
         IPRINTF(verbose,"[node %u] reply received on port %u\n", node_id,
                 recv_port);
         IPRINTF(verbose,"\t- source_node_id = %u\n", src_id);
-        IPRINTF(verbose,"\t- message index = %u\n", recv_payload.packet_id);
+        IPRINTF(verbose,"\t- message index = %u\n", recv_payload.unique_id);
 
-        diff_ts = timespec_sub(end_ts, start_ts);
+        start_ns = recv_payload.timestamp;
+        end_ns = timespec2nsec(end_ts);
 
         /* ********************** statiscs ***************************** */
         /* difference computation */
-        diff_nsec = timespec2nsec(diff_ts);
+        diff_ns = end_ns - start_ns;
 
-        sum_nsec += diff_nsec;
+        sum_nsec += diff_ns;
 
         printf("from node %d: seq_num=%d time=%3.3f ms\n", src_id,
-                recv_payload.packet_id,
-                nsec2msec(diff_nsec));
+                recv_payload.seq_num, nsec2msec(diff_ns));
 
-        if (diff_nsec > max_nsec) {
-            max_nsec = diff_nsec;
+        if (diff_ns > max_nsec) {
+            max_nsec = diff_ns;
         }
-        if (diff_nsec < min_nsec) {
-            min_nsec = diff_nsec;
+        if (diff_ns < min_nsec) {
+            min_nsec = diff_ns;
         }
 
         if (sigint_received) {
             break;
         }
 
-        if (interval)
-            usleep(interval * 1000000);
-
-        if (num_ping_ok == 1) {
+        if (num_ping_set == 1) {
             num_ping--;
         }
 
     }
 
 exit:
+    /* start sender thread */
+    if (pthread_join(sender_thread, NULL)) {
+        EPRINTF("error joining sender thread");
+        goto err;
+    }
+
     /* average computation */
     avg_nsec = ((double)(sum_nsec) / recv_packets);
     packet_loss = (1 - ((double)(recv_packets) / sent_packets)) * 100;

@@ -16,6 +16,7 @@ CC := ${CCPREFIX}gcc
 
 DFLAGS := -g -DPDEBUG
 CFLAGS += -Wall $(DFLAGS) -I$(PWD)/$(AXIOM_INCLUDE)
+LDLIBS += -pthread
 
 .PHONY: all clean
 
