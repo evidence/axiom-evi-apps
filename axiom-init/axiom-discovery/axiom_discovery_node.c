@@ -1,7 +1,7 @@
 /*!
  * \file axiom_discovery_node.c
  *
- * \version     v0.5
+ * \version     v0.6
  * \date        2016-05-03
  *
  * This file contains the functions used in the axiom-init deamon to handle
