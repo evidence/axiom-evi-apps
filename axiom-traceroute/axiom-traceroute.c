@@ -133,6 +133,13 @@ main(int argc, char **argv)
         exit(-1);
     }
 
+    /* flush all previous packets */
+    err = axiom_flush_raw(dev);
+    if (err != AXIOM_RET_OK) {
+        EPRINTF("axiom_flush_raw error");
+        goto err;
+    }
+
     /* get interface to reach next hop for dest_node */
     err = axiom_next_hop(dev, dest_node, &if_id);
     if (err != AXIOM_RET_OK) {

@@ -175,6 +175,13 @@ main(int argc, char **argv)
         goto err;
     }
 
+    /* flush all previous packets */
+    err = axiom_flush_raw(dev);
+    if (err != AXIOM_RET_OK) {
+        EPRINTF("axiom_flush_raw error");
+        goto err;
+    }
+
     total_bytes = data_length << data_scale;
 
     /* send start message */
@@ -239,12 +246,14 @@ main(int argc, char **argv)
             &payload);
     if (err != AXIOM_RET_OK || (src_node != dest_node) ||
             payload.command != AXIOM_CMD_NETPERF_END) {
-        EPRINTF("recv_elapsed_time error");
+        EPRINTF("recv_elapsed_time error - err: 0x%x node: 0x%x [0x%x] "
+                "command 0x%x [0x%x]", err, src_node, dest_node,
+                payload.command, AXIOM_CMD_NETPERF_END);
         goto err;
     }
 
     elapsed_rx_nsec = payload.elapsed_time;
-    
+
     /* raw bytes include also the header */
     sent_raw_bytes = sent_bytes + (total_packets * sizeof(axiom_raw_hdr_t));
 
