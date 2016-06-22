@@ -45,6 +45,7 @@ main(int argc, char **argv)
 {
     int master = 0, run = 1;
     axiom_dev_t *dev = NULL;
+    axiom_args_t axiom_args;
     axiom_node_id_t topology[AXIOM_NODES_MAX][AXIOM_INTERFACES_MAX];
     axiom_if_id_t final_routing_table[AXIOM_NODES_MAX];
     axiom_err_t ret;
@@ -75,8 +76,11 @@ main(int argc, char **argv)
         }
     }
 
+    /* avoid the flush of previous packets */
+    axiom_args.flags = AXIOM_FLAG_NOFLUSH;
+
     /* open the axiom device */
-    dev = axiom_open(NULL);
+    dev = axiom_open(&axiom_args);
     if (dev == NULL) {
         perror("axiom_open()");
         exit(-1);

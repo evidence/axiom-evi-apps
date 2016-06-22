@@ -228,13 +228,6 @@ main(int argc, char **argv)
         goto err;
     }
 
-    /* flush all previous packets */
-    err = axiom_flush_raw(dev);
-    if (err != AXIOM_RET_OK) {
-        EPRINTF("axiom_flush_raw error");
-        goto err;
-    }
-
     /* generate random packet id */
     srand(time(NULL));
     unique_id = rand();

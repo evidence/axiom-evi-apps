@@ -45,6 +45,7 @@ int
 main(int argc, char **argv)
 {
     axiom_dev_t *dev = NULL;
+    axiom_args_t axiom_args;
     axiom_msg_id_t recv_ret;
     axiom_node_id_t src_id, node_id;
     axiom_port_t port = 1, recv_port;
@@ -119,14 +120,25 @@ main(int argc, char **argv)
         }
     }
 
+    axiom_args.flags = 0;
+
+    if (!flush)
+        axiom_args.flags |= AXIOM_FLAG_NOFLUSH;
+
+    if (no_blocking)
+        axiom_args.flags |= AXIOM_FLAG_NOBLOCK;
+
     /* open the axiom device */
-    dev = axiom_open(NULL);
+    dev = axiom_open(&axiom_args);
     if (dev == NULL) {
         perror("axiom_open()");
         exit(-1);
     }
 
     node_id = axiom_get_node_id(dev);
+
+    printf("[node %u] device opened - bind-flush: %d no-blocking: %d\n",
+            node_id, flush, no_blocking);
 
     /* bind the current process on port */
     err = axiom_bind(dev, port);
@@ -135,26 +147,7 @@ main(int argc, char **argv)
         exit(-1);
     }
 
-    if (no_blocking) {
-        err = axiom_set_blocking(dev, 0);
-        if (err != AXIOM_RET_OK) {
-            EPRINTF("axiom_set_noblocking error");
-            exit(-1);
-        }
-    }
-
-    if (flush) {
-        printf("[node %u] flushing raw messages on port %u\n",
-                node_id, port);
-        err = axiom_flush_raw(dev);
-        if (err != AXIOM_RET_OK) {
-            EPRINTF("axiom_flush_raw error");
-            exit(-1);
-        }
-    }
-
-    printf("[node %u] receiving raw messages on port %u...\n",
-            node_id, port);
+    printf("[node %u] receiving raw messages on port %u...\n", node_id, port);
 
     do {
         axiom_payload_size_t payload_size = sizeof(payload);
