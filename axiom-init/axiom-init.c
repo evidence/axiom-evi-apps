@@ -102,7 +102,7 @@ main(int argc, char **argv)
         axiom_type_t type;
         axiom_init_cmd_t cmd;
         axiom_init_payload_t payload;
-        axiom_payload_size_t payload_size = sizeof(payload);
+        axiom_raw_payload_size_t payload_size = sizeof(payload);
 
         ret = axiom_recv_raw_init(dev, &src, &type, &cmd, &payload_size,
                 &payload);

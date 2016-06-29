@@ -36,7 +36,7 @@ typedef struct axiom_netperf_status {
 axiom_netperf_status_t status[AXIOM_NODES_MAX];
 
 void
-axiom_netperf_reply(axiom_dev_t *dev, axiom_node_id_t src, axiom_payload_size_t
+axiom_netperf_reply(axiom_dev_t *dev, axiom_node_id_t src, axiom_raw_payload_size_t
         payload_size, axiom_init_payload_t *payload, int verbose)
 {
     axiom_netperf_payload_t *recv_payload =

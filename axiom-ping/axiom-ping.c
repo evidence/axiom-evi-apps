@@ -260,7 +260,7 @@ main(int argc, char **argv)
         /* ********************* receive the reply ************************ */
         retry = 1;
         do {
-            axiom_payload_size_t payload_size = sizeof(recv_payload);
+            axiom_raw_payload_size_t payload_size = sizeof(recv_payload);
 
             /* receive a ping reply (pong) */
             recv_ret =  axiom_recv_raw(dev, &src_id, (axiom_port_t *)&recv_port,

@@ -150,7 +150,7 @@ main(int argc, char **argv)
     printf("[node %u] receiving raw messages on port %u...\n", node_id, port);
 
     do {
-        axiom_payload_size_t payload_size = sizeof(payload);
+        axiom_raw_payload_size_t payload_size = sizeof(payload);
         int i, avail;
 
         if (no_blocking) {

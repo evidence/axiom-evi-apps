@@ -89,8 +89,8 @@ main(int argc, char **argv)
     axiom_port_t port;
     axiom_type_t type;
     axiom_netperf_payload_t payload;
-    axiom_payload_size_t pld_recv_size;
-    axiom_payload_size_t payload_size = AXIOM_NETPERF_DEF_PAYLOAD_SIZE;
+    axiom_raw_payload_size_t pld_recv_size;
+    axiom_raw_payload_size_t payload_size = AXIOM_NETPERF_DEF_PAYLOAD_SIZE;
     struct timespec start_ts, end_ts, elapsed_ts;
     double tx_th, rx_th, tx_raw_th, rx_raw_th, tx_pps, rx_pps;
     int dest_node_ok = 0, err, ret, long_index, opt;

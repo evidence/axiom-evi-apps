@@ -63,7 +63,7 @@ axiom_pong(axiom_dev_t *dev, axiom_if_id_t first_src,
  */
 void
 axiom_netperf_reply(axiom_dev_t *dev, axiom_node_id_t src,
-        axiom_payload_size_t payload_size,
+        axiom_raw_payload_size_t payload_size,
         axiom_init_payload_t *payload, int verbose);
 
 /*!
