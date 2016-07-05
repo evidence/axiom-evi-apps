@@ -154,7 +154,7 @@ main(int argc, char **argv)
     msg_err = axiom_send_raw(dev, if_id, port, type, sizeof(payload),
             &payload);
 
-    if (msg_err != AXIOM_RET_OK) {
+    if (msg_err < AXIOM_RET_OK) {
         EPRINTF("send error");
         goto err;
     }

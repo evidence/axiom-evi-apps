@@ -164,7 +164,7 @@ main(int argc, char **argv)
         /* receive a raw message from port*/
         recv_ret =  axiom_recv_raw(dev, &src_id, (axiom_port_t *)&recv_port,
                 &type, &payload_size, &payload);
-        if (recv_ret != AXIOM_RET_OK) {
+        if (recv_ret < AXIOM_RET_OK) {
             if (no_blocking && (recv_ret == AXIOM_RET_NOTAVAIL)) {
                 IPRINTF(verbose, "no packets available, waiting %f secs",
                         sleep_time);

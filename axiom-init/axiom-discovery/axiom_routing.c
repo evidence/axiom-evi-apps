@@ -229,7 +229,7 @@ axiom_delivery_routing_tables(axiom_dev_t *dev,
                 /* (node, if) to send to dest_node_id*/
                 ret = axiom_send_raw_delivery(dev, dest_node_index,
                         AXIOM_RT_CMD_INFO, rt_node_index, ifaces);
-                if (ret != AXIOM_RET_OK)
+                if (ret < AXIOM_RET_OK)
                 {
                     EPRINTF("MASTER, Error sending AXIOM_RT_TYPE_INFO message "
                             "to node %d", dest_node_index);
@@ -247,7 +247,7 @@ axiom_delivery_routing_tables(axiom_dev_t *dev,
         /* end of sending routing tables */
         ret = axiom_send_raw_delivery(dev, dest_node_index,
                 AXIOM_RT_CMD_END_INFO, 0, 0);
-        if (ret != AXIOM_RET_OK)
+        if (ret < AXIOM_RET_OK)
         {
             EPRINTF("MASTER, Error sending AXIOM_RT_TYPE_END_INFO message "
                     "to node %d", dest_node_index);
@@ -350,7 +350,7 @@ axiom_receive_routing_tables(axiom_dev_t *dev, axiom_node_id_t node_id,
             ret = axiom_send_raw_delivery(dev, AXIOM_MASTER_ID,
                     AXIOM_RT_CMD_RT_REPLY, node_id, 0);
 
-            if (ret != AXIOM_RET_OK)
+            if (ret < AXIOM_RET_OK)
             {
                 EPRINTF("Slave %d, Error sending AXIOM_RT_CMD_RT_REPLY message",
                         node_id);
@@ -420,7 +420,7 @@ axiom_set_routing_table(axiom_dev_t *dev,
                 /* Say over interface 'if_index': Set your routing table */
                 ret = axiom_send_raw_set_routing(dev, if_index,
                         AXIOM_RT_CMD_SET_ROUTING);
-                if (ret != AXIOM_RET_OK)
+                if (ret < AXIOM_RET_OK)
                 {
                     EPRINTF("Node:%d, error sending to interface number = %d "
                             "the AXIOM_RAW_TYPE_SET_ROUTING message",
@@ -496,7 +496,7 @@ axiom_set_routing_table(axiom_dev_t *dev,
                 /* Say over interface 'if_index': Set your routing table */
                 ret = axiom_send_raw_set_routing(dev, if_index,
                         AXIOM_RT_CMD_SET_ROUTING);
-                if (ret != AXIOM_RET_OK)
+                if (ret < AXIOM_RET_OK)
                 {
                     EPRINTF("Node:%d, error sending AXIOM_RAW_TYPE_SET_ROUTING message",
                             node_id);

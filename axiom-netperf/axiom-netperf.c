@@ -182,7 +182,7 @@ main(int argc, char **argv)
     payload.total_bytes = total_bytes;
     msg_err = axiom_send_raw(dev, dest_node, AXIOM_RAW_PORT_INIT,
             AXIOM_TYPE_RAW_DATA, sizeof(payload), &payload);
-    if (msg_err != AXIOM_RET_OK) {
+    if (msg_err < AXIOM_RET_OK) {
         EPRINTF("send error");
         goto err;
     }
@@ -206,7 +206,7 @@ main(int argc, char **argv)
         /* send netperf message */
         msg_err = axiom_send_raw(dev, dest_node, AXIOM_RAW_PORT_INIT,
                 AXIOM_TYPE_RAW_DATA, payload_size, &payload);
-        if (msg_err != AXIOM_RET_OK) {
+        if (msg_err < AXIOM_RET_OK) {
             EPRINTF("send error");
             goto err;
         }
@@ -237,7 +237,7 @@ main(int argc, char **argv)
     pld_recv_size = sizeof(payload);
     err =  axiom_recv_raw(dev, &src_node, &port, &type, &pld_recv_size,
             &payload);
-    if (err != AXIOM_RET_OK || (src_node != dest_node) ||
+    if (err < AXIOM_RET_OK || (src_node != dest_node) ||
             payload.command != AXIOM_CMD_NETPERF_END) {
         EPRINTF("recv_elapsed_time error - err: 0x%x node: 0x%x [0x%x] "
                 "command 0x%x [0x%x]", err, src_node, dest_node,

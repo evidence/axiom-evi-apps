@@ -345,7 +345,7 @@ void
 
         DPRINTF("Slave: Wait for AXIOM_DSCV_CMD_REQ_ID message");
         ret = axiom_recv_raw(dev, &first_interface, &port, &type, &first_msg);
-        if (ret != AXIOM_RET_OK) {
+        if (ret < AXIOM_RET_OK) {
             EPRINTF("Slave: Error receiving AXIOM_DSCV_CMD_REQ_ID message");
         }
 

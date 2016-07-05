@@ -110,7 +110,7 @@ axiom_netperf_reply(axiom_dev_t *dev, axiom_node_id_t src, axiom_raw_payload_siz
         payload.elapsed_time = elapsed_nsec;
         err = axiom_send_raw(dev, src, AXIOM_RAW_PORT_NETUTILS,
                 AXIOM_TYPE_RAW_DATA, sizeof(payload), &payload);
-        if (err != AXIOM_RET_OK) {
+        if (err < AXIOM_RET_OK) {
             EPRINTF("send back time error");
             return;
         }

@@ -84,7 +84,7 @@ discover_phase(axiom_dev_t *dev, axiom_node_id_t *next_id,
         /* Say over interface 'i': 'I am node node_id give me your node id' */
         ret = axiom_send_raw_discovery(dev, i, AXIOM_DSCV_CMD_REQ_ID,
                 node_id, 0, 0, 0);
-        if (ret != AXIOM_RET_OK) {
+        if (ret < AXIOM_RET_OK) {
             EPRINTF("Node:%d, Error sending to interface number = %d the "
                     "AXIOM_DSCV_CMD_REQ_ID message", node_id, i);
             break;
@@ -138,7 +138,7 @@ discover_phase(axiom_dev_t *dev, axiom_node_id_t *next_id,
         /* Say over interface 'i': you are node 'nextid' */
         ret = axiom_send_raw_discovery(dev, i, AXIOM_DSCV_CMD_SETID,
                 node_id, *next_id, 0, 0);
-        if (ret != AXIOM_RET_OK) {
+        if (ret < AXIOM_RET_OK) {
             EPRINTF("Node:%d, Error sending to interface number = %d the "
                     "AXIOM_DSCV_CMD_SETID message, id_node=%d",
                     node_id, i, *next_id);
@@ -166,7 +166,7 @@ discover_phase(axiom_dev_t *dev, axiom_node_id_t *next_id,
         /* Say over interface 'i': start discovery protocol, nextid */
         ret = axiom_send_raw_discovery(dev, i, AXIOM_DSCV_CMD_START,
                 node_id, *next_id, 0, 0);
-        if (ret != AXIOM_RET_OK) {
+        if (ret < AXIOM_RET_OK) {
             EPRINTF("Node:%d, Error sending to interface number = %d the "
                     "AXIOM_DSCV_CMD_START message", node_id, i);
             break;
@@ -201,7 +201,7 @@ discover_phase(axiom_dev_t *dev, axiom_node_id_t *next_id,
                         node_id, src_node_id, src_interface, 0);
                 DPRINTF("Node:%d, Send AXIOM_DSCV_CMD_RSP_ID on if %d",
                         node_id, src_interface);
-                if (ret != AXIOM_RET_OK) {
+                if (ret < AXIOM_RET_OK) {
                     EPRINTF("Node:%d, Error sending AXIOM_DSCV_CMD_RSP_ID messages",
                             node_id);
                     break;
@@ -311,7 +311,7 @@ axiom_slave_node_discovery (axiom_dev_t *dev,
         /* Reply 'I am node 'node_id', I'm on interface 'src_interface' */
         ret = axiom_send_raw_discovery(dev, src_interface, AXIOM_DSCV_CMD_RSP_ID,
                 *node_id, src_node_id, src_interface, 0);
-        if (ret != AXIOM_RET_OK) {
+        if (ret < AXIOM_RET_OK) {
             EPRINTF("Slave id:%d Error sending AXIOM_DSCV_CMD_RSP_ID message",
                     *node_id);
         }
@@ -323,7 +323,7 @@ axiom_slave_node_discovery (axiom_dev_t *dev,
     /* Reply 'I do not have an id, I'm on interface src_interface' */
     ret = axiom_send_raw_discovery(dev, src_interface, AXIOM_DSCV_CMD_RSP_NOID,
             *node_id, src_node_id, src_interface, 0);
-    if (ret != AXIOM_RET_OK) {
+    if (ret < AXIOM_RET_OK) {
         EPRINTF("Slave: error sending to interface number = %d the "
                 "AXIOM_DSCV_CMD_RSP_NOID message", src_interface);
         return ret;
@@ -387,7 +387,7 @@ axiom_slave_node_discovery (axiom_dev_t *dev,
             /* there is a link to return */
             ret = axiom_send_raw_discovery(dev, src_interface,
                     AXIOM_DSCV_CMD_TOPOLOGY, i, topology[i][j], j, w);
-            if (ret != AXIOM_RET_OK) {
+            if (ret < AXIOM_RET_OK) {
                 EPRINTF("Slave id:%d Error receiving AXIOM_DSCV_CMD_START message",
                         *node_id);
                 return ret;
@@ -403,7 +403,7 @@ axiom_slave_node_discovery (axiom_dev_t *dev,
      * I send back actual next_id>> */
     ret = axiom_send_raw_discovery(dev, src_interface,
             AXIOM_DSCV_CMD_END_TOPOLOGY, next_id, 0, 0, 0);
-    if (ret != AXIOM_RET_OK) {
+    if (ret < AXIOM_RET_OK) {
         EPRINTF("Slave id:%d Error sending AXIOM_DSCV_CMD_END_TOPOLOGY message",
                 *node_id);
         return ret;

@@ -203,8 +203,8 @@ main(int argc, char **argv)
         /* send a raw message*/
         recv_ret =  axiom_send_raw(dev, (axiom_node_id_t)dst_id,
                 (axiom_port_t)port, type, payload_size, &payload);
-        if (recv_ret != AXIOM_RET_OK) {
-            EPRINTF("receive error");
+        if (recv_ret < AXIOM_RET_OK) {
+            EPRINTF("send error");
             goto err;
         }
 

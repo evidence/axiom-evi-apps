@@ -46,7 +46,7 @@ axiom_traceroute_reply(axiom_dev_t *dev, axiom_if_id_t src,
     recv_payload->command = AXIOM_CMD_TRACEROUTE_REPLY;
     ret = axiom_send_raw(dev, recv_payload->src_id, AXIOM_RAW_PORT_NETUTILS,
             AXIOM_TYPE_RAW_DATA, sizeof(*recv_payload), recv_payload);
-    if (ret != AXIOM_RET_OK) {
+    if (ret < AXIOM_RET_OK) {
         EPRINTF("send error");
         return;
     }
@@ -66,7 +66,7 @@ axiom_traceroute_reply(axiom_dev_t *dev, axiom_if_id_t src,
         msg_err = axiom_send_raw_init(dev, if_id, AXIOM_TYPE_RAW_NEIGHBOUR,
                                         &send_payload);
 
-        if (msg_err != AXIOM_RET_OK) {
+        if (msg_err < AXIOM_RET_OK) {
             EPRINTF("send raw init error");
             return;
         }
