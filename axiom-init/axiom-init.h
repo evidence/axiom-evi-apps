@@ -94,4 +94,20 @@ void axiom_barrier_init();
  */
 void axiom_barrier_req(axiom_dev_t *dev, axiom_node_id_t src, axiom_payload_size_t payload_size, axiom_init_payload_t *payload, int verbose);
 
+/*!
+ * \brief This function initialize the internal structures used by the spawn service implementation.
+ */
+void axiom_spawn_init();
+
+/*!
+ * \brief This function implement the spawn request handling..
+ *
+ * \param dev                   The axiom device private data pointer
+ * \param src                   Source node of spawn request
+ * \param payload_size          Size of payload of spawn request message
+ * \param payload               Payload of spawn request message
+ * \param verbose               Enable verbose output
+ */
+void axiom_spawn_req(axiom_dev_t *dev, axiom_node_id_t src, axiom_payload_size_t payload_size, axiom_init_payload_t *payload, int verbose);
+
 #endif /*! AXIOM_INIT_h*/

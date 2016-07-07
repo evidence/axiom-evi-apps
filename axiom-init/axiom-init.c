@@ -97,6 +97,7 @@ main(int argc, char **argv)
         axiom_discovery_master(dev, topology, final_routing_table, verbose);
     }
     axiom_barrier_init();
+    axiom_spawn_init();
     
     while(run) {
         axiom_node_id_t src;
@@ -133,6 +134,10 @@ main(int argc, char **argv)
                 
             case AXIOM_CMD_BARRIER_REQ:
                 axiom_barrier_req(dev, src, payload_size, &payload, verbose);
+                break;
+                
+            case AXIOM_CMD_SPAWN_REQ:
+                axiom_spawn_req(dev, src, payload_size, &payload, verbose);
                 break;
 
             default:
