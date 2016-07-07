@@ -35,6 +35,7 @@
 #define PRINT_ALL_RTSET         (PRINT_ALL & ~PRINT_ROUTING_ALL)
 
 int verbose = 0;
+int quiet = 0;
 
 static void
 usage(void)
@@ -51,6 +52,7 @@ usage(void)
     printf("-R, --routing-all           print routing table (all nodes)\n");
     printf("-s, --status                print status register\n");
     printf("-c, --control               print control register\n");
+    printf("-q, --quiet                 easy script parsing\n");
     printf("-h, --help                  print this help\n\n");
 }
 
@@ -61,7 +63,10 @@ print_nodeid(axiom_dev_t *dev)
 
     nodeid = axiom_get_node_id(dev);
 
-    printf("\tnode id = %u\n\n", nodeid);
+    if (quiet)
+      printf("%u\n", nodeid);
+    else
+      printf("\tnode id = %u\n\n", nodeid);
 }
 
 static void
@@ -75,7 +80,10 @@ print_ifnumber(axiom_dev_t *dev)
         EPRINTF("err: %x if_number: %x", err, if_number);
     }
 
-    printf("\tnumber of interfaces = %u\n\n", if_number);
+    if (quiet)
+      printf("%u\n", if_number);
+    else
+      printf("\tnumber of interfaces = %u\n\n", if_number);
 }
 
 static void
@@ -138,7 +146,10 @@ print_num_nodes(axiom_dev_t *dev)
         EPRINTF("err: %d", num_nodes);
     }
 
-    printf("\tnumber of nodes = %d\n\n", num_nodes);
+    if (quiet)
+      printf("%d\n", num_nodes);
+    else
+      printf("\tnumber of nodes = %d\n\n", num_nodes);
 }
 
 static void
@@ -187,7 +198,10 @@ print_ni_status(axiom_dev_t *dev)
 
     status = axiom_read_ni_status(dev);
 
-    printf("\tstatus register = 0x%08x\n", status);
+    if (quiet)
+      printf("0x%08x\n", status);
+    else
+      printf("\tstatus register = 0x%08x\n", status);
 
     /*TODO*/
 
@@ -230,16 +244,21 @@ main(int argc, char **argv)
         {"routing-all", no_argument, 0, 'R'},
         {"status", no_argument, 0, 's'},
         {"control", no_argument, 0, 'c'},
+        {"quiet", no_argument, 0, 'q'},
         {"help", no_argument, 0, 'h'},
         {0, 0, 0, 0}
     };
 
-    while ((opt = getopt_long(argc, argv, "anifrRNsch",
-                    long_options, &long_index )) != -1) {
+    while ((opt = getopt_long(argc, argv, "anqifrRNsch",
+            long_options, &long_index)) != -1) {
         switch(opt) {
             case 'a':
                 print_bitmap |= PRINT_ALL;
                 break;
+		
+            case 'q':
+	        quiet = 1;
+	        break;
 
             case 'n':
                 print_bitmap |= PRINT_NODEID;
@@ -284,7 +303,7 @@ main(int argc, char **argv)
         print_bitmap = PRINT_ALL_RTSET;
     }
 
-    printf("AXIOM NIC informations\n");
+    if (!quiet) printf("AXIOM NIC informations\n");
     /* open the axiom device */
     dev = axiom_open(NULL);
     if (dev == NULL)
