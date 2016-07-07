@@ -234,7 +234,7 @@ main(int argc, char **argv)
         {0, 0, 0, 0}
     };
 
-    while ((opt = getopt_long(argc, argv, "anifrRsch",
+    while ((opt = getopt_long(argc, argv, "anifrRNsch",
                     long_options, &long_index )) != -1) {
         switch(opt) {
             case 'a':
