@@ -1,5 +1,5 @@
 APPS_DIR := axiom-init axiom-recv-raw axiom-send-raw axiom-whoami axiom-info
-APPS_DIR += axiom-ping axiom-traceroute axiom-netperf
+APPS_DIR += axiom-ping axiom-traceroute axiom-netperf axiom-rdma
 CLEAN_DIR := $(addprefix _clean_, $(APPS_DIR))
 INSTALL_DIR := $(addprefix _install_, $(APPS_DIR))
 
