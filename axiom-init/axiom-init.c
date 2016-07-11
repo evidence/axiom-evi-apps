@@ -88,7 +88,7 @@ main(int argc, char **argv)
 
     /* TODO: bind the current process on port 0 */
     ret = axiom_bind(dev, AXIOM_RAW_PORT_INIT);
-    if (ret != AXIOM_RET_OK) {
+    if (ret != AXIOM_RAW_PORT_INIT) {
         EPRINTF("error binding port");
         exit(-1);
     }

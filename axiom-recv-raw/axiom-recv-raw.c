@@ -142,7 +142,7 @@ main(int argc, char **argv)
 
     /* bind the current process on port */
     err = axiom_bind(dev, port);
-    if (err != AXIOM_RET_OK) {
+    if (err != port) {
         EPRINTF("bind error");
         exit(-1);
     }
