@@ -56,12 +56,12 @@ usage(void)
     printf("Application to use RDMA features of Axiom NIC\n");
     printf("\n\n");
     printf("Arguments:\n");
-    printf("-m, --mode      r,w,d,s  r = rdma read, w = rdma write, d = local dump, s = local store\n");
+    printf("-m, --mode      r,w,d,s  r = rdma read, w = rdma write, d = local dump,");
+    printf("                         s = local store\n");
     printf("-n, --node      node_id  remote node id \n");
-    printf("-o, --loffset   offset   local offset in the RDMA zone\n");
-    printf("-O, --roffset   offset   remote offset in the RDMA zone\n");
-    printf("-s, --size      size      \n");
-    printf("-f, --fill               fill the payload, repeating specified bytes\n");
+    printf("-o, --loffset   offset   local offset in the RDMA zone [default 0]\n");
+    printf("-O, --roffset   offset   remote offset in the RDMA zone [default 0]\n");
+    printf("-s, --size      size     size of payload\n");
     printf("-p, --port      port     port used for the RDMA transfer\n");
     printf("-v, --verbose            verbose\n");
     printf("-h, --help               print this help\n\n");
@@ -72,12 +72,19 @@ axrdma_read(axrdma_status_t *s)
 {
     axiom_err_t ret;
     axiom_rdma_payload_size_t rdma_psize =
-        s->payload_size >> AXIOM_RDMA_PAYLOAD_ORDER;
+        s->payload_size >> AXIOM_RDMA_PAYLOAD_SIZE_ORDER;
 
     if (s->remote_id == AXIOM_NULL_NODE) {
         EPRINTF("You must specify the remote node [-n]");
         return;
     }
+
+    if (s.payload_size == 0 || (s.payload_size > AXIOM_RDMA_PAYLOAD_MAX_SIZE)) {
+        EPRINTF("You must specify the payload size (max %lu) [-s]",
+                sizeof(s.payload));
+        return;
+    }
+
     if (rdma_psize == 0) {
         EPRINTF("You must specify the payload size (multiple of 8 bytes) [-s]");
         return;
@@ -86,7 +93,7 @@ axrdma_read(axrdma_status_t *s)
     printf("[node %u] RDMA read - remote_id: %u size: %u local_offset: 0x%"
             PRIx32 " remote_offset: 0x%" PRIx32 "\n",
             s->local_id, s->remote_id,
-            ((uint32_t)(rdma_psize)) << AXIOM_RDMA_PAYLOAD_ORDER,
+            ((uint32_t)(rdma_psize)) << AXIOM_RDMA_PAYLOAD_SIZE_ORDER,
             s->local_offset, s->remote_offset);
 
     ret = axiom_rdma_read(s->dev, s->remote_id, s->port, rdma_psize,
@@ -103,12 +110,19 @@ axrdma_write(axrdma_status_t *s)
 {
     axiom_err_t ret;
     axiom_rdma_payload_size_t rdma_psize =
-        s->payload_size >> AXIOM_RDMA_PAYLOAD_ORDER;
+        s->payload_size >> AXIOM_RDMA_PAYLOAD_SIZE_ORDER;
 
     if (s->remote_id == AXIOM_NULL_NODE) {
         EPRINTF("You must specify the remote node [-n]");
         return;
     }
+
+    if (s.payload_size == 0 || (s.payload_size > AXIOM_RDMA_PAYLOAD_MAX_SIZE)) {
+        EPRINTF("You must specify the payload size (max %lu) [-s]",
+                sizeof(s.payload));
+        return;
+    }
+
     if (rdma_psize == 0) {
         EPRINTF("You must specify the payload size (multiple of 8 bytes) [-s]");
         return;
@@ -117,7 +131,7 @@ axrdma_write(axrdma_status_t *s)
     printf("[node %u] RDMA write - remote_id: %u size: %u local_offset: 0x%"
             PRIx32 " remote_offset: 0x%" PRIx32 "\n",
             s->local_id, s->remote_id,
-            ((uint32_t)(rdma_psize)) << AXIOM_RDMA_PAYLOAD_ORDER,
+            ((uint32_t)(rdma_psize)) << AXIOM_RDMA_PAYLOAD_SIZE_ORDER,
             s->local_offset, s->remote_offset);
 
     ret = axiom_rdma_write(s->dev, s->remote_id, s->port, rdma_psize,
@@ -260,10 +274,11 @@ main(int argc, char **argv)
 
     /* read payload list */
     if (s.mode == LOCAL_STORE) {
-        int payload_read = 0, orig_psize, i;
+        uint32_t payload_read = 0, orig_psize, i;
 
-        if (s.payload_size == 0) {
-            EPRINTF("You must specify the payload size [-s]");
+        if (s.payload_size == 0 || (s.payload_size > sizeof(s.payload))) {
+            EPRINTF("You must specify the payload size (max %lu) [-s]",
+                    sizeof(s.payload));
             exit(-1);
         }
 
@@ -317,7 +332,7 @@ main(int argc, char **argv)
             s.rdma_zone, s.rdma_size);
 
     if (s.payload_size + s.local_offset > s.rdma_size) {
-        EPRINTF("Out of RDMA zone");
+        EPRINTF("Out of RDMA zone - rdma_size: %" PRIu64, s.rdma_size);
         goto err;
     }
 
