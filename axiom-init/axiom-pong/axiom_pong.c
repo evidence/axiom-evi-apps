@@ -32,8 +32,9 @@ axiom_pong(axiom_dev_t *dev, axiom_if_id_t first_src,
         return;
     }
 
-    IPRINTF(verbose, "PING message received - src_node: %u unique_id: %u",
-            first_src, payload->unique_id);
+    IPRINTF(verbose, "PING message received - src_node: %u unique_id: %u "
+            "seq_num: %u",
+            first_src, payload->unique_id, payload->seq_num);
 
     /* send back the message */
     payload->command = AXIOM_CMD_PONG;
@@ -44,6 +45,7 @@ axiom_pong(axiom_dev_t *dev, axiom_if_id_t first_src,
         return;
     }
 
-    IPRINTF(verbose, "PONG message sent - dst_node: %u unique_id: %u",
-            first_src, payload->unique_id);
+    IPRINTF(verbose, "PONG message sent - dst_node: %u unique_id: %u "
+            "seq_num: %u",
+            first_src, payload->unique_id, payload->seq_num);
 }

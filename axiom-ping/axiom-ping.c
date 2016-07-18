@@ -77,7 +77,8 @@ sender_body(void *opaque)
     payload.command = AXIOM_CMD_PING;
     payload.unique_id = p->unique_id;
     payload.seq_num = 0;
-    while (!sigint_received &&  (p->num_ping > 0)) {
+
+    while (!sigint_received && (p->num_ping > 0)) {
         axiom_type_t type = AXIOM_TYPE_RAW_DATA;
         axiom_msg_id_t send_ret;
         struct timespec start_ts;
@@ -294,7 +295,11 @@ main(int argc, char **argv)
                 retry = 0;
             }
 
-        } while (retry);
+        } while (!sigint_received && retry);
+
+        if (sigint_received) {
+            break;
+        }
 
         recv_packets++;
         IPRINTF(verbose,"[node %u] reply received on port %u\n", node_id,
@@ -332,7 +337,7 @@ main(int argc, char **argv)
     }
 
 exit:
-    /* start sender thread */
+    /* join with the sender thread */
     if (pthread_join(sender_thread, NULL)) {
         EPRINTF("error joining sender thread");
         goto err;
