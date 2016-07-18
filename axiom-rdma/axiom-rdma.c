@@ -81,7 +81,7 @@ axrdma_read(axrdma_status_t *s)
 
     if (s->payload_size == 0 ||
             (s->payload_size > AXIOM_RDMA_PAYLOAD_MAX_SIZE)) {
-        EPRINTF("You must specify the payload size (max %lu) [-s]",
+        EPRINTF("You must specify the payload size (max %d) [-s]",
                 AXIOM_RDMA_PAYLOAD_MAX_SIZE);
         return;
     }
@@ -120,7 +120,7 @@ axrdma_write(axrdma_status_t *s)
 
     if (s->payload_size == 0 ||
             (s->payload_size > AXIOM_RDMA_PAYLOAD_MAX_SIZE)) {
-        EPRINTF("You must specify the payload size (max %lu) [-s]",
+        EPRINTF("You must specify the payload size (max %d) [-s]",
                 AXIOM_RDMA_PAYLOAD_MAX_SIZE);
         return;
     }
