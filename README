@@ -76,3 +76,26 @@ This repository contains the following user space application:
         # interface (if_id=1) with a specified payload
         axiom-send-raw -d 1 --neighbour --payload 987654
 ```
+ * axiom-rdma
+     + use RDMA features (remote write, remote read) of Axiom NIC
+```
+        examples:
+        # dump local RDMA zone (starting from offset 0 to 1023)
+        axiom-rdma -m d -s 1k
+```
+```
+        # store in the local RDMA zone (starting from offset 1024 to 2043)
+        # the bytes ( 1, 2, 3, 4) repeated many times to fill the size
+        # specified
+        axiom-rdma -m s -o 1k -s 1k 1 2 3 4
+```
+```
+        # write 3072 bytes in the RDMA zone of node 3 (offset 2048) reading
+        # from the local RDMA zone (offset 1024)
+        axiom-rdma -m w -n 3 -o 1k -O 2k -s 3k
+```
+```
+        # read 4096 bytes in the RDMA zone of node 2 (offset 7168) reading
+        # from the local RDMA zone (offset 0)
+        axiom-rdma -m r -n 2 -O 7k -s 4k
+```

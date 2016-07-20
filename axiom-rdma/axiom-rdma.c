@@ -56,15 +56,44 @@ usage(void)
     printf("Application to use RDMA features of Axiom NIC\n");
     printf("\n\n");
     printf("Arguments:\n");
-    printf("-m, --mode      r,w,d,s  r = rdma read, w = rdma write, d = local dump,");
-    printf("                         s = local store\n");
-    printf("-n, --node      node_id  remote node id \n");
-    printf("-o, --loffset   offset   local offset in the RDMA zone [default 0]\n");
-    printf("-O, --roffset   offset   remote offset in the RDMA zone [default 0]\n");
-    printf("-s, --size      size     size of payload\n");
-    printf("-p, --port      port     port used for the RDMA transfer\n");
-    printf("-v, --verbose            verbose\n");
-    printf("-h, --help               print this help\n\n");
+    printf("-m, --mode      r,w,d,s        r = rdma read, w = rdma write, d = local dump,\n");
+    printf("                               s = local store\n");
+    printf("-n, --node      node_id        remote node id \n");
+    printf("-o, --loffset   off[B|K|M|G]   local offset in the RDMA zone [default 0]\n");
+    printf("-O, --roffset   off[B|K|M|G]   remote offset in the RDMA zone [default 0]\n");
+    printf("-s, --size      size[B|K|M|G]  size of payload in byte\n");
+    printf("                               The suffix specifies the size unit\n");
+    printf("-p, --port      port           port used for the RDMA transfer\n");
+    printf("-v, --verbose                  verbose\n");
+    printf("-h, --help                     print this help\n\n");
+}
+
+static int
+get_scale(char char_scale) {
+    uint8_t scale;
+
+    switch (char_scale) {
+        case 'b': case 'B':
+            scale = 0;
+            break;
+
+        case 'k': case 'K':
+            scale = 10;
+            break;
+
+        case 'm': case 'M':
+            scale = 20;
+            break;
+
+        case 'G': case 'g':
+            scale = 30;
+            break;
+
+        default:
+            scale = 0;
+    }
+
+    return scale;
 }
 
 void
@@ -215,6 +244,9 @@ main(int argc, char **argv)
 
     while ((opt = getopt_long(argc, argv,"m:n:o:O:s:fp:vh",
                          long_options, &long_index )) != -1) {
+        char char_scale = 'b';
+        int data_scale = 0;
+
         switch (opt) {
             case 'm':
                 if (sscanf(optarg, "%c", &rdma_mode_char) != 1) {
@@ -232,25 +264,32 @@ main(int argc, char **argv)
                 }
                 break;
             case 'o':
-                if (sscanf(optarg, "%" SCNu32, &s.local_offset) != 1) {
+                if (sscanf(optarg, "%" SCNu32 "%c", &s.local_offset,
+                            &char_scale) == 0) {
                     EPRINTF("wrong local offset [32bit]");
                     usage();
                     exit(-1);
                 }
+                data_scale = get_scale(char_scale);
                 break;
             case 'O':
-                if (sscanf(optarg, "%" SCNu32, &s.remote_offset) != 1) {
+                if (sscanf(optarg, "%" SCNu32 "%c", &s.remote_offset,
+                            &char_scale) == 0) {
                     EPRINTF("wrong remote offset [32bit]");
                     usage();
                     exit(-1);
                 }
+                data_scale = get_scale(char_scale);
                 break;
             case 's':
-                if (sscanf(optarg, "%" SCNu32, &s.payload_size) != 1) {
+                if (sscanf(optarg, "%" SCNu32 "%c", &s.payload_size,
+                            &char_scale) == 0) {
                     EPRINTF("wrong payload size [16bit]");
                     usage();
                     exit(-1);
                 }
+                data_scale = get_scale(char_scale);
+                s.payload_size = s.payload_size << data_scale;
                 break;
             case 'p':
                 if (sscanf(optarg, "%" SCNu8, &s.port) != 1) {
