@@ -1,7 +1,7 @@
 /*!
  * \file axiom-info.c
  *
- * \version     v0.6
+ * \version     v0.7
  * \date        2016-05-03
  *
  * This file contains the implementation of axiom-info application.
