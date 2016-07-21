@@ -46,12 +46,14 @@ This repository contains the following user space application:
     + estimate the throughput between two nodes
 ```
         example:
-        # Estimate the throughput with targat node 3, sending 512 KBytes of data.
-        axiom-netperf -d 3 -l 512K
+        # Estimate the throughput with targat node 3, sending 512 KBytes of data
+        # using RAW messages.
+        axiom-netperf -d 3 -l 512K -t raw
 ```
 ```
         # Estimate the throughput with targat node 3, sending 2 MBytes of data.
-        axiom-netperf -d 3 -l 2M
+        # using RDMA messages.
+        axiom-netperf -d 3 -l 2M -t rdma
 ```
  * axiom-traceroute
     + print the hops needed to reach a specified target node
