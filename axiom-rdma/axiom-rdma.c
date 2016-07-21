@@ -379,7 +379,6 @@ main(int argc, char **argv)
 
     IPRINTF(verbose, "start");
 
-    /* check parameter */
     switch (s.mode) {
         case RDMA_READ:
             axrdma_read(&s);
@@ -396,7 +395,7 @@ main(int argc, char **argv)
         default:
             EPRINTF("You must specify the mode [-m]");
             usage();
-            exit(-1);
+            goto err;
     }
 
     IPRINTF(verbose, "end");
