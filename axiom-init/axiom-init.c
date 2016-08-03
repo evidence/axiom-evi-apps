@@ -96,7 +96,6 @@ main(int argc, char **argv)
     if (master) {
         axiom_discovery_master(dev, topology, final_routing_table, verbose);
     }
-    axiom_barrier_init();
     axiom_spawn_init();
     
     while(run) {
@@ -132,12 +131,12 @@ main(int argc, char **argv)
                 axiom_netperf_reply(dev, src, payload_size, &payload, verbose);
                 break;
                 
-            case AXIOM_CMD_BARRIER_REQ:
-                axiom_barrier_req(dev, src, payload_size, &payload, verbose);
-                break;
-                
             case AXIOM_CMD_SPAWN_REQ:
                 axiom_spawn_req(dev, src, payload_size, &payload, verbose);
+                break;
+
+            case AXIOM_CMD_SESSION_REQ:
+                axiom_session_req(dev, src, payload_size, &payload, verbose);
                 break;
 
             default:
