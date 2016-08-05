@@ -133,11 +133,13 @@ static void output(uint8_t *ptr, int size, FILE *fout) {
  * @param info array of "output pending" information
  * @param num_nodes number of nodes
  * @param fout write to this file.
+ * @param flags flags. see axiom-run.h
  */
-static void flush(output_info_t *info, int num_nodes, FILE *fout) {
+static void flush(output_info_t *info, int num_nodes, FILE *fout, int flags) {
     int node;
     for (node = 0; node < num_nodes; node++) {
         if (info[node].sz > 0) {
+            if (flags && IDENT_FLAG) fprintf(fout, flags & ALTERNATE_IDENT_FLAG ? "{%02d}" : "%02d:", node);
             output(info[node].buffer, info[node].sz, fout);
             info[node].sz = 0;
             fputc('\n', fout);
@@ -159,7 +161,9 @@ static void flush(output_info_t *info, int num_nodes, FILE *fout) {
  * @param flags flags. see axiom-run.h
  */
 static void emit(axiom_node_id_t node, uint8_t *buffer, int size, output_info_t *info, FILE *fout, int flags) {
-    int emit_id = flags&IDENT_FLAG;
+    const int emit_id = flags&IDENT_FLAG;
+    const int alternate = flags&ALTERNATE_IDENT_FLAG;
+    int no_stop_emit = 1;
     int res;
     uint8_t *p;
 
@@ -167,14 +171,15 @@ static void emit(axiom_node_id_t node, uint8_t *buffer, int size, output_info_t 
     p = (emit_id ? memchr(buffer, '\n', size) : memrchr(buffer, '\n', size));
     if (p != NULL) {
         if (info[node].sz > 0) {
-            if (emit_id) fprintf(fout, flags & ALTERNATE_IDENT_FLAG ? "{%02d}" : "%02d:", node);
+            if (emit_id) fprintf(fout, alternate ? "{%02d}" : "%02d:", node);
             output(info[node].buffer, info[node].sz, fout);
             info[node].sz = 0;
-            emit_id = 0;
+            no_stop_emit = 0;
         }
         for (;;) {
             res = p - buffer + 1;
-            if (emit_id) fprintf(fout, flags & ALTERNATE_IDENT_FLAG ? "{%02d}" : "%02d:", node);
+            if (emit_id && no_stop_emit) fprintf(fout, alternate ? "{%02d}" : "%02d:", node);
+            no_stop_emit = 1;
             output(buffer, res, fout);
             buffer += res;
             size -= res;
@@ -321,8 +326,8 @@ static void *master_receiver(void *data) {
             zlogmsg(LOG_ERROR, LOGZ_MASTER, "unknown message command 0x%02x", buffer.header.command);
         }
     }
-    flush(infoout, MAX_NUM_NODES, stdout);
-    flush(infoerr, MAX_NUM_NODES, stderr);
+    flush(infoout, MAX_NUM_NODES, stdout, info->flags);
+    flush(infoerr, MAX_NUM_NODES, stderr, info->flags);
     zlogmsg(LOG_INFO, LOGZ_MASTER, "MASTER: exiting receiver thread");
 
     // release resources
