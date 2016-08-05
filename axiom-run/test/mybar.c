@@ -39,7 +39,7 @@ int main(int argc, char**argv) {
     opterr = 0;
     while ((opt = getopt_long(argc, argv, "hb:s:", long_options, &long_index)) != -1) {
         switch (opt) {
-            case 'n':
+            case 'b':
                 barrier = atoi(optarg);
                 break;
             case 's':
