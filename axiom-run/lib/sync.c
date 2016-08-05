@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <unistd.h>
 
+#include "../axiom-run.h"
 #include "axiom_run_api.h"
 
 /* see axiom_run_api.h */
@@ -26,14 +27,14 @@ int axrun_sync(const unsigned barrier_id) {
     sock = socket(AF_UNIX, SOCK_DGRAM, 0);
     if (sock == -1) goto error;
     myaddr.sun_family = AF_UNIX;
-    snprintf(myaddr.sun_path, sizeof (myaddr.sun_path), "/tmp/axbar%d.%d", (int) getppid(), barrier_id);
+    snprintf(myaddr.sun_path, sizeof (myaddr.sun_path), BARRIER_SLAVE_TEMPLATE_NAME, (int) getppid(), barrier_id);
     res = bind(sock, &myaddr, sizeof (myaddr));
     if (res == -1) goto error;
     //
     // send the barrier id to axbar$PARENT_PID
     //
     itsaddr.sun_family = AF_UNIX;
-    snprintf(itsaddr.sun_path, sizeof (itsaddr.sun_path), "/tmp/axbar%d", (int) getppid());
+    snprintf(itsaddr.sun_path, sizeof (itsaddr.sun_path), BARRIER_MASTER_TEMPLATE_NAME, (int) getppid());
     res = sendto(sock, &barrier_id, sizeof (unsigned), 0, (struct sockaddr*) &itsaddr, sizeof (itsaddr));
     if (res != sizeof (unsigned)) goto error;
     //

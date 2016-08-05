@@ -663,13 +663,7 @@ int main(int argc, char **argv) {
     //
 
     sl_init(&env);
-    prepare_env(&env, envreg ? &_envreg : NULL, slave, services & BARRIER_SERVICE);
-    if (services & BARRIER_SERVICE) {
-        char buf[64];
-        snprintf(buf, sizeof (buf), "AXIOM_BARRIER_ADDRESS=/tmp/axbar.%d", (int) getpid());
-        sl_append(&env, buf);
-        sl_append(&env, NULL);
-    }
+    prepare_env(&env, envreg ? &_envreg : NULL, slave, 0);
 
     //
     // SLAVE or MASTER?

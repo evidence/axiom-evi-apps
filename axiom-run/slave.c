@@ -172,7 +172,7 @@ static void *recv_thread(void *data) {
             // manage barrier service
             //
             if (info->services & BARRIER_SERVICE) {
-                snprintf(itsaddr.sun_path, sizeof (itsaddr.sun_path), "/tmp/axbar%d.%d", (int) getpid(), buffer.header.barrier_id);
+                snprintf(itsaddr.sun_path, sizeof (itsaddr.sun_path), BARRIER_SLAVE_TEMPLATE_NAME, (int) getpid(), buffer.header.barrier_id);
                 res = sendto(sock, &buffer.header.barrier_id, sizeof (unsigned), 0, (struct sockaddr*) &itsaddr, sizeof (itsaddr));
                 if (res != sizeof (unsigned)) {
                     zlogmsg(LOG_WARN, LOGZ_SLAVE, "SLAVE: receiver thread sendto() error (errno=%d '%s')!", errno, strerror(errno));
@@ -212,7 +212,7 @@ static void *sock_thread(void *data) {
         exit(EXIT_FAILURE);
     }
     myaddr.sun_family = AF_UNIX;
-    snprintf(myaddr.sun_path, sizeof (myaddr.sun_path), "/tmp/axbar%d", (int) getpid());
+    snprintf(myaddr.sun_path, sizeof (myaddr.sun_path), BARRIER_MASTER_TEMPLATE_NAME, (int) getpid());
     res = bind(sock, &myaddr, sizeof (myaddr));
     if (res == -1) {
         elogmsg("bind()");
@@ -282,7 +282,7 @@ static void myexit(int sig) {
     {
         // paranoia
         char sname[UNIX_PATH_MAX];
-        snprintf(sname, sizeof (sname), "/tmp/axbar%d", (int) getpid());
+        snprintf(sname, sizeof (sname), BARRIER_MASTER_TEMPLATE_NAME, (int) getpid());
         unlink(sname);
     }
     //
@@ -397,7 +397,7 @@ void manage_slave_services(axiom_dev_t *_dev, int _services, int *_fd, pid_t _pi
         if (_services & BARRIER_SERVICE) {
             char sname[UNIX_PATH_MAX];
             terminate_thread_slave(thsock);
-            snprintf(sname, sizeof (sname), "/tmp/axbar%d", (int) getpid());
+            snprintf(sname, sizeof (sname), BARRIER_MASTER_TEMPLATE_NAME, (int) getpid());
             unlink(sname);
         }
         zlogmsg(LOG_INFO, LOGZ_SLAVE, "SLAVE: working threads died");

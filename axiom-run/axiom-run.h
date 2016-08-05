@@ -142,6 +142,11 @@ extern "C" {
     /** the form of identification. if IDENT_FLAG is set two form of identification can be written. */
 #define ALTERNATE_IDENT_FLAG 0x02
 
+    /** template name for the master unix domani socket port */
+#define BARRIER_MASTER_TEMPLATE_NAME "/tmp/axbar%d"
+    /** template name for the slave unix domain socket port */
+#define BARRIER_SLAVE_TEMPLATE_NAME "/tmp/axbar%d.%d"
+
     /**
      * Run and manage services for master process.
      * @param dev axiom device for communication
