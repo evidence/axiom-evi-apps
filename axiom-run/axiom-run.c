@@ -201,7 +201,6 @@ void terminate_thread(pthread_t th, char *logheader) {
 #define min(x,y) ((x)<(y)?(x):(y))
 
 extern char **environ;
-
 /**
  * Prepare the environment.
  * 
@@ -216,7 +215,7 @@ extern char **environ;
  * @param slave if this is the slave process
  * @param noclose if a null must be append to result
  */
-static void prepare_env(strlist_t *env, regex_t *re, int slave, int noclose) {
+static void prepare_env(strlist_t *env, regex_t *re, int slave, int noclose, uint64_t nodes) {
     char **ptr = environ;
     int already = 0;
     regex_t myre;
@@ -242,6 +241,10 @@ static void prepare_env(strlist_t *env, regex_t *re, int slave, int noclose) {
                 zlogmsg(LOG_WARN, LOGZ_MAIN, "AXIOM_RUN environment variable already present!");
                 already = 1;
             }
+            if (strncmp("AXIOM_NODES", *ptr, 11) == 0) {
+                zlogmsg(LOG_WARN, LOGZ_MAIN, "AXIOM_NODES environment variable already present!");
+                already = 1;
+            }
             /*
             if (strncmp("AXIOM_", *ptr, min(6, sz)) == 0) {
                 sl_append(env, *ptr);
@@ -254,7 +257,21 @@ static void prepare_env(strlist_t *env, regex_t *re, int slave, int noclose) {
         }
         ptr++;
     }
-    if (slave&&!already) sl_append(env, "AXIOM_RUN=1");
+    if (slave&&!already) {
+        char buf[64];
+        /* count the number of slaves nodes */
+        int nnodes = 0;
+        uint64_t n = nodes;
+        while (n != 0) {
+            if (n & 0x1) nnodes++;
+            n >>= 1;
+        }
+        //
+        snprintf(buf, sizeof (buf), "AXIOM_RUN=%d", nnodes);
+        sl_append(env, buf);
+        snprintf(buf, sizeof (buf), "AXIOM_NODES=0x%lx", nodes);
+        sl_append(env, buf);
+    }
     if (!noclose) sl_append(env, NULL);
     regfree(re);
 }
@@ -663,7 +680,7 @@ int main(int argc, char **argv) {
     //
 
     sl_init(&env);
-    prepare_env(&env, envreg ? &_envreg : NULL, slave, 0);
+    prepare_env(&env, envreg ? &_envreg : NULL, slave, 0, nodes);
 
     //
     // SLAVE or MASTER?
