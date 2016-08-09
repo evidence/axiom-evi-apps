@@ -20,9 +20,10 @@ extern "C" {
      * Synchronization on a barrier.
      * Used to sychronize all the applications started by an axiom-run instance.
      * @param barrier_id the barrier identification.
+     * @param verbose if true in case of error emit verbose messages on stderr
      * @return 0 on success -1 on error (setting errno)
      */
-    int axrun_sync(unsigned barrier_id);
+    int axrun_sync(unsigned barrier_id, int verbose);
 
 #ifdef __cplusplus
 }
