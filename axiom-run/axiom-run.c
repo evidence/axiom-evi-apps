@@ -680,7 +680,13 @@ int main(int argc, char **argv) {
     //
 
     sl_init(&env);
-    prepare_env(&env, envreg ? &_envreg : NULL, slave, 0, nodes);
+    prepare_env(&env, envreg ? &_envreg : NULL, slave, slave && (services & BARRIER_SERVICE), nodes);
+    if (slave && (services & BARRIER_SERVICE)) {
+        char var[128];
+        snprintf(var, sizeof (var), "AXIOM_BARRIER=%d", getpid());
+        sl_append(&env, var);
+        sl_append(&env, NULL);
+    }
 
     //
     // SLAVE or MASTER?

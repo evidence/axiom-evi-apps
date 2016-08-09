@@ -15,6 +15,8 @@ int axrun_sync(const unsigned barrier_id, int verbose) {
     unsigned id;
     int sock, res;
     int line;
+    char *s;
+    pid_t ppid;
 
     sock = -1;
     myaddr.sun_path[0] = '\0';
@@ -24,6 +26,18 @@ int axrun_sync(const unsigned barrier_id, int verbose) {
         errno = EINVAL;
         goto error;
     }
+
+    //
+    // search pid of the barrier service
+    //
+    s = getenv("AXIOM_BARRIER");
+    if (s == NULL) {
+        line = __LINE__;
+        errno = EINVAL;
+        goto error;
+    }
+    ppid = (pid_t) atoi(s);
+
     //
     // create a Unix domain socket
     // and bind it to axbar$PARENT_PID.$BARRIER_ID
@@ -31,7 +45,7 @@ int axrun_sync(const unsigned barrier_id, int verbose) {
     sock = socket(AF_UNIX, SOCK_DGRAM, 0);
     if (sock == -1) goto error;
     myaddr.sun_family = AF_UNIX;
-    snprintf(myaddr.sun_path, sizeof (myaddr.sun_path), BARRIER_SLAVE_TEMPLATE_NAME, (int) getppid(), barrier_id);
+    snprintf(myaddr.sun_path, sizeof (myaddr.sun_path), BARRIER_SLAVE_TEMPLATE_NAME, (int) ppid, barrier_id);
     res = bind(sock, &myaddr, sizeof (myaddr));
     if (res == -1) {
         line = __LINE__;
@@ -41,7 +55,7 @@ int axrun_sync(const unsigned barrier_id, int verbose) {
     // send the barrier id to axbar$PARENT_PID
     //
     itsaddr.sun_family = AF_UNIX;
-    snprintf(itsaddr.sun_path, sizeof (itsaddr.sun_path), BARRIER_MASTER_TEMPLATE_NAME, (int) getppid());
+    snprintf(itsaddr.sun_path, sizeof (itsaddr.sun_path), BARRIER_MASTER_TEMPLATE_NAME, (int) ppid);
     res = sendto(sock, &barrier_id, sizeof (unsigned), 0, (struct sockaddr*) &itsaddr, sizeof (itsaddr));
     if (res != sizeof (unsigned)) {
         line = __LINE__;

@@ -76,7 +76,7 @@ int main(int argc, char**argv) {
     }
     fprintf(stdout, "{%d} sync on barrier %d...\n", id, barrier);
     for (;;) {
-        res = axrun_sync(barrier);
+        res = axrun_sync(barrier, 1);
         if (res == 0) break;
         fprintf(stderr, "{%d} error on axrun_sync() errno=%d '%s'\n", id, errno, strerror(errno));
         if (errno != EAGAIN) break;
