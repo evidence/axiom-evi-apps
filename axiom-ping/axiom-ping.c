@@ -98,7 +98,7 @@ sender_body(void *opaque)
         payload.timestamp = timespec2nsec(start_ts);
         send_ret =  axiom_send_raw(p->dev, (axiom_node_id_t)p->dst_id,
                 remote_port, type, sizeof(payload), &payload);
-        if (send_ret < AXIOM_RET_OK) {
+        if (!AXIOM_RET_IS_OK(send_ret)) {
             IPRINTF(verbose, "send error");
             goto err;
         }
@@ -274,7 +274,7 @@ main(int argc, char **argv)
                 goto err;
             }
 
-            if (recv_ret < AXIOM_RET_OK) {
+            if (!AXIOM_RET_IS_OK(recv_ret)) {
                 /* recv interrupted by the SIGINT signal */
                 if (recv_ret == AXIOM_RET_INTR) {
                     goto exit;

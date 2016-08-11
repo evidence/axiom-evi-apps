@@ -213,7 +213,7 @@ axiom_delivery_routing_tables(axiom_dev_t *dev,
 
     /* MASTER: for each node */
     for (dest_node_index = AXIOM_MASTER_ID+1;
-         (dest_node_index < total_nodes) && (ret == AXIOM_RET_OK);
+         (dest_node_index < total_nodes) && AXIOM_RET_IS_OK(ret);
          dest_node_index++)
     {
         /* send the routing table using raw messages */
@@ -229,8 +229,7 @@ axiom_delivery_routing_tables(axiom_dev_t *dev,
                 /* (node, if) to send to dest_node_id*/
                 ret = axiom_send_raw_delivery(dev, dest_node_index,
                         AXIOM_RT_CMD_INFO, rt_node_index, ifaces);
-                if (ret < AXIOM_RET_OK)
-                {
+                if (!AXIOM_RET_IS_OK(ret)) {
                     EPRINTF("MASTER, Error sending AXIOM_RT_TYPE_INFO message "
                             "to node %d", dest_node_index);
                     return ret;
@@ -241,14 +240,13 @@ axiom_delivery_routing_tables(axiom_dev_t *dev,
 
     /* all routing table delivered; Master says: "end of delivery phase" */
     for (dest_node_index = AXIOM_MASTER_ID+1;
-            (dest_node_index < total_nodes) && (ret == AXIOM_RET_OK);
+            (dest_node_index < total_nodes) && AXIOM_RET_IS_OK(ret);
             dest_node_index++)
 	{
         /* end of sending routing tables */
         ret = axiom_send_raw_delivery(dev, dest_node_index,
                 AXIOM_RT_CMD_END_INFO, 0, 0);
-        if (ret < AXIOM_RET_OK)
-        {
+        if (!AXIOM_RET_IS_OK(ret)) {
             EPRINTF("MASTER, Error sending AXIOM_RT_TYPE_END_INFO message "
                     "to node %d", dest_node_index);
             return ret;
@@ -277,7 +275,7 @@ axiom_wait_rt_received(axiom_dev_t *dev, axiom_node_id_t total_nodes)
         /* receive reply from node which have received the routing table */
         ret = axiom_recv_raw_delivery(dev, &src_node_id,
                 &cmd, &payload_node_id, &payload_if_id);
-        if ((ret != AXIOM_RET_OK) || (cmd != AXIOM_RT_CMD_RT_REPLY))
+        if (!AXIOM_RET_IS_OK(ret) || (cmd != AXIOM_RT_CMD_RT_REPLY))
         {
             EPRINTF("MASTER, Error receiving AXIOM_RT_CMD_RT_REPLY message");
             EPRINTF("%d, %d", ret, cmd);
@@ -315,8 +313,7 @@ axiom_receive_routing_tables(axiom_dev_t *dev, axiom_node_id_t node_id,
         ret = axiom_recv_raw_delivery(dev, &src_node_id,
                 &cmd, &node_to_set, &if_to_set);
 
-        if (ret != AXIOM_RET_OK)
-        {
+        if (!AXIOM_RET_IS_OK(ret)) {
             EPRINTF("Slave %d, Error receiving AXIOM_RT_TYPE_INFO message",
                     node_id);
             return ret;
@@ -350,8 +347,7 @@ axiom_receive_routing_tables(axiom_dev_t *dev, axiom_node_id_t node_id,
             ret = axiom_send_raw_delivery(dev, AXIOM_MASTER_ID,
                     AXIOM_RT_CMD_RT_REPLY, node_id, 0);
 
-            if (ret < AXIOM_RET_OK)
-            {
+            if (!AXIOM_RET_IS_OK(ret)) {
                 EPRINTF("Slave %d, Error sending AXIOM_RT_CMD_RT_REPLY message",
                         node_id);
                 return ret;
@@ -405,7 +401,7 @@ axiom_set_routing_table(axiom_dev_t *dev,
 
         /* For each interface send all messages */
         for (if_index = 0; (if_index < AXIOM_INTERFACES_MAX) &&
-                (ret == AXIOM_RET_OK); if_index++)
+                AXIOM_RET_IS_OK(ret); if_index++)
         {
             /* get interface features */
             axiom_get_if_info (dev, if_index, &if_features);
@@ -420,8 +416,7 @@ axiom_set_routing_table(axiom_dev_t *dev,
                 /* Say over interface 'if_index': Set your routing table */
                 ret = axiom_send_raw_set_routing(dev, if_index,
                         AXIOM_RT_CMD_SET_ROUTING);
-                if (ret < AXIOM_RET_OK)
-                {
+                if (!AXIOM_RET_IS_OK(ret)) {
                     EPRINTF("Node:%d, error sending to interface number = %d "
                             "the AXIOM_RAW_TYPE_SET_ROUTING message",
                             node_id, if_index);
@@ -432,7 +427,7 @@ axiom_set_routing_table(axiom_dev_t *dev,
 
         /* For each interface receive all messages */
         for (if_index = 0; (if_index < AXIOM_INTERFACES_MAX) &&
-                (ret == AXIOM_RET_OK); if_index++)
+                AXIOM_RET_IS_OK(ret); if_index++)
         {
             /* get interface features */
             axiom_get_if_info (dev, if_index, &if_features);
@@ -442,8 +437,7 @@ axiom_set_routing_table(axiom_dev_t *dev,
             {
                 /* Wait answers */
                 ret = axiom_recv_raw_set_routing(dev, &src_interface, &cmd);
-                if (ret != AXIOM_RET_OK)
-                {
+                if (!AXIOM_RET_IS_OK(ret)) {
                     EPRINTF("Node:%d, error receiving AXIOM_RAW_TYPE_SET_ROUTING message",
                             node_id);
                     return ret;
@@ -457,14 +451,13 @@ axiom_set_routing_table(axiom_dev_t *dev,
         /* ********************* Slave nodes ********************* */
 
         /* wait for the first message saying to set the table */
-        while ((cmd != AXIOM_RT_CMD_SET_ROUTING) && (ret == AXIOM_RET_OK))
+        while ((cmd != AXIOM_RT_CMD_SET_ROUTING) && AXIOM_RET_IS_OK(ret))
         {
             DPRINTF("Node %d: Wait for AXIOM_RAW_TYPE_SET_ROUTING message",
                     node_id);
 
             ret = axiom_recv_raw_set_routing(dev, &src_interface, &cmd);
-            if (ret != AXIOM_RET_OK)
-            {
+            if (!AXIOM_RET_IS_OK(ret)) {
                 EPRINTF("Node:%d, error receiving AXIOM_RAW_TYPE_SET_ROUTING message",
                         node_id);
                 return ret;
@@ -481,7 +474,7 @@ axiom_set_routing_table(axiom_dev_t *dev,
 
         /* For each interface send all messages */
         for (if_index = 0; (if_index < AXIOM_INTERFACES_MAX) &&
-                (ret == AXIOM_RET_OK); if_index++)
+                AXIOM_RET_IS_OK(ret); if_index++)
         {
             /* get interface features */
             axiom_get_if_info (dev, if_index, &if_features);
@@ -496,8 +489,7 @@ axiom_set_routing_table(axiom_dev_t *dev,
                 /* Say over interface 'if_index': Set your routing table */
                 ret = axiom_send_raw_set_routing(dev, if_index,
                         AXIOM_RT_CMD_SET_ROUTING);
-                if (ret < AXIOM_RET_OK)
-                {
+                if (!AXIOM_RET_IS_OK(ret)) {
                     EPRINTF("Node:%d, error sending AXIOM_RAW_TYPE_SET_ROUTING message",
                             node_id);
                     return ret;
@@ -509,12 +501,11 @@ axiom_set_routing_table(axiom_dev_t *dev,
         /* For each interface, (except the one from which I've
             already received) I receive messages, but I don't
             set the routing table (already set!!) */
-        while ((num_interface > 1) && (ret == AXIOM_RET_OK))
+        while ((num_interface > 1) && AXIOM_RET_IS_OK(ret))
         {
             /* Wait answer */
             ret = axiom_recv_raw_set_routing(dev, &src_interface, &cmd);
-            if (ret != AXIOM_RET_OK)
-            {
+            if (!AXIOM_RET_IS_OK(ret)) {
                 EPRINTF("Node:%d, axiom_recv_raw_set_routing() error",
                         node_id);
                 return ret;

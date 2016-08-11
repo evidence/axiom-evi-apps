@@ -86,7 +86,7 @@ axiom_discovery_master(axiom_dev_t *dev,
 
     /* Discovery phase: discover the global topology */
     ret = axiom_master_node_discovery(dev, topology, &total_nodes);
-    if (ret != AXIOM_RET_OK) {
+    if (!AXIOM_RET_IS_OK(ret)) {
         EPRINTF("MASTER: axiom_master_node_discovery failed");
         return;
     }
@@ -104,20 +104,20 @@ axiom_discovery_master(axiom_dev_t *dev,
 
     /* delivery of each node routing tables */
     ret = axiom_delivery_routing_tables(dev, routing_tables, total_nodes);
-    if (ret != AXIOM_RET_OK) {
+    if (!AXIOM_RET_IS_OK(ret)) {
         EPRINTF("MASTER: axiom_delivery_routing_tables failed");
         return;
     }
     IPRINTF(verbose, "MASTER: wait for all delivery reply");
     ret = axiom_wait_rt_received(dev, total_nodes);
-    if (ret != AXIOM_RET_OK) {
+    if (!AXIOM_RET_IS_OK(ret)) {
         EPRINTF("Master: axiom_wait_rt_received failed");
         return;
     }
 
     /* Say to all nodes to set the received routing table */
     ret = axiom_set_routing_table(dev, final_routing_table);
-    if (ret != AXIOM_RET_OK) {
+    if (!AXIOM_RET_IS_OK(ret)) {
         EPRINTF("Master: axiom_set_routing_table failed");
         return;
     }
@@ -146,7 +146,7 @@ axiom_discovery_slave(axiom_dev_t *dev,
     /* Discovery phase: discover the intermediate topology */
     ret = axiom_slave_node_discovery(dev, topology, &node_id, first_src,
             (axiom_discovery_payload_t *)first_payload);
-    if (ret != AXIOM_RET_OK) {
+    if (!AXIOM_RET_IS_OK(ret)) {
         EPRINTF("SLAVE[%u]: axiom_slave_node_discovery failed", node_id);
         return;
     }
@@ -157,7 +157,7 @@ axiom_discovery_slave(axiom_dev_t *dev,
     /* Receive local routing table */
     ret = axiom_receive_routing_tables(dev, node_id,
             final_routing_table, &max_node_id);
-    if (ret != AXIOM_RET_OK) {
+    if (!AXIOM_RET_IS_OK(ret)) {
         EPRINTF("SLAVE[%u]: axiom_receive_routing_tables failed", node_id);
         return;
     }
@@ -166,7 +166,7 @@ axiom_discovery_slave(axiom_dev_t *dev,
 
     /* Set local final routing table*/
     ret = axiom_set_routing_table(dev, final_routing_table);
-    if (ret != AXIOM_RET_OK) {
+    if (!AXIOM_RET_IS_OK(ret)) {
         EPRINTF("SLAVE[%u]: axiom_set_routing_table failed", node_id);
         return;
     }

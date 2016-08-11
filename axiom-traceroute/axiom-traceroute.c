@@ -51,10 +51,11 @@ recv_tracereoute_reply(axiom_dev_t *dev, axiom_node_id_t *recv_node,
     msg_err =  axiom_recv_raw(dev, recv_node, port, type, &payload_size,
             recv_payload);
 
-    if (msg_err != AXIOM_RET_OK) {
+    if (!AXIOM_RET_IS_OK(msg_err)) {
         EPRINTF("receive error");
         return -1;
     }
+
     if (recv_payload->command != AXIOM_CMD_TRACEROUTE_REPLY) {
         EPRINTF("command received [%x] != AXIOM_CMD_TRACEROUTE_REPLY [%x]",
                 recv_payload->command, AXIOM_CMD_TRACEROUTE_REPLY);
@@ -135,7 +136,7 @@ main(int argc, char **argv)
 
     /* get interface to reach next hop for dest_node */
     err = axiom_next_hop(dev, dest_node, &if_id);
-    if (err != AXIOM_RET_OK) {
+    if (!AXIOM_RET_IS_OK(err)) {
         EPRINTF("node[%u] is unreachable", dest_node);
         exit(-1);
     }
@@ -154,7 +155,7 @@ main(int argc, char **argv)
     msg_err = axiom_send_raw(dev, if_id, port, type, sizeof(payload),
             &payload);
 
-    if (msg_err < AXIOM_RET_OK) {
+    if (!AXIOM_RET_IS_OK(msg_err)) {
         EPRINTF("send error");
         goto err;
     }
