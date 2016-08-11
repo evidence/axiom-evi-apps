@@ -47,7 +47,7 @@ axiom_net_connect_status(axiom_dev_t *dev, axiom_if_id_t if_number);
 axiom_msg_id_t
 axiom_net_send_raw_neighbour(axiom_dev_t *dev,
         axiom_if_id_t src_interface, axiom_port_t port, axiom_type_t type,
-        axiom_payload_t *payload);
+        axiom_raw_payload_t *payload);
 
 /*
  * @brief This function sends a raw message to a node.
@@ -60,7 +60,7 @@ axiom_net_send_raw_neighbour(axiom_dev_t *dev,
  */
 axiom_msg_id_t
 axiom_net_send_raw(axiom_dev_t *dev, axiom_if_id_t dest_node_id,
-        axiom_port_t port, axiom_type_t type, axiom_payload_t *payload);
+        axiom_port_t port, axiom_type_t type, axiom_raw_payload_t *payload);
 
 /*
  * @brief This function receives raw neighbour data.
@@ -73,7 +73,7 @@ axiom_net_send_raw(axiom_dev_t *dev, axiom_if_id_t dest_node_id,
  */
 axiom_msg_id_t
 axiom_net_recv_raw_neighbour(axiom_dev_t *dev, axiom_node_id_t *src_interface,
-        axiom_port_t *port, axiom_type_t *type, axiom_payload_t *payload);
+        axiom_port_t *port, axiom_type_t *type, axiom_raw_payload_t *payload);
 
 /*
  * @brief This function receives raw data.
@@ -86,6 +86,6 @@ axiom_net_recv_raw_neighbour(axiom_dev_t *dev, axiom_node_id_t *src_interface,
  */
 axiom_msg_id_t
 axiom_net_recv_raw(axiom_dev_t *dev, axiom_node_id_t *src_node_id,
-        axiom_port_t *port, axiom_type_t *type, axiom_payload_t *payload);
+        axiom_port_t *port, axiom_type_t *type, axiom_raw_payload_t *payload);
 
 #endif /* !AXIOM_NET_h */

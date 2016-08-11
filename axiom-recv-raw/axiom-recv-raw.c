@@ -51,7 +51,7 @@ main(int argc, char **argv)
     axiom_port_t port = 1, recv_port;
     int port_ok = 0, once = 0;
     axiom_type_t type;
-    axiom_payload_t payload;
+    axiom_raw_payload_t payload;
     axiom_err_t err;
     float sleep_time = 1;
     int no_blocking = 0, verbose = 0, flush = 0;

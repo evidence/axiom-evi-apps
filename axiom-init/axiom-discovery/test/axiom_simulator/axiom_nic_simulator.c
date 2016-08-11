@@ -141,7 +141,7 @@ axiom_get_routing(axiom_dev_t *dev, axiom_node_id_t node_id,
  */
 axiom_msg_id_t
 axiom_send_raw(axiom_dev_t *dev, axiom_node_id_t dst_id,
-        axiom_port_t port, axiom_type_t type, axiom_payload_t *payload)
+        axiom_port_t port, axiom_type_t type, axiom_raw_payload_t *payload)
 {
     axiom_msg_id_t ret = AXIOM_RET_ERROR;
 
@@ -168,7 +168,7 @@ axiom_send_raw(axiom_dev_t *dev, axiom_node_id_t dst_id,
  */
 axiom_msg_id_t
 axiom_recv_raw(axiom_dev_t *dev, axiom_node_id_t *src_id,
-        axiom_port_t *port, axiom_type_t *type, axiom_payload_t *payload)
+        axiom_port_t *port, axiom_type_t *type, axiom_raw_payload_t *payload)
 {
     axiom_msg_id_t ret = AXIOM_RET_ERROR;
 

@@ -51,7 +51,7 @@ main(int argc, char **argv)
     axiom_port_t port = 1;
     axiom_node_id_t node_id, dst_id;
     axiom_type_t type = AXIOM_TYPE_RAW_DATA;
-    axiom_payload_t payload; /* XXX: maybe we can use string */
+    axiom_raw_payload_t payload; /* XXX: maybe we can use string */
     axiom_raw_payload_size_t payload_size = 0;
     int count = 1, repeat = 0, port_ok = 0, dst_ok = 0, to_neighbour = 0;
     int verbose = 0, msg_id, i;

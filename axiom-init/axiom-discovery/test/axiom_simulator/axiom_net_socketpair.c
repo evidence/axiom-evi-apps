@@ -38,7 +38,7 @@ typedef struct axiom_net {
  */
 static axiom_msg_id_t
 send_from_master_to_slave(axiom_dev_t *dev, axiom_if_id_t dest_node_id,
-        axiom_port_t port, axiom_type_t type, axiom_payload_t *payload)
+        axiom_port_t port, axiom_type_t type, axiom_raw_payload_t *payload)
 {
     axiom_raw_msg_t message;
     ssize_t write_ret;
@@ -124,7 +124,7 @@ send_from_master_to_slave(axiom_dev_t *dev, axiom_if_id_t dest_node_id,
  */
 static axiom_msg_id_t
 recv_from_master_to_slave(axiom_dev_t *dev, axiom_node_id_t *src_node_id,
-        axiom_port_t *port, axiom_type_t *type, axiom_payload_t *payload)
+        axiom_port_t *port, axiom_type_t *type, axiom_raw_payload_t *payload)
 {
     axiom_raw_msg_t message;
     axiom_routing_payload_t rt_message;
@@ -249,7 +249,7 @@ recv_from_master_to_slave(axiom_dev_t *dev, axiom_node_id_t *src_node_id,
  */
 static axiom_msg_id_t
 send_from_slave_to_master(axiom_dev_t *dev, axiom_if_id_t dest_node_id,
-        axiom_port_t port, axiom_type_t type, axiom_payload_t *payload)
+        axiom_port_t port, axiom_type_t type, axiom_raw_payload_t *payload)
 {
     axiom_node_id_t node_id, node_index;
     int do_flag, num_nodes_after_me, i;
@@ -373,7 +373,7 @@ send_from_slave_to_master(axiom_dev_t *dev, axiom_if_id_t dest_node_id,
  */
 static axiom_msg_id_t recv_from_slave_to_master (axiom_dev_t *dev,
         axiom_node_id_t *src_node_id, axiom_port_t *port, axiom_type_t *type,
-        axiom_payload_t *payload)
+        axiom_raw_payload_t *payload)
 {
     axiom_node_id_t node_id, node_index;
     uint8_t if_index;
@@ -558,7 +558,7 @@ axiom_net_connect_status(axiom_dev_t *dev, axiom_if_id_t if_number)
  */
 axiom_msg_id_t
 axiom_net_send_raw_neighbour(axiom_dev_t *dev, axiom_if_id_t src_interface,
-        axiom_port_t port, axiom_type_t type, axiom_payload_t *payload)
+        axiom_port_t port, axiom_type_t type, axiom_raw_payload_t *payload)
 {
     axiom_raw_msg_t message;
     ssize_t write_ret;
@@ -594,7 +594,7 @@ axiom_net_send_raw_neighbour(axiom_dev_t *dev, axiom_if_id_t src_interface,
  */
 axiom_msg_id_t
 axiom_net_send_raw(axiom_dev_t *dev, axiom_if_id_t dest_node_id,
-        axiom_port_t port, axiom_type_t type, axiom_payload_t *payload)
+        axiom_port_t port, axiom_type_t type, axiom_raw_payload_t *payload)
 {
     axiom_msg_id_t ret;
 
@@ -626,7 +626,7 @@ axiom_net_send_raw(axiom_dev_t *dev, axiom_if_id_t dest_node_id,
  */
 axiom_msg_id_t
 axiom_net_recv_raw_neighbour(axiom_dev_t *dev, axiom_node_id_t *src_interface,
-        axiom_port_t *port, axiom_type_t *type, axiom_payload_t *payload)
+        axiom_port_t *port, axiom_type_t *type, axiom_raw_payload_t *payload)
 {
     axiom_raw_msg_t message;
     struct pollfd fds[AXIOM_INTERFACES_MAX];
@@ -709,7 +709,7 @@ axiom_net_recv_raw_neighbour(axiom_dev_t *dev, axiom_node_id_t *src_interface,
  */
 axiom_msg_id_t
 axiom_net_recv_raw(axiom_dev_t *dev, axiom_node_id_t *src_node_id,
-        axiom_port_t *port, axiom_type_t *type, axiom_payload_t *payload)
+        axiom_port_t *port, axiom_type_t *type, axiom_raw_payload_t *payload)
 {
     axiom_msg_id_t ret;
 
