@@ -1,12 +1,12 @@
 /*!
- * \file axiom-send-raw.c
+ * \file axiom-send.c
  *
  * \version     v0.7
  * \date        2016-05-03
  *
- * This file contains the implementation of axiom-send-raw application.
+ * This file contains the implementation of axiom-send application.
  *
- * axiom-send-raw sends AXIOM raw message to a specified remote node.
+ * axiom-send sends AXIOM raw message to a specified remote node.
  */
 #include <ctype.h>
 #include <stdio.h>
@@ -28,7 +28,7 @@
 static void
 usage(void)
 {
-    printf("usage: axiom-send-raw [arguments] -d dest   payload (list of bytes)\n");
+    printf("usage: axiom-send [arguments] -d dest   payload (list of bytes)\n");
     printf("Send AXIOM raw message to specified dest (dest can be remote node\n");
     printf("or local interface, if you send a message to neighbour [-n])\n\n");
     printf("Arguments:\n");

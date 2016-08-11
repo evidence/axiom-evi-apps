@@ -1,12 +1,12 @@
 /*!
- * \file axiom-recv-raw.c
+ * \file axiom-recv.c
  *
  * \version     v0.7
  * \date        2016-05-03
  *
- * This file contains the implementation of axiom-recv-raw application.
+ * This file contains the implementation of axiom-recv application.
  *
- * axiom-recv-raw receives AXIOM raw message
+ * axiom-recv receives AXIOM raw message
  */
 #include <ctype.h>
 #include <stdio.h>
@@ -28,7 +28,7 @@
 static void
 usage(void)
 {
-    printf("usage: axiom-recv-raw [arguments]\n");
+    printf("usage: axiom-recv [arguments]\n");
     printf("Receive AXIOM raw message\n\n");
     printf("Arguments:\n");
     printf("-p, --port       port   port used for receiving\n");
