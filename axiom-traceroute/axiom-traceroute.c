@@ -45,7 +45,7 @@ recv_tracereoute_reply(axiom_dev_t *dev, axiom_node_id_t *recv_node,
                        axiom_port_t *port, axiom_type_t *type,
                        axiom_traceroute_payload_t *recv_payload)
 {
-    axiom_msg_id_t msg_err;
+    axiom_err_t msg_err;
     axiom_raw_payload_size_t payload_size = sizeof(*recv_payload);
 
     msg_err =  axiom_recv_raw(dev, recv_node, port, type, &payload_size,
@@ -70,10 +70,9 @@ int
 main(int argc, char **argv)
 {
     axiom_dev_t *dev = NULL;
-    axiom_node_id_t dest_node, recv_node = 0;
+    axiom_node_id_t dest_node, recv_node = 0, node_id;
     axiom_if_id_t if_id;
-    axiom_err_t err;
-    axiom_msg_id_t msg_err, node_id;
+    axiom_err_t err, msg_err;
     axiom_port_t port;
     axiom_type_t type;
     axiom_traceroute_payload_t payload, recv_payload;

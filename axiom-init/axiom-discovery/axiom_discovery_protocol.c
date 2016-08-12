@@ -48,7 +48,7 @@ discover_phase(axiom_dev_t *dev, axiom_node_id_t *next_id,
     axiom_node_id_t start_node_index, node_index;
     int i, a, b;
     uint8_t b_mask;
-    axiom_msg_id_t ret;
+    axiom_err_t ret;
 
     /* The node reads its node id (1) */
     axiom_node_id_t node_id = axiom_get_node_id(dev);
@@ -278,7 +278,7 @@ axiom_slave_node_discovery (axiom_dev_t *dev,
     axiom_if_id_t src_interface, data_src_if, data_dst_if;
     int i, j, w;
     uint8_t b_mask;
-    axiom_msg_id_t ret;
+    axiom_err_t ret;
 
     /* called when received the first AXIOM_DSCV_CMD_REQ_ID type message */
     src_interface = first_interface;

@@ -25,7 +25,7 @@ axiom_traceroute_reply(axiom_dev_t *dev, axiom_if_id_t src,
         axiom_init_payload_t *payload, int verbose) {
     axiom_err_t ret;
     axiom_if_id_t if_id;
-    axiom_msg_id_t msg_err;
+    axiom_err_t msg_err;
     axiom_node_id_t node_id;
     axiom_init_payload_t send_payload;
     axiom_traceroute_payload_t *recv_payload =

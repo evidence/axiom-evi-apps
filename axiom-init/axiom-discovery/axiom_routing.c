@@ -209,7 +209,7 @@ axiom_delivery_routing_tables(axiom_dev_t *dev,
 {
     axiom_node_id_t dest_node_index, rt_node_index;
     axiom_if_id_t ifaces;
-    axiom_msg_id_t ret = AXIOM_RET_OK;
+    axiom_err_t ret = AXIOM_RET_OK;
 
     /* MASTER: for each node */
     for (dest_node_index = AXIOM_MASTER_ID+1;

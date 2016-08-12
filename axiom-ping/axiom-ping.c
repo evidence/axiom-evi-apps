@@ -80,7 +80,7 @@ sender_body(void *opaque)
 
     while (!sigint_received && (p->num_ping > 0)) {
         axiom_type_t type = AXIOM_TYPE_RAW_DATA;
-        axiom_msg_id_t send_ret;
+        axiom_err_t send_ret;
         struct timespec start_ts;
         int ret;
 
@@ -127,12 +127,11 @@ int
 main(int argc, char **argv)
 {
     axiom_dev_t *dev = NULL;
-    axiom_msg_id_t recv_ret, node_id;
     axiom_port_t recv_port;
     axiom_port_t port = AXIOM_RAW_PORT_NETUTILS;
-    axiom_node_id_t dst_id, src_id;
+    axiom_node_id_t dst_id, src_id, node_id;
     axiom_ping_payload_t recv_payload;
-    axiom_err_t err;
+    axiom_err_t err, recv_ret;
     struct sigaction sig;
     double interval = 1; /* default interval 1 sec */
     unsigned int num_ping = 1;
