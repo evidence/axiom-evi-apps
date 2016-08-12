@@ -53,7 +53,7 @@ main(int argc, char **argv)
     axiom_dev_t *dev = NULL;
     axiom_netperf_type_t np_type = AXIOM_RECV_DEF_TYPE;
     axiom_args_t axiom_args;
-    axiom_msg_id_t recv_ret;
+    axiom_err_t recv_ret;
     axiom_node_id_t src_id, node_id;
     axiom_port_t port = 1, recv_port;
     int port_ok = 0, once = 0;
@@ -194,7 +194,7 @@ main(int argc, char **argv)
             if (np_type == AXNP_RAW)
                 avail = axiom_recv_raw_avail(dev);
             else if (np_type == AXNP_LONG) {
-                // TODO: avail = axiom_recv_long_avail(dev);
+                avail = axiom_recv_long_avail(dev);
             }
 
             IPRINTF(verbose, "packets available: %d", avail);
@@ -237,6 +237,8 @@ main(int argc, char **argv)
 
         printf("[node %u msg_id %d] message received on port %u\n", node_id,
                 msg_id, recv_port);
+
+        IPRINTF(verbose, "recv_ret: %d", recv_ret);
 
         if (verbose) {
             if (type == AXIOM_TYPE_RAW_NEIGHBOUR) {

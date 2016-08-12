@@ -6,7 +6,7 @@
  *
  * This file contains the implementation of axiom-send application.
  *
- * axiom-send sends AXIOM raw or long  message to a specified remote node.
+ * axiom-send sends AXIOM raw or long message to a specified remote node.
  */
 #include <ctype.h>
 #include <stdio.h>
@@ -54,7 +54,7 @@ main(int argc, char **argv)
 {
     axiom_dev_t *dev = NULL;
     axiom_netperf_type_t np_type = AXIOM_RECV_DEF_TYPE;
-    axiom_msg_id_t recv_ret;
+    axiom_err_t send_ret;
     axiom_port_t port = 1;
     axiom_node_id_t node_id, dst_id;
     axiom_type_t type = AXIOM_TYPE_RAW_DATA;
@@ -246,15 +246,15 @@ main(int argc, char **argv)
         /* send a raw message*/
         if (np_type == AXNP_RAW) {
             axiom_raw_payload_size_t raw_psize = payload_size;
-            recv_ret =  axiom_send_raw(dev, (axiom_node_id_t)dst_id,
+            send_ret =  axiom_send_raw(dev, (axiom_node_id_t)dst_id,
                             (axiom_port_t)port, type, raw_psize, &payload);
         } else if (np_type == AXNP_LONG) {
             axiom_long_payload_size_t long_psize = payload_size;
-            recv_ret =  axiom_send_long(dev, (axiom_node_id_t)dst_id,
+            send_ret =  axiom_send_long(dev, (axiom_node_id_t)dst_id,
                             (axiom_port_t)port, type, long_psize, &payload);
         }
 
-        if (!AXIOM_RET_IS_OK(recv_ret)) {
+        if (!AXIOM_RET_IS_OK(send_ret)) {
             EPRINTF("send error");
             goto err;
         }
