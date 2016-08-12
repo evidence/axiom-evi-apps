@@ -236,8 +236,9 @@ main(int argc, char **argv)
 
         msg_id++;
 
-        printf("[node %u msg_id %d] message received on port %u\n", node_id,
-                msg_id, recv_port);
+        printf("[node %u msg-id %d] message received - payload_size %d "
+                "source_id %d port %u\n",
+                node_id, msg_id, payload_size, src_id, recv_port);
 
         IPRINTF(verbose, "recv_ret: %d", recv_ret);
 

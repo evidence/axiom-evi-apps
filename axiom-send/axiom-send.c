@@ -58,7 +58,7 @@ main(int argc, char **argv)
     axiom_port_t port = 1;
     axiom_node_id_t node_id, dst_id;
     axiom_type_t type = AXIOM_TYPE_RAW_DATA;
-    axiom_raw_payload_t payload; /* XXX: maybe we can use string */
+    axiom_long_payload_t payload;
     int payload_size = 0;
     int count = 1, repeat = 0, port_ok = 0, dst_ok = 0, to_neighbour = 0;
     int msg_id, i;
@@ -235,9 +235,13 @@ main(int argc, char **argv)
     }
 #endif
 
-    if (np_type == AXNP_RAW)
+    if (np_type == AXNP_RAW) {
+        if (payload_size > AXIOM_RAW_PAYLOAD_MAX_SIZE)
+            payload_size = AXIOM_RAW_PAYLOAD_MAX_SIZE;
         printf("[node %u] sending %d RAW messages...\n", node_id, count);
-    else if (np_type == AXNP_LONG) {
+    } else if (np_type == AXNP_LONG) {
+        if (payload_size > AXIOM_LONG_PAYLOAD_MAX_SIZE)
+            payload_size = AXIOM_LONG_PAYLOAD_MAX_SIZE;
         type = AXIOM_TYPE_LONG_DATA;
         printf("[node %u] sending %d LONG messages...\n", node_id, count);
     }
@@ -259,8 +263,9 @@ main(int argc, char **argv)
             goto err;
         }
 
-        printf("[node %u msg-id %d] message sent to port %u\n", node_id,
-                msg_id + 1, port);
+        printf("[node %u msg-id %d] message sent - payload_size %d dest_id %d "
+                "port %u\n",
+                node_id, msg_id + 1, payload_size, dst_id, port);
 
         if (verbose) {
             if (type == AXIOM_TYPE_RAW_NEIGHBOUR) {
