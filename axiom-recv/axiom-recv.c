@@ -215,9 +215,10 @@ main(int argc, char **argv)
         } else if (np_type == AXNP_LONG) {
             axiom_long_payload_size_t long_psize = sizeof(long_payload);
             /* receive a long message from port*/
-            recv_ret =  axiom_recv_long(dev, &src_id, (axiom_port_t *)&recv_port,
-                    &type, &long_psize, &long_payload);
+            recv_ret =  axiom_recv_long(dev, &src_id,
+                    (axiom_port_t *)&recv_port, &long_psize, &long_payload);
 
+            type = AXIOM_TYPE_LONG_DATA;
             payload_size = long_psize;
             payload = ((uint8_t *)(&long_payload));
         }

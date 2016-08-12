@@ -251,7 +251,7 @@ main(int argc, char **argv)
         } else if (np_type == AXNP_LONG) {
             axiom_long_payload_size_t long_psize = payload_size;
             send_ret =  axiom_send_long(dev, (axiom_node_id_t)dst_id,
-                            (axiom_port_t)port, type, long_psize, &payload);
+                            (axiom_port_t)port, long_psize, &payload);
         }
 
         if (!AXIOM_RET_IS_OK(send_ret)) {
