@@ -25,7 +25,7 @@ axiom_discovery_master(axiom_dev_t *dev,
  */
 void
 axiom_discovery_slave(axiom_dev_t *dev,
-        axiom_node_id_t first_src, axiom_payload_t first_payload,
+        axiom_node_id_t first_src, axiom_raw_payload_t first_payload,
         axiom_node_id_t topology[][AXIOM_INTERFACES_MAX],
         axiom_if_id_t final_routing_table[AXIOM_NODES_MAX], int verbose);
 #endif /*! AXIOM_DISCOVERY_PROTOCOL_h*/

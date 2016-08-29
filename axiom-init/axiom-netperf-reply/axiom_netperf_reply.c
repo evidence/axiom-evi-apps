@@ -64,7 +64,7 @@ axiom_netperf_send_reply(axiom_dev_t *dev, axiom_netperf_status_t *cur_status,
         payload.error = error_report;
         err = axiom_send_raw(dev, src, AXIOM_RAW_PORT_NETUTILS,
                 AXIOM_TYPE_RAW_DATA, sizeof(payload), &payload);
-        if (err < AXIOM_RET_OK) {
+        if (!AXIOM_RET_IS_OK(err)) {
             EPRINTF("send back time error");
             return;
         }

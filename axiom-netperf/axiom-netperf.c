@@ -154,7 +154,7 @@ axnetperf_raw(axnetperf_status_t *s)
         /* send netperf message */
         err = axiom_send_raw(s->dev, s->dest_node, AXIOM_RAW_PORT_INIT,
                 AXIOM_TYPE_RAW_DATA, payload_size, &payload);
-        if (unlikely(err < AXIOM_RET_OK)) {
+        if (unlikely(!AXIOM_RET_IS_OK(err))) {
             EPRINTF("send error");
             return err;
         }
@@ -277,7 +277,7 @@ axnetperf_rdma(axnetperf_status_t *s)
 
     err = axiom_send_raw(s->dev, s->dest_node, AXIOM_RAW_PORT_INIT,
             AXIOM_TYPE_RAW_DATA, sizeof(payload), &payload);
-    if (err < AXIOM_RET_OK) {
+    if (unlikely(!AXIOM_RET_IS_OK(err))) {
         EPRINTF("send error");
         return err;
     }
@@ -298,7 +298,7 @@ axnetperf_start(axnetperf_status_t *s)
 
     err = axiom_send_raw(s->dev, s->dest_node, AXIOM_RAW_PORT_INIT,
             AXIOM_TYPE_RAW_DATA, sizeof(payload), &payload);
-    if (err < AXIOM_RET_OK) {
+    if (unlikely(!AXIOM_RET_IS_OK(err))) {
         EPRINTF("send error");
         return err;
     }
@@ -340,7 +340,7 @@ axnetperf_stop(axnetperf_status_t *s)
     pld_recv_size = sizeof(payload);
     err =  axiom_recv_raw(s->dev, &src_node, &port, &type, &pld_recv_size,
             &payload);
-    if (err < AXIOM_RET_OK || (src_node != s->dest_node) ||
+    if (!AXIOM_RET_IS_OK(err) || (src_node != s->dest_node) ||
             payload.command != AXIOM_CMD_NETPERF_END) {
         EPRINTF("recv_elapsed_time error - err: 0x%x node: 0x%x [0x%x] "
                 "command 0x%x [0x%x]", err, src_node, s->dest_node,
@@ -414,7 +414,8 @@ main(int argc, char **argv)
                 break;
 
             case 't':
-                if (sscanf(optarg, "%ms", &type_string) != 1) {
+                if ((sscanf(optarg, "%ms", &type_string) != 1) ||
+                        type_string == NULL) {
                     EPRINTF("wrong message type");
                     usage();
                     exit(-1);

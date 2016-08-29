@@ -327,7 +327,7 @@ void
     axiom_sim_node_args_t *axiom_args = (axiom_sim_node_args_t *) args;
     axiom_dev_t *dev;
     axiom_discovery_cmd_t msg_cmd;
-    axiom_payload_t first_msg;
+    axiom_raw_payload_t first_msg;
     axiom_if_id_t first_interface;
 
     set_node_info(axiom_args);
@@ -345,7 +345,7 @@ void
 
         DPRINTF("Slave: Wait for AXIOM_DSCV_CMD_REQ_ID message");
         ret = axiom_recv_raw(dev, &first_interface, &port, &type, &first_msg);
-        if (ret < AXIOM_RET_OK) {
+        if (!AXIOM_RET_IS_OK(ret)) {
             EPRINTF("Slave: Error receiving AXIOM_DSCV_CMD_REQ_ID message");
         }
 

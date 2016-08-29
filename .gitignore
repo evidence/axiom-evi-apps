@@ -1,8 +1,8 @@
 #
 # Generated executable
 #
-axiom-recv-raw/axiom-recv-raw
-axiom-send-raw/axiom-send-raw
+axiom-recv/axiom-recv
+axiom-send/axiom-send
 axiom-whoami/axiom-whoami
 axiom-init/axiom-discovery/test/axiom_discovery_protocol_test
 axiom-init/axiom-discovery/test/axsw_discovery_protocol_test

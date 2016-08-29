@@ -1,7 +1,7 @@
 AXIOM_INCLUDE := ../../axiom-evi-nic/include
 AXIOM_NIC_UL := ../../axiom-evi-nic/axiom_user_library
 
-APPS := axiom-send-raw
+APPS := axiom-send
 HEADERS := $(AXIOM_INCLUDE)/*.h
 CLEANFILES = $(APPS) *.o
 
@@ -21,9 +21,9 @@ CFLAGS += -Wall $(DFLAGS) -I$(PWD)/$(AXIOM_INCLUDE)
 
 all: $(APPS)
 
-axiom-send-raw: axiom-send-raw.o $(AXIOM_NIC_UL)/libaxiom_user_api.a
+axiom-send: axiom-send.o $(AXIOM_NIC_UL)/libaxiom_user_api.a
 
-axiom-send-raw.o: axiom-send-raw.c $(HEADERS)
+axiom-send.o: axiom-send.c $(HEADERS)
 
 $(AXIOM_NIC_UL)/%:
 	cd $(AXIOM_NIC_UL) && make CCPREFIX=$(CCPREFIX) DFLAGS="$(DFLAGS)"

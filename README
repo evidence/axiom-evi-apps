@@ -62,21 +62,29 @@ This repository contains the following user space application:
         # Print the hops needed to reach the node 1
         axiom-traceroute -d 1
 ```
- * axiom-[send|recv]-raw
-     + send/receive Axiom RAW data to/from a node
+ * axiom-[send|recv]
+     + send/receive Axiom RAW/LONG data to/from a node
 ```
         examples:
         # receive RAW message
-        axiom-recv-raw
+        axiom-recv -t raw
+```
+```
+        # receive LONG message
+        axiom-recv -t long
 ```
 ```
         # send RAW data to node (node_id=4) with a specified payload
-        axiom-send-raw -d 4 --payload 987654
+        axiom-send -t raw -d 4   112 43 0 57 33
 ```
 ```
         # send RAW data to a neighbour directly connected on a local
         # interface (if_id=1) with a specified payload
-        axiom-send-raw -d 1 --neighbour --payload 987654
+        axiom-send -t raw -d 1 --neighbour   67 52 1 0 1 0
+```
+```
+        # send LONG data to node (node_id=0) with a specified payload
+        axiom-send -t long -d 0   112 43 0 57 33
 ```
  * axiom-rdma
      + use RDMA features (remote write, remote read) of Axiom NIC

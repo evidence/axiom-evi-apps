@@ -129,7 +129,7 @@ axrdma_read(axrdma_status_t *s)
     ret = axiom_rdma_read(s->dev, s->remote_id, s->port, rdma_psize,
             s->remote_offset, s->local_offset);
 
-    if (ret != AXIOM_RET_OK) {
+    if (!AXIOM_RET_IS_OK(ret)) {
         EPRINTF("axiom_rdma_read() failed - ret: 0x%x", ret);
         return;
     }
@@ -168,7 +168,7 @@ axrdma_write(axrdma_status_t *s)
     ret = axiom_rdma_write(s->dev, s->remote_id, s->port, rdma_psize,
             s->local_offset, s->remote_offset);
 
-    if (ret != AXIOM_RET_OK) {
+    if (!AXIOM_RET_IS_OK(ret)) {
         EPRINTF("axiom_rdma_write() failed - ret: 0x%x", ret);
         return;
     }

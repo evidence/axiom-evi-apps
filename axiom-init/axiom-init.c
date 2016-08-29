@@ -107,7 +107,7 @@ main(int argc, char **argv)
 
         ret = axiom_recv_raw_init(dev, &src, &type, &cmd, &payload_size,
                 &payload);
-        if (ret != AXIOM_RET_OK) {
+        if (!AXIOM_RET_IS_OK(ret)) {
             EPRINTF("error receiving message");
             break;
         }

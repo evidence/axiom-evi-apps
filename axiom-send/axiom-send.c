@@ -1,12 +1,12 @@
 /*!
- * \file axiom-send-raw.c
+ * \file axiom-send.c
  *
  * \version     v0.7
  * \date        2016-05-03
  *
- * This file contains the implementation of axiom-send-raw application.
+ * This file contains the implementation of axiom-send application.
  *
- * axiom-send-raw sends AXIOM raw message to a specified remote node.
+ * axiom-send sends AXIOM raw or long message to a specified remote node.
  */
 #include <ctype.h>
 #include <stdio.h>
@@ -23,44 +23,52 @@
 #include "axiom_nic_types.h"
 #include "axiom_nic_api_user.h"
 #include "axiom_nic_packets.h"
+#include "axiom_nic_init.h"
 #include "dprintf.h"
+
+#define AXIOM_RECV_DEF_TYPE             AXNP_RAW
+
+int verbose = 0;
 
 static void
 usage(void)
 {
-    printf("usage: axiom-send-raw [arguments] -d dest   payload (list of bytes)\n");
-    printf("Send AXIOM raw message to specified dest (dest can be remote node\n");
+    printf("usage: axiom-send [arguments] -d dest   payload (list of bytes)\n");
+    printf("Send AXIOM raw or long message to specified dest (dest can be remote node\n");
     printf("or local interface, if you send a message to neighbour [-n])\n\n");
     printf("Arguments:\n");
-    printf("-d, --dest      dest     dest node id or local if (TO_NEIGHBOUR) \n");
-    printf("-r, --repeat    rep      repeat rep times the payload specified\n");
-    printf("-p, --port      port     port used for sending this message\n");
-    printf("-n, --neighbour          send message to neighbour (dest is used\n");
-    printf("                         to specify the local interface)\n");
-    printf("-c, --count     count    send the same message multiple times [def: 1]\n");
-    printf("-s, --sleep     sec      second to sleep between two send \n");
-    printf("-v, --verbose            verbose\n");
-    printf("-h, --help               print this help\n\n");
+    printf("-t, --type      raw|long  message type to use [default: RAW]\n");
+    printf("-d, --dest      dest      dest node id or local if (TO_NEIGHBOUR) \n");
+    printf("-r, --repeat    rep       repeat rep times the payload specified\n");
+    printf("-p, --port      port      port used for sending this message\n");
+    printf("-n, --neighbour           send message to neighbour (dest is used\n");
+    printf("                          to specify the local interface)\n");
+    printf("-c, --count     count     send the same message multiple times [def: 1]\n");
+    printf("-s, --sleep     sec       second to sleep between two send \n");
+    printf("-v, --verbose             verbose\n");
+    printf("-h, --help                print this help\n\n");
 }
 
 int
 main(int argc, char **argv)
 {
     axiom_dev_t *dev = NULL;
-    axiom_msg_id_t recv_ret;
+    axiom_netperf_type_t np_type = AXIOM_RECV_DEF_TYPE;
+    axiom_err_t send_ret;
     axiom_port_t port = 1;
     axiom_node_id_t node_id, dst_id;
     axiom_type_t type = AXIOM_TYPE_RAW_DATA;
-    axiom_payload_t payload; /* XXX: maybe we can use string */
-    axiom_raw_payload_size_t payload_size = 0;
+    axiom_long_payload_t payload;
+    int payload_size = 0;
     int count = 1, repeat = 0, port_ok = 0, dst_ok = 0, to_neighbour = 0;
-    int verbose = 0, msg_id, i;
+    int msg_id, i;
     float sleep_time = 0;
 
     int long_index =0;
     int opt = 0;
     static struct option long_options[] = {
         {"dest", required_argument, 0, 'd'},
+        {"type", required_argument,  0, 't'},
         {"repeat", required_argument, 0, 'r'},
         {"port", required_argument, 0, 'p'},
         {"count", required_argument, 0, 'c'},
@@ -71,8 +79,10 @@ main(int argc, char **argv)
     };
 
 
-    while ((opt = getopt_long(argc, argv,"hp:d:nr:c:s:v",
+    while ((opt = getopt_long(argc, argv,"ht:p:d:nr:c:s:v",
                          long_options, &long_index )) != -1) {
+        char *type_string = NULL;
+
         switch (opt) {
             case 'p':
                 if (sscanf(optarg, "%" SCNu8, &port) != 1) {
@@ -81,6 +91,28 @@ main(int argc, char **argv)
                     exit(-1);
                 }
                 port_ok = 1;
+                break;
+
+            case 't':
+                if ((sscanf(optarg, "%ms", &type_string) != 1) ||
+                        type_string == NULL) {
+                    EPRINTF("wrong message type");
+                    usage();
+                    exit(-1);
+                }
+
+                if (strncmp(type_string, "long", 4) == 0) {
+                    np_type = AXNP_LONG;
+                } else if (strncmp(type_string, "raw", 3) == 0) {
+                    np_type = AXNP_RAW;
+                } else {
+                    EPRINTF("wrong message type");
+                    free(type_string);
+                    usage();
+                    exit(-1);
+                }
+
+                free(type_string);
                 break;
 
             case 'd':
@@ -137,6 +169,12 @@ main(int argc, char **argv)
             printf("Port not allowed [%u]; [0 <= port <= 7]\n", port);
             exit(-1);
         }
+    }
+
+    /* check neighbour parameter */
+    if (to_neighbour && (np_type != AXNP_RAW)) {
+        printf("message to neighbour is available only with RAW type");
+        exit(-1);
     }
 
     /* check destination node parameter */
@@ -197,19 +235,37 @@ main(int argc, char **argv)
     }
 #endif
 
-    printf("[node %u] sending %d raw messages...\n", node_id, count);
+    if (np_type == AXNP_RAW) {
+        if (payload_size > AXIOM_RAW_PAYLOAD_MAX_SIZE)
+            payload_size = AXIOM_RAW_PAYLOAD_MAX_SIZE;
+        printf("[node %u] sending %d RAW messages...\n", node_id, count);
+    } else if (np_type == AXNP_LONG) {
+        if (payload_size > AXIOM_LONG_PAYLOAD_MAX_SIZE)
+            payload_size = AXIOM_LONG_PAYLOAD_MAX_SIZE;
+        type = AXIOM_TYPE_LONG_DATA;
+        printf("[node %u] sending %d LONG messages...\n", node_id, count);
+    }
 
     for (msg_id = 0; msg_id < count; msg_id++) {
         /* send a raw message*/
-        recv_ret =  axiom_send_raw(dev, (axiom_node_id_t)dst_id,
-                (axiom_port_t)port, type, payload_size, &payload);
-        if (recv_ret < AXIOM_RET_OK) {
+        if (np_type == AXNP_RAW) {
+            axiom_raw_payload_size_t raw_psize = payload_size;
+            send_ret =  axiom_send_raw(dev, (axiom_node_id_t)dst_id,
+                            (axiom_port_t)port, type, raw_psize, &payload);
+        } else if (np_type == AXNP_LONG) {
+            axiom_long_payload_size_t long_psize = payload_size;
+            send_ret =  axiom_send_long(dev, (axiom_node_id_t)dst_id,
+                            (axiom_port_t)port, long_psize, &payload);
+        }
+
+        if (!AXIOM_RET_IS_OK(send_ret)) {
             EPRINTF("send error");
             goto err;
         }
 
-        printf("[node %u msg-id %d] message sent to port %u\n", node_id,
-                msg_id + 1, port);
+        printf("[node %u msg-id %d] message sent - payload_size %d dest_id %d "
+                "port %u\n",
+                node_id, msg_id + 1, payload_size, dst_id, port);
 
         if (verbose) {
             if (type == AXIOM_TYPE_RAW_NEIGHBOUR) {
@@ -218,6 +274,9 @@ main(int argc, char **argv)
             } else if (type == AXIOM_TYPE_RAW_DATA) {
                 printf("\t- destination_node_id = %u\n", dst_id);
                 printf("\t- type = %s\n", "DATA");
+            } else if (type == AXIOM_TYPE_LONG_DATA) {
+                printf("\t- destination_node_id = %u\n", dst_id);
+                printf("\t- type = %s\n", "LONG DATA");
             }
 
             printf("\t- payload_size = %u\n", payload_size);
