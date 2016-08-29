@@ -31,7 +31,6 @@ typedef struct {
     /** running flags. see axiom-run.h */
     int flags;
 } thread_info_t;
-
 /**
  * Send the same axiom raw message to all nodes.
  *
@@ -42,7 +41,8 @@ typedef struct {
  * @param payload the payload
  * @return AXIOM_RET_OK in case of succes
  */
-static axiom_err_t my_axiom_send_raw(axiom_dev_t *dev, uint64_t nodes, axiom_port_t port, axiom_raw_payload_size_t size, axiom_payload_t *payload) {
+static axiom_err_t my_axiom_send_raw(axiom_dev_t *dev, uint64_t nodes, axiom_port_t port, axiom_raw_payload_size_t size, axiom_raw_payload_t *payload)
+{
     axiom_node_id_t node = 0;
     axiom_err_t err = AXIOM_RET_OK;
     axiom_msg_id_t msg;
@@ -59,7 +59,6 @@ static axiom_err_t my_axiom_send_raw(axiom_dev_t *dev, uint64_t nodes, axiom_por
     }
     return err;
 }
-
 /**
  * Send the same axiom raw message to all nodes using safe log message.
  * Is the same as my_axiom_send_raw but use signal safe handler log message.
@@ -73,7 +72,8 @@ static axiom_err_t my_axiom_send_raw(axiom_dev_t *dev, uint64_t nodes, axiom_por
  * @param payload the payload
  * @return AXIOM_RET_OK in case of succes
  */
-static axiom_err_t s_my_axiom_send_raw(axiom_dev_t *dev, uint64_t nodes, axiom_port_t port, axiom_raw_payload_size_t size, axiom_payload_t *payload) {
+static axiom_err_t s_my_axiom_send_raw(axiom_dev_t *dev, uint64_t nodes, axiom_port_t port, axiom_raw_payload_size_t size, axiom_raw_payload_t *payload)
+{
     //
     // :-((((
     //
@@ -286,7 +286,7 @@ static void *master_receiver(void *data) {
             zlogmsg(LOG_INFO, LOGZ_MASTER, "MASTER: received EXIT message from %d", node);
             if (info->services & EXIT_SERVICE) {
                 zlogmsg(LOG_DEBUG, LOGZ_MASTER, "MASTER: send CMD_EXIT to all");
-                my_axiom_send_raw(info->dev, info->nodes, slave_port, sizeof (header_t), (axiom_payload_t *) & buffer);
+                my_axiom_send_raw(info->dev, info->nodes, slave_port, sizeof (header_t), (axiom_raw_payload_t *) & buffer);
                 //exit(EXIT_SUCCESS);
                 exit_counter--;
                 zlogmsg(LOG_DEBUG, LOGZ_MASTER, "exit_counter now is %d", exit_counter);
@@ -314,7 +314,7 @@ static void *master_receiver(void *data) {
                     barrier[id].counter--;
                     if (barrier[id].counter == 0) {
                         // SEND SYNC TO SLAVES
-                        my_axiom_send_raw(info->dev, info->nodes, slave_port, sizeof (header_t), (axiom_payload_t*) & buffer);
+                        my_axiom_send_raw(info->dev, info->nodes, slave_port, sizeof (header_t), (axiom_raw_payload_t*) & buffer);
                     }
                 } else {
                     zlogmsg(LOG_WARN, LOGZ_MASTER, "MASTER: BARRIER message from node %d with id=%d out of bound", node, buffer.header.barrier_id);
@@ -370,7 +370,7 @@ static void *master_sender(void *data) {
             break;
         }
         if (sz > 0) {
-            my_axiom_send_raw(info->dev, info->nodes, slave_port, sz + sizeof (header_t), (axiom_payload_t *) & buffer);
+            my_axiom_send_raw(info->dev, info->nodes, slave_port, sz + sizeof (header_t), (axiom_raw_payload_t *) & buffer);
         }
     }
     zlogmsg(LOG_INFO, LOGZ_MASTER, "MASTER: exiting redirect loop for STDIN");
@@ -391,7 +391,7 @@ static void myexit(int sig) {
     if (mydev != NULL) {
         buffer.header.command = CMD_EXIT;
         buffer.header.status = sig & 0x7f; // HACK: works... for now.... see <bits/waitstatus.h>
-        s_my_axiom_send_raw(mydev, mynodes, slave_port, sizeof (header_t), (axiom_payload_t *) & buffer);
+        s_my_axiom_send_raw(mydev, mynodes, slave_port, sizeof (header_t), (axiom_raw_payload_t *) & buffer);
     } else {
         szlogmsg(LOG_WARN, LOGZ_SLAVE, "SLAVE: mydev is NULL!!!!");
     }
