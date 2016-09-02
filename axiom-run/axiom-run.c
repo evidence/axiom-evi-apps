@@ -16,6 +16,9 @@
 
 #include "axiom-run.h"
 
+/** Table to convert command code to command name. */
+char *cmd_to_name[] = {"CMD_EXIT", "CMD_KILL", "CMD_SEND_TO_STDOUT", "CMD_SEND_TO_STDERR", "CMD_RECV_FROM_STDIN", "CMD_BARRIER"};
+
 /*
 static char *debug_dump(char *ptr, int sz) {
     // :-(
@@ -186,7 +189,8 @@ void terminate_thread(pthread_t th, char *logheader) {
     zlogmsg(LOG_DEBUG, LOGZ_SLAVE, "%s: sendind cancellation request to %ld", logheader, (long) th);
     res = pthread_cancel(th);
     if (res != 0) {
-        zlogmsg(LOG_WARN, LOGZ_SLAVE, "%s: pthread_cancel() error res=%d '%s'", logheader, res, strerror(res));
+        // it is normal to have an error if the thread has already died
+        zlogmsg(LOG_DEBUG, LOGZ_SLAVE, "%s: pthread_cancel() error res=%d '%s'", logheader, res, strerror(res));
         return;
     }
     zlogmsg(LOG_DEBUG, LOGZ_SLAVE, "%s: join %ld", logheader, (long) th);

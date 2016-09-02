@@ -65,6 +65,9 @@ extern "C" {
     /** command barrier (master<->slave) */
 #define CMD_BARRIER         0x85
 
+    extern char *cmd_to_name[];
+#define CMD_TO_NAME(cmd) ((cmd)>=CMD_EXIT&&(cmd)<=CMD_BARRIER?cmd_to_name[(cmd)-CMD_EXIT]:"unknown")
+
     /**
      * header of all raws message between master ans slave
      */

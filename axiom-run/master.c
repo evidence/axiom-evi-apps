@@ -148,6 +148,16 @@ static void flush(output_info_t *info, int num_nodes, FILE *fout, int flags) {
     fflush(fout);
 }
 
+static void logbufferstatus(output_info_t *info, int num_nodes, char *name)
+{
+    int node;
+    for (node = 0; node < num_nodes; node++) {
+        if (info[node].sz > 0) {
+            zlogmsg(LOG_WARN, LOGZ_MASTER, "MASTER: node %d has %d characters for %s", node, info[node].sz, name);
+        }
+    }
+}
+
 /**
  * Write a buffer to stdout/stderr line buffered.
  * Emit only full lines. The partial line are append to the "output pending" buffer.
@@ -247,7 +257,7 @@ static void *master_receiver(void *data) {
     // thread MAIN LOOP
     //
     // note that we exit from this loop when we have received a EXIT message from all child
-    zlogmsg(LOG_INFO, LOGZ_MASTER, "MASTER: entering receiver thread");
+    zlogmsg(LOG_INFO, LOGZ_MASTER, "MASTER: entering receiver thread (thread=%ld)", (long) pthread_self());
     for (;;) {
         size = sizeof (buffer);
         //
@@ -258,7 +268,7 @@ static void *master_receiver(void *data) {
             zlogmsg(LOG_WARN, LOGZ_MASTER, "MASTER: axiom_recv_raw() error %d", msg);
             continue;
         }
-        logmsg(LOG_TRACE, "MASTER: received %d bytes command=%d", size, buffer.header.command);
+        logmsg(LOG_TRACE, "MASTER: received %d bytes command=%d '%s'", size, buffer.header.command, CMD_TO_NAME(buffer.header.command));
         if (buffer.header.command == CMD_SEND_TO_STDERR) {
             //
             // redirect stderr service...
@@ -284,6 +294,12 @@ static void *master_receiver(void *data) {
             // exit service/information...
             //
             zlogmsg(LOG_INFO, LOGZ_MASTER, "MASTER: received EXIT message from %d", node);
+#if 1
+            if (logmsg_is_zenabled(LOG_DEBUG, LOGZ_MASTER)) {
+                logbufferstatus(infoout, MAX_NUM_NODES, "STDOUT");
+                logbufferstatus(infoerr, MAX_NUM_NODES, "STDERR");
+            }
+#endif
             if (info->services & EXIT_SERVICE) {
                 zlogmsg(LOG_DEBUG, LOGZ_MASTER, "MASTER: send CMD_EXIT to all");
                 my_axiom_send_raw(info->dev, info->nodes, slave_port, sizeof (header_t), (axiom_raw_payload_t *) & buffer);
@@ -357,7 +373,7 @@ static void *master_sender(void *data) {
     // read stdin and send this data to all slaves...
     //
 
-    zlogmsg(LOG_INFO, LOGZ_MASTER, "MASTER: entering redirect loop for STDIN");
+    zlogmsg(LOG_INFO, LOGZ_MASTER, "MASTER: entering redirect loop for STDIN (thread=%ld)", (long) pthread_self());
     buffer.header.command = CMD_RECV_FROM_STDIN;
     //
     // main loop

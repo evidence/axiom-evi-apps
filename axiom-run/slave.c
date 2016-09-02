@@ -47,13 +47,14 @@ static void *send_thread(void *data) {
     size_t sz;
     char *id = (info->cmd == CMD_SEND_TO_STDOUT) ? "STDOUT" : "STDERR";
 
-    zlogmsg(LOG_INFO, LOGZ_SLAVE, "SLAVE: redirect loop for %s started", id);
+    zlogmsg(LOG_INFO, LOGZ_SLAVE, "SLAVE: redirect loop for %s started (thread=%ld)", id, (long) pthread_self());
     buffer.header.command = ((thread_info_t*) data)->cmd;
     //
     // main loop
     // (exit in case of read failure)
     for (;;) {
         // read slave stdout/stderr...
+        zlogmsg(LOG_TRACE, LOGZ_SLAVE, "SLAVE: %s waiting data...", id);
         sz = read(info->fd, buffer.raw, sizeof (buffer.raw));
         zlogmsg(LOG_TRACE, LOGZ_SLAVE, "SLAVE: %s read %d bytes from fd", id, (int) sz);
         if (sz == -1) {
@@ -114,7 +115,7 @@ static void *recv_thread(void *data) {
     struct sockaddr_un itsaddr;
     int sock, res;
 
-    zlogmsg(LOG_INFO, LOGZ_SLAVE, "SLAVE: receiver thread started");
+    zlogmsg(LOG_INFO, LOGZ_SLAVE, "SLAVE: receiver thread started (thread=%ld)", (long) pthread_self());
 
     if (info->services & BARRIER_SERVICE) {
         // socket used to inform the child process of barrier synchronization...
@@ -203,7 +204,7 @@ static void *sock_thread(void *data) {
 
     // read synchornization request from a socket and send the request to the master...
 
-    zlogmsg(LOG_INFO, LOGZ_SLAVE, "SLAVE: socket thread started");
+    zlogmsg(LOG_INFO, LOGZ_SLAVE, "SLAVE: socket thread started (thread=%ld)", (long) pthread_self());
 
     // socket used for slave<->child comunnication
     sock = socket(AF_UNIX, SOCK_DGRAM, 0);
