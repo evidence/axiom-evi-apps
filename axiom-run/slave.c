@@ -162,7 +162,8 @@ static void *recv_thread(void *data) {
             if (info->services & EXIT_SERVICE) {
                 zlogmsg(LOG_INFO, LOGZ_SLAVE, "SLAVE: received CMD_EXIT");
                 //received_exit_command = 1;
-                res = kill(info->pid, SIGQUIT);
+                res = kill(info->pid, SIGTERM);
+                zlogmsg(LOG_DEBUG, LOGZ_SLAVE, "SLAVE: sent SIGTERM to child");
                 if (res != 0) {
                     zlogmsg(LOG_WARN, LOGZ_SLAVE, "SLAVE: error sending SIGQUIT signal to controlled application errno=%d '%s'!", errno, strerror(errno));
                 }
