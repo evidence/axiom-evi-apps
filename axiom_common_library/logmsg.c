@@ -9,7 +9,7 @@
 
 extern char **environ;
 
-char *logmsg_name[] = {"FATAL", "ERROR", "WARN", "INFO", "DEBUG"};
+char *logmsg_name[] = {"FATAL", "ERROR", "WARN", "INFO", "DEBUG", "TRACE"};
 
 static FILE *logmsg_fout = NULL; // :-( stderr is not constant
 pid_t logmsg_pid = -1;
@@ -35,10 +35,12 @@ static pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 void _logmsg(char *msg, ...) {
     va_list list;
     va_start(list, msg);
+    pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, NULL);
     pthread_mutex_lock(&mutex);
     // NMB: logmsg_fout can be NULL if logmsg_init() has not been never called
     vfprintf(logmsg_fout, msg, list);
     pthread_mutex_unlock(&mutex);
+    pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
     va_end(list);
 }
 
