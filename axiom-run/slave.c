@@ -67,6 +67,8 @@ static void *send_thread(void *data) {
             msg = axiom_send_raw(info->dev, master_node, master_port, AXIOM_TYPE_RAW_DATA, sz + sizeof (header_t), &buffer);
             if (!AXIOM_RET_IS_OK(msg))
                 zlogmsg(LOG_WARN, LOGZ_SLAVE, "SLAVE: %s thread axiom_send_raw() write error (err=%d)", id, msg);
+        } else {
+            break;
         }
     }
     zlogmsg(LOG_INFO, LOGZ_SLAVE, "SLAVE: redirect loop for %s end", id);
