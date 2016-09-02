@@ -304,17 +304,14 @@ static void *master_receiver(void *data) {
                 zlogmsg(LOG_DEBUG, LOGZ_MASTER, "MASTER: send CMD_EXIT to all");
                 my_axiom_send_raw(info->dev, info->nodes, slave_port, sizeof (header_t), (axiom_raw_payload_t *) & buffer);
                 //exit(EXIT_SUCCESS);
-                exit_counter--;
-                zlogmsg(LOG_DEBUG, LOGZ_MASTER, "exit_counter now is %d", exit_counter);
                 info->services &= ~EXIT_SERVICE;
-            } else {
-                exit_counter--;
-                zlogmsg(LOG_DEBUG, LOGZ_MASTER, "exit_counter now is %d", exit_counter);
-                if (exit_counter == 0) {
-                    zlogmsg(LOG_DEBUG, LOGZ_MASTER, "MASTER: exit_counter reach zero... exiting...");
-                    //exit(EXIT_SUCCESS);
-                    break;
-                }
+            }
+            exit_counter--;
+            zlogmsg(LOG_DEBUG, LOGZ_MASTER, "exit_counter now is %d", exit_counter);
+            if (exit_counter == 0) {
+                zlogmsg(LOG_DEBUG, LOGZ_MASTER, "MASTER: exit_counter reach zero... exiting...");
+                //exit(EXIT_SUCCESS);
+                break;
             }
         } else if (buffer.header.command == CMD_BARRIER) {
             //
@@ -403,13 +400,14 @@ static uint64_t mynodes;
  */
 static void myexit(int sig) {
     buffer_t buffer;
-    szlogmsg(LOG_INFO, LOGZ_SLAVE, "MASTER: caught exit signal... exiting...");
+    szlogmsg(LOG_INFO, LOGZ_MASTER, "MASTER: caught exit signal... exiting...");
     if (mydev != NULL) {
         buffer.header.command = CMD_EXIT;
         buffer.header.status = sig & 0x7f; // HACK: works... for now.... see <bits/waitstatus.h>
         s_my_axiom_send_raw(mydev, mynodes, slave_port, sizeof (header_t), (axiom_raw_payload_t *) & buffer);
+        szlogmsg(LOG_INFO, LOGZ_MASTER, "MASTER: sent EXIT command to slaves...");
     } else {
-        szlogmsg(LOG_WARN, LOGZ_SLAVE, "SLAVE: mydev is NULL!!!!");
+        szlogmsg(LOG_WARN, LOGZ_MASTER, "MASTER: mydev is NULL!!!!");
     }
     exit(EXIT_SUCCESS);
 }
