@@ -404,6 +404,69 @@ void manage_slave_services(axiom_dev_t *_dev, int _services, int *_fd, pid_t _pi
             unlink(sname);
         }
         zlogmsg(LOG_INFO, LOGZ_SLAVE, "SLAVE: working threads died");
+
+        {
+            struct timeval tv;
+            fd_set set;
+            buffer_t buffer;
+            int nfds, ret, sz, closedout, closederr;
+            axiom_msg_id_t msg;
+
+            zlogmsg(LOG_INFO, LOGZ_SLAVE, "SLAVE: waiting spurious stdout/stderr data");
+            tv.tv_sec = 0;
+            tv.tv_usec = 750000;
+            closedout = closederr = 0;
+            for (;;) {
+                FD_ZERO(&set);
+                nfds = 0;
+                if (!closedout) {
+                    FD_SET(_fd[1], &set);
+                    nfds = _fd[1];
+                }
+                if (!closederr) {
+                    FD_SET(_fd[2], &set);
+                    nfds = nfds > _fd[2] ? nfds : _fd[2];
+                }
+                ret = select(nfds + 1, &set, NULL, NULL, &tv);
+                // NMB: we assume, as linux do but posix permits not to do, that struct timeval will be updated
+                if (ret == -1) {
+                    elogmsg("SLAVE: select()");
+                    break;
+                }
+                zlogmsg(LOG_TRACE, LOGZ_SLAVE, "SLAVE: remaining %ld usec (for spurios write)", tv.tv_usec);
+                if (!ret) break;
+                if (FD_ISSET(_fd[1], &set)) {
+                    sz = read(_fd[1], buffer.raw, sizeof (buffer.raw));
+                    zlogmsg(LOG_INFO, LOGZ_SLAVE, "SLAVE: STDOUT read %d bytes from fd", (int) sz);
+                    if (sz == -1) {
+                        zlogmsg(LOG_WARN, LOGZ_SLAVE, "SLAVE: STDOUT read error (errno=%d '%s')", errno, strerror(errno));
+                    } else if (sz > 0) {
+                        buffer.header.command = CMD_SEND_TO_STDOUT;
+                        msg = axiom_send_raw(_dev, master_node, master_port, AXIOM_TYPE_RAW_DATA, sz + sizeof (header_t), &buffer);
+                        if (!AXIOM_RET_IS_OK(msg))
+                            zlogmsg(LOG_WARN, LOGZ_SLAVE, "SLAVE: STDOUT axiom_send_raw() write error (err=%d)", msg);
+                    } else {
+                        closedout = 1;
+                    }
+                }
+                if (FD_ISSET(_fd[2], &set)) {
+                    sz = read(_fd[2], buffer.raw, sizeof (buffer.raw));
+                    zlogmsg(LOG_INFO, LOGZ_SLAVE, "SLAVE: STDERR read %d bytes from fd", (int) sz);
+                    if (sz == -1) {
+                        zlogmsg(LOG_WARN, LOGZ_SLAVE, "SLAVE: STDERR read error (errno=%d '%s')", errno, strerror(errno));
+                    } else if (sz > 0) {
+                        buffer.header.command = CMD_SEND_TO_STDERR;
+                        msg = axiom_send_raw(_dev, master_node, master_port, AXIOM_TYPE_RAW_DATA, sz + sizeof (header_t), &buffer);
+                        if (!AXIOM_RET_IS_OK(msg))
+                            zlogmsg(LOG_WARN, LOGZ_SLAVE, "SLAVE: STDERR axiom_send_raw() write error (err=%d)", msg);
+                    } else {
+                        closederr = 1;
+                    }
+                }
+                if (closedout && closederr) break;
+            }
+        }
+
     }
 
     zlogmsg(LOG_INFO, LOGZ_SLAVE, "SLAVE: send CMD_EXIT message to master");
