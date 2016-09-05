@@ -109,3 +109,14 @@ This repository contains the following user space application:
         # from the local RDMA zone (offset 0)
         axiom-rdma -m r -n 2 -O 7k -s 4k
 ```
+ * axiom-run
+    + spawn application on multiple nodes
+```
+        # run ls on remote node 1 (-n) and redirect (-r) the stdin/stdout/stderr
+        axiom-run -n 1 -r ls
+```
+```
+        # run ls on all nodes, redirect (-r) the stdin/stdout/stderr and print
+        # the node id in each line (-i)
+        axiom-run -r -i ls
+```
