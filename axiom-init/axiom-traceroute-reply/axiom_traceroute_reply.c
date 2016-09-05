@@ -66,7 +66,7 @@ axiom_traceroute_reply(axiom_dev_t *dev, axiom_if_id_t src,
         /* send raw neighbour traceroute message */
         msg_err = axiom_send_raw_init(dev, if_id, AXIOM_TYPE_RAW_NEIGHBOUR,
                                         &send_payload);
-        if (!AXIOM_RET_IS_OK(ret)) {
+        if (!AXIOM_RET_IS_OK(msg_err)) {
             EPRINTF("send raw init error");
             return;
         }
