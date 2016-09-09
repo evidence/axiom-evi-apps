@@ -150,6 +150,7 @@ static void *recv_thread(void *data) {
             // manage stdin redirect service
             //
             if (info->services & REDIRECT_SERVICE) {
+                zlogmsg(LOG_INFO, LOGZ_SLAVE, "SLAVE: received CMD_RECV_FROM_STDIN");
                 size -= sizeof (header_t);
                 output(info->fd, buffer.raw, size);
             } else {
@@ -176,6 +177,7 @@ static void *recv_thread(void *data) {
             // manage barrier service
             //
             if (info->services & BARRIER_SERVICE) {
+                zlogmsg(LOG_INFO, LOGZ_SLAVE, "SLAVE: received CMD_BARRIER");
                 snprintf(itsaddr.sun_path, sizeof (itsaddr.sun_path), BARRIER_SLAVE_TEMPLATE_NAME, (int) getpid(), buffer.header.barrier_id);
                 res = sendto(sock, &buffer.header.barrier_id, sizeof (unsigned), 0, (struct sockaddr*) &itsaddr, sizeof (itsaddr));
                 if (res != sizeof (unsigned)) {

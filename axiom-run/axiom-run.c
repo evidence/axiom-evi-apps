@@ -640,6 +640,15 @@ int main(int argc, char **argv) {
             perror("axiom_bind()");
             exit(EXIT_FAILURE);
         }
+
+#if 0
+        if (!slave) {
+            axiom_err_t err = axiom_flush_raw(dev);
+            if (!AXIOM_RET_IS_OK(err)) {
+                zlogmsg(LOG_WARN, LOGZ_MAIN, "axiom_flush_raw() error %d", (int) err);
+            }
+        }
+#endif
     }
 
     //

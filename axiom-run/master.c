@@ -317,7 +317,7 @@ static void *master_receiver(void *data) {
             //
             // barrier service...
             //
-            zlogmsg(LOG_INFO, LOGZ_MASTER, "MASTER: received BARRIER message from %d", node);
+            zlogmsg(LOG_INFO, LOGZ_MASTER, "MASTER: received BARRIER message from %d (barrier=%d)", node,(unsigned)buffer.header.barrier_id);
             if (info->services & BARRIER_SERVICE) {
                 if (buffer.header.barrier_id <= AXRUN_MAX_BARRIER_ID) {
                     unsigned id = buffer.header.barrier_id;
@@ -327,6 +327,7 @@ static void *master_receiver(void *data) {
                     barrier[id].counter--;
                     if (barrier[id].counter == 0) {
                         // SEND SYNC TO SLAVES
+                        zlogmsg(LOG_INFO, LOGZ_MASTER, "MASTER: sending BARRIER unlock to all slaves");
                         my_axiom_send_raw(info->dev, info->nodes, slave_port, sizeof (header_t), (axiom_raw_payload_t*) & buffer);
                     }
                 } else {
