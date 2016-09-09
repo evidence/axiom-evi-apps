@@ -16,6 +16,7 @@ axiom-rdma/axiom-rdma
 axiom-run/axiom-run
 axiom-run/test/myinfo
 axiom-run/test/mybar
+axiom-run/test/myexch
 
 #
 # Normal rules

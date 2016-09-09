@@ -5,7 +5,7 @@ AXIOM_APPS_UL := ../axiom-init/lib
 AXIOM_COMMON_UL := ../axiom_common_library
 
 APPS := axiom-run 
-TAPPS := test/myinfo test/mybar
+TAPPS := test/myinfo test/mybar test/myexch
 LIBS := lib/libaxiom_run_api.a
 
 CLEANFILES = $(APPS) $(TAPPS) $(LIBS) *.o test/*.o lib/*.o
@@ -34,6 +34,9 @@ lib/libaxiom_run_api.a: lib/sync.o
 	$(AR) rcs $@ $?
 	
 test/myinfo: test/myinfo.o
+
+test/myexch: test/myexch.o
+	$(CC) -L$(PWD)/../../axiom-evi-nic/axiom_user_library -o test/myexch test/myexch.o -laxiom_user_api -lpthread
 
 test/mybar: test/mybar.o lib/libaxiom_run_api.a
 	$(CC) -L$(PWD)/lib -o test/mybar test/mybar.o -laxiom_run_api
