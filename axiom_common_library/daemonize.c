@@ -36,7 +36,7 @@ extern char **environ;
 }
 
 /* See axiom_common.h */
-pid_t daemonize(char *cwd, char *exec, char **args, char **env, int *pipefd, int verbose) {
+pid_t daemonize(char *cwd, char *exec, char **args, char **env, int *pipefd, int newsession, int verbose) {
 
     pid_t pid;
     char *oldcwd;
@@ -139,10 +139,12 @@ pid_t daemonize(char *cwd, char *exec, char **args, char **env, int *pipefd, int
         int i, fd;
         //
         // new control terminal
-        //
-        sid = setsid();
-        if (sid < 0) {
-            // ignored
+        // setsid() -> become a session leader (and create a new process group) 
+        if (newsession) {
+            sid = setsid();
+            if (sid < 0) {
+                // ignored
+            }
         }
         //
         // new stdin/stdout/stderr

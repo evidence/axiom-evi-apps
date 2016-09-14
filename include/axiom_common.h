@@ -336,10 +336,11 @@ extern "C" {
      * @param args The executable arguments.
      * @param env The executable environment.
      * @param pipefd A pointer to int[3] for pipes.
+     * @param newsession if true create a new session/new process group
      * @param verbose Emit log message of "what are you doing?"
      * @return The pid of the new process or -1 in case of failure (set errno).
      */
-    pid_t daemonize(char *cwd, char *exec, char **args, char **env, int *pipefd, int verbose);
+    pid_t daemonize(char *cwd, char *exec, char **args, char **env, int *pipefd, int newsession, int verbose);
 
 #ifdef __cplusplus
 }
