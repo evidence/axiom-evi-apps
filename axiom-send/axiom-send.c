@@ -61,8 +61,9 @@ main(int argc, char **argv)
     axiom_long_payload_t payload;
     int payload_size = 0;
     int count = 1, repeat = 0, port_ok = 0, dst_ok = 0, to_neighbour = 0;
-    int msg_id, i;
+    int seq, i;
     float sleep_time = 0;
+    char msg_type_str[16];
 
     int long_index =0;
     int opt = 0;
@@ -239,14 +240,17 @@ main(int argc, char **argv)
         if (payload_size > AXIOM_RAW_PAYLOAD_MAX_SIZE)
             payload_size = AXIOM_RAW_PAYLOAD_MAX_SIZE;
         printf("[node %u] sending %d RAW messages...\n", node_id, count);
+        strcpy(msg_type_str, "RAW");
     } else if (np_type == AXNP_LONG) {
         if (payload_size > AXIOM_LONG_PAYLOAD_MAX_SIZE)
             payload_size = AXIOM_LONG_PAYLOAD_MAX_SIZE;
         type = AXIOM_TYPE_LONG_DATA;
         printf("[node %u] sending %d LONG messages...\n", node_id, count);
+        strcpy(msg_type_str, "LONG");
     }
 
-    for (msg_id = 0; msg_id < count; msg_id++) {
+    for (seq = 0; seq < count; seq++) {
+
         /* send a raw message*/
         if (np_type == AXNP_RAW) {
             axiom_raw_payload_size_t raw_psize = payload_size;
@@ -263,9 +267,10 @@ main(int argc, char **argv)
             goto err;
         }
 
-        printf("[node %u msg-id %d] message sent - payload_size %d dest_id %d "
-                "port %u\n",
-                node_id, msg_id + 1, payload_size, dst_id, port);
+        printf("[node %u seq %d] %s msg sent - msg_id %d dest_id %d "
+                "port %u payload_size %d\n",
+                node_id, seq + 1, msg_type_str, send_ret, dst_id, port,
+                payload_size);
 
         if (verbose) {
             if (type == AXIOM_TYPE_RAW_NEIGHBOUR) {

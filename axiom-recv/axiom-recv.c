@@ -16,6 +16,7 @@
 #include <unistd.h>
 #include <getopt.h>
 #include <inttypes.h>
+#include <poll.h>
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -26,7 +27,7 @@
 #include "axiom_nic_init.h"
 #include "dprintf.h"
 
-#define AXIOM_RECV_DEF_TYPE             AXNP_RAW
+#define AXIOM_RECV_DEF_TYPE             (AXNP_RAW | AXNP_LONG)
 
 int verbose = 0;
 
@@ -36,15 +37,15 @@ usage(void)
     printf("usage: axiom-recv [arguments]\n");
     printf("Receive AXIOM raw or long message\n\n");
     printf("Arguments:\n");
-    printf("-t, --type       raw|long  message type to use [default: RAW]\n");
-    printf("-p, --port       port      port used for receiving\n");
-    printf("-o, --once                 receive one message and exit\n");
-    printf("-n, --noblocking           use no blocking receive\n");
-    printf("-f, --flush                flush all messages previously received\n");
-    printf("-s, --sleep      sec       second to sleep between two recv (only in"
-                                       "noblocking)\n");
-    printf("-v, --verbose              verbose\n");
-    printf("-h, --help                 print this help\n\n");
+    printf("-t, --type       raw|long|all  message type to use [default: ALL]\n");
+    printf("-p, --port       port          port used for receiving\n");
+    printf("-o, --once                     receive one message and exit\n");
+    printf("-n, --noblocking               use no blocking receive\n");
+    printf("-f, --flush                    flush all messages previously received\n");
+    printf("-s, --sleep      sec           second to sleep between two recv (only in"
+                                           "noblocking)\n");
+    printf("-v, --verbose                  verbose\n");
+    printf("-h, --help                     print this help\n\n");
 }
 
 int
@@ -53,15 +54,16 @@ main(int argc, char **argv)
     axiom_dev_t *dev = NULL;
     axiom_netperf_type_t np_type = AXIOM_RECV_DEF_TYPE;
     axiom_args_t axiom_args;
-    axiom_err_t recv_ret;
     axiom_node_id_t src_id, node_id;
     axiom_port_t port = 1, recv_port;
     int port_ok = 0, once = 0;
     axiom_type_t type;
     axiom_err_t err;
     float sleep_time = 1;
-    int no_blocking = 0, flush = 0;
-    int msg_id = 0;
+    int no_blocking = 0, flush = 0, timeout;
+    int seq = 0;
+    struct pollfd fds[2];
+    int nfds = 0, raw_fd = -1, long_fd = -1;
 
     int long_index =0;
     int opt = 0;
@@ -99,6 +101,8 @@ main(int argc, char **argv)
                     np_type = AXNP_LONG;
                 } else if (strncmp(type_string, "raw", 3) == 0) {
                     np_type = AXNP_RAW;
+                } else if (strncmp(type_string, "all", 3) == 0) {
+                    np_type = AXNP_RAW | AXNP_LONG;
                 } else {
                     EPRINTF("wrong message type");
                     free(type_string);
@@ -178,90 +182,115 @@ main(int argc, char **argv)
         exit(-1);
     }
 
-    if (np_type == AXNP_RAW)
+    err = axiom_get_fds(dev, &raw_fd, &long_fd, NULL);
+    if (!AXIOM_RET_IS_OK(err)) {
+        exit(-1);
+    }
+
+    if (np_type & AXNP_RAW) {
         printf("[node %u] receiving RAW messages on port %u...\n", node_id, port);
-    else if (np_type == AXNP_LONG)
+        fds[nfds].fd = raw_fd;
+        fds[nfds].events = POLLIN;
+        nfds++;
+    }
+    if (np_type & AXNP_LONG) {
         printf("[node %u] receiving LONG messages on port %u...\n", node_id, port);
+        fds[nfds].fd = long_fd;
+        fds[nfds].events = POLLIN;
+        nfds++;
+    }
+
+    if (no_blocking) {
+        timeout = 0;
+    } else {
+        timeout = -1;
+    }
 
     do {
         axiom_raw_payload_t raw_payload;
         axiom_long_payload_t long_payload;
         uint8_t *payload = NULL;
         int payload_size;
-        int i, avail;
+        int ifd, fds_ready;
 
-        if (no_blocking) {
-            if (np_type == AXNP_RAW)
-                avail = axiom_recv_raw_avail(dev);
-            else if (np_type == AXNP_LONG) {
-                avail = axiom_recv_long_avail(dev);
-            }
+        fds_ready = poll(fds, nfds, timeout);
 
-            IPRINTF(verbose, "packets available: %d", avail);
-            if (avail > 0) {
-                printf("[node %u] packets available: %d \n", node_id, avail);
-            }
-        }
-
-
-        if (np_type == AXNP_RAW) {
-            axiom_raw_payload_size_t raw_psize = sizeof(raw_payload);
-            /* receive a raw message from port*/
-            recv_ret =  axiom_recv_raw(dev, &src_id, (axiom_port_t *)&recv_port,
-                    &type, &raw_psize, &raw_payload);
-
-            payload_size = raw_psize;
-            payload = ((uint8_t *)(&raw_payload));
-        } else if (np_type == AXNP_LONG) {
-            axiom_long_payload_size_t long_psize = sizeof(long_payload);
-            /* receive a long message from port*/
-            recv_ret =  axiom_recv_long(dev, &src_id,
-                    (axiom_port_t *)&recv_port, &long_psize, &long_payload);
-
-            type = AXIOM_TYPE_LONG_DATA;
-            payload_size = long_psize;
-            payload = ((uint8_t *)(&long_payload));
-        }
-
-        if (!AXIOM_RET_IS_OK(recv_ret)) {
-            if (no_blocking && (recv_ret == AXIOM_RET_NOTAVAIL)) {
-                IPRINTF(verbose, "no packets available, waiting %f secs",
-                        sleep_time);
-                usleep(sleep_time * 1000000);
-                continue;
-            }
-            EPRINTF("receive error");
+        if (fds_ready < 0) {
+            EPRINTF("poll error")
             break;
+        } else if (fds_ready == 0) {
+            IPRINTF(verbose, "no packets available, waiting %f secs",
+                    sleep_time);
+            usleep(sleep_time * 1000000);
+            continue;
         }
 
-        msg_id++;
-
-        printf("[node %u msg-id %d] message received - payload_size %d "
-                "source_id %d port %u\n",
-                node_id, msg_id, payload_size, src_id, recv_port);
-
-        IPRINTF(verbose, "recv_ret: %d", recv_ret);
-
-        if (verbose) {
-            if (type == AXIOM_TYPE_RAW_NEIGHBOUR) {
-                printf("\t- local_interface = %u\n", src_id);
-                printf("\t- type = %s\n", "RAW NEIGHBOUR");
-            } else if (type == AXIOM_TYPE_RAW_DATA) {
-                printf("\t- source_node_id = %u\n", src_id);
-                printf("\t- type = %s\n", "RAW DATA");
-            } else if (type == AXIOM_TYPE_LONG_DATA) {
-                printf("\t- source_node_id = %u\n", src_id);
-                printf("\t- type = %s\n", "LONG DATA");
+        for (ifd = 0; ifd < nfds; ifd++) {
+            if (fds[ifd].revents & (POLLERR | POLLHUP)) {
+                EPRINTF("error");
+                break;
             }
 
-            printf("\t- payload_size = %u\n", payload_size);
-            printf("\t- payload = ");
-            for (i = 0; i < payload_size; i++)
-                printf("0x%x ", payload[i]);
+            if (fds[ifd].revents & POLLIN) {
+                char msg_type_str[16];
+                axiom_err_t recv_ret = -1;
 
-            printf("\n");
+                if (fds[ifd].fd == raw_fd) {
+                    axiom_raw_payload_size_t raw_psize = sizeof(raw_payload);
+                    /* receive a raw message from port*/
+                    recv_ret =  axiom_recv_raw(dev, &src_id, (axiom_port_t *)&recv_port,
+                            &type, &raw_psize, &raw_payload);
+                    payload_size = raw_psize;
+                    payload = ((uint8_t *)(&raw_payload));
+                    strcpy(msg_type_str, "RAW");
+                } else if (fds[ifd].fd == long_fd) {
+                    axiom_long_payload_size_t long_psize = sizeof(long_payload);
+                    /* receive a long message from port*/
+                    recv_ret =  axiom_recv_long(dev, &src_id,
+                            (axiom_port_t *)&recv_port, &long_psize, &long_payload);
+
+                    type = AXIOM_TYPE_LONG_DATA;
+                    payload_size = long_psize;
+                    payload = ((uint8_t *)(&long_payload));
+                    strcpy(msg_type_str, "LONG");
+                }
+
+                if (!AXIOM_RET_IS_OK(recv_ret)) {
+                    EPRINTF("receive error");
+                    break;
+                }
+
+                seq++;
+
+                printf("[node %u seq %d] %s msg received - msg_id %d "
+                        "src_id %d port %u payload_size %d \n",
+                        node_id, seq, msg_type_str, recv_ret, src_id,
+                        recv_port, payload_size);
+
+                IPRINTF(verbose, "recv_ret: %d", recv_ret);
+
+                if (verbose) {
+                    int i;
+                    if (type == AXIOM_TYPE_RAW_NEIGHBOUR) {
+                        printf("\t- local_interface = %u\n", src_id);
+                        printf("\t- type = %s\n", "RAW NEIGHBOUR");
+                    } else if (type == AXIOM_TYPE_RAW_DATA) {
+                        printf("\t- source_node_id = %u\n", src_id);
+                        printf("\t- type = %s\n", "RAW DATA");
+                    } else if (type == AXIOM_TYPE_LONG_DATA) {
+                        printf("\t- source_node_id = %u\n", src_id);
+                        printf("\t- type = %s\n", "LONG DATA");
+                    }
+
+                    printf("\t- payload_size = %u\n", payload_size);
+                    printf("\t- payload = ");
+                    for (i = 0; i < payload_size; i++)
+                        printf("0x%x ", payload[i]);
+
+                    printf("\n");
+                }
+            }
         }
-
     } while (!once);
 
     axiom_close(dev);
