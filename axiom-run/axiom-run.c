@@ -138,6 +138,8 @@ void restore_signals_and_set_quit_handler(sigset_t *oldset, void (*myhandler)(in
     struct sigaction act;
     int res;
 
+    // handler on SIGINT, SIGQUIT and SIGTERM
+
     act.sa_handler = myhandler;
     sigemptyset(&act.sa_mask);
     act.sa_flags = 0;
@@ -158,7 +160,19 @@ void restore_signals_and_set_quit_handler(sigset_t *oldset, void (*myhandler)(in
         exit(EXIT_FAILURE);
     }
 
-    // handler on SIGINT, SIGQUIT and SIGTERM
+    // handler for SIGCHLD
+    
+    act.sa_handler = SIG_DFL;
+    sigemptyset(&act.sa_mask);
+    act.sa_flags=SA_NOCLDSTOP;
+    
+    res = sigaction(SIGCHLD, &act, NULL);
+    if (res != 0) {
+        elogmsg("sigaction()");
+        exit(EXIT_FAILURE);
+    }
+    
+    // unmask wanted signals
     
     res = sigdelset(oldset, SIGINT);
     if (res != 0) {
@@ -171,6 +185,11 @@ void restore_signals_and_set_quit_handler(sigset_t *oldset, void (*myhandler)(in
         exit(EXIT_FAILURE);
     }
     res = sigdelset(oldset, SIGTERM);
+    if (res != 0) {
+        elogmsg("sigdelset()");
+        exit(EXIT_FAILURE);
+    }
+    res = sigdelset(oldset, SIGCHLD);
     if (res != 0) {
         elogmsg("sigdelset()");
         exit(EXIT_FAILURE);
@@ -467,6 +486,7 @@ int main(int argc, char **argv) {
     int num_nodes;
     axiom_err_t err;
     strlist_t env;
+    int exitval=0,myexit;
     int res;
 
     logmsg_init();
@@ -746,8 +766,8 @@ int main(int argc, char **argv) {
         }
 
         // fork/exec the child...
-        pid = daemonize(NULL, myexec, myargv, sl_get(&env), (services & REDIRECT_SERVICE) ? fd : NULL, 1);
-
+        pid = daemonize(NULL, myexec, myargv, sl_get(&env), (services & REDIRECT_SERVICE) ? fd : NULL, 0, 1);
+        
         // release resources...
         if (rungdb) {
             free(myargv[1]);
@@ -756,7 +776,7 @@ int main(int argc, char **argv) {
 
         // manage services....
         if (services) {
-            manage_slave_services(dev, services, fd, pid);
+            exitval=manage_slave_services(dev, services, fd, pid);
         }
 
     } else {
@@ -832,7 +852,7 @@ int main(int argc, char **argv) {
 
         // manage servicies...
         if (services) {
-            manage_master_services(dev, services, nodes, flags);
+            exitval=manage_master_services(dev, services, nodes, flags);
         }
     }
 
@@ -841,6 +861,9 @@ int main(int argc, char **argv) {
 
     zlogmsg(LOG_INFO, LOGZ_MAIN, "axiom-run finished");
 
-    return 0;
+    /* see "Appendix E. Exit Codes With Special Meanings" in bash manual */
+    myexit=WIFEXITED(exitval)?WEXITSTATUS(exitval):(WIFSIGNALED(exitval)?WTERMSIG(exitval)+128:255);
+    zlogmsg(LOG_DEBUG, LOGZ_MAIN, "%s: exitval=0x%08x axiom-run.exit=%d",slave?"SLAVE":"MASTER",exitval,myexit);
+    return myexit;
 }
 

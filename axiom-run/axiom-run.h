@@ -150,14 +150,15 @@ extern "C" {
     /** template name for the slave unix domain socket port */
 #define BARRIER_SLAVE_TEMPLATE_NAME "/tmp/axbar%d.%d"
 
-    /**
+    /*
      * Run and manage services for master process.
      * @param dev axiom device for communication
      * @param services services bitwise
      * @param nodes nodes bitwise
      * @param flags flags
+     * @return exit status (see 'man 2 waitpid')
      */
-    void manage_master_services(axiom_dev_t *dev, int services, uint64_t nodes, int flags);
+    int manage_master_services(axiom_dev_t *dev, int services, uint64_t nodes, int flags);
 
     /**
      * Run and manage services for slave process.
@@ -165,8 +166,9 @@ extern "C" {
      * @param services services bitwise
      * @param fd array of 3 file descriptor for redirect service (if enabled)
      * @param pid process id of child process (application controlled)
+     * @return exit status (see 'man 2 waitpid')
      */
-    void manage_slave_services(axiom_dev_t *dev, int services, int *fd, pid_t pid);
+    int manage_slave_services(axiom_dev_t *dev, int services, int *fd, pid_t pid);
 
     /** node number of the master  */
     extern int master_node;

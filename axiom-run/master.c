@@ -215,6 +215,8 @@ static void emit(axiom_node_id_t node, uint8_t *buffer, int size, output_info_t 
     }
 }
 
+static int exit_status=0;
+
 /**
  * Thread that receive messaged from slaves.
  *
@@ -293,7 +295,7 @@ static void *master_receiver(void *data) {
             //
             // exit service/information...
             //
-            zlogmsg(LOG_INFO, LOGZ_MASTER, "MASTER: received EXIT message from %d", node);
+            zlogmsg(LOG_INFO, LOGZ_MASTER, "MASTER: received EXIT message from %d with status 0x%08x", node, buffer.header.status);
 #if 1
             if (logmsg_is_zenabled(LOG_DEBUG, LOGZ_MASTER)) {
                 logbufferstatus(infoout, MAX_NUM_NODES, "STDOUT");
@@ -301,10 +303,33 @@ static void *master_receiver(void *data) {
             }
 #endif
             if (info->services & EXIT_SERVICE) {
-                zlogmsg(LOG_DEBUG, LOGZ_MASTER, "MASTER: send CMD_EXIT to all");
+                exit_status=buffer.header.status;
+                zlogmsg(LOG_DEBUG, LOGZ_MASTER, "MASTER: send CMD_KILL to all");
+                buffer.header.command=CMD_KILL;
                 my_axiom_send_raw(info->dev, info->nodes, slave_port, sizeof (header_t), (axiom_raw_payload_t *) & buffer);
                 //exit(EXIT_SUCCESS);
                 info->services &= ~EXIT_SERVICE;
+            } else {
+                if (WIFEXITED(buffer.header.status)) {
+                    if (WIFEXITED(exit_status)) {
+                        // PREV normal RECV normal
+                        if (WEXITSTATUS(buffer.header.status)>WEXITSTATUS(exit_status)) {
+                            exit_status=buffer.header.status;
+                        }
+                    } else {
+                        // PREV singnaled RECV normal
+                        // nothing
+                    }
+                } else {
+                    if (WIFEXITED(exit_status)) {
+                        // PREV normal RECV signaled
+                        exit_status=buffer.header.status;                        
+                    } else {
+                        // PREV singnaled RECV signaled
+                        // nothing
+                    }
+                    
+                }
             }
             exit_counter--;
             zlogmsg(LOG_DEBUG, LOGZ_MASTER, "exit_counter now is %d", exit_counter);
@@ -403,10 +428,10 @@ static void myexit(int sig) {
     buffer_t buffer;
     szlogmsg(LOG_INFO, LOGZ_MASTER, "MASTER: caught exit signal... exiting...");
     if (mydev != NULL) {
-        buffer.header.command = CMD_EXIT;
+        buffer.header.command = CMD_KILL;
         buffer.header.status = sig & 0x7f; // HACK: works... for now.... see <bits/waitstatus.h>
         s_my_axiom_send_raw(mydev, mynodes, slave_port, sizeof (header_t), (axiom_raw_payload_t *) & buffer);
-        szlogmsg(LOG_INFO, LOGZ_MASTER, "MASTER: sent EXIT command to slaves...");
+        szlogmsg(LOG_INFO, LOGZ_MASTER, "MASTER: sent KILL command to slaves...");
     } else {
         szlogmsg(LOG_WARN, LOGZ_MASTER, "MASTER: mydev is NULL!!!!");
     }
@@ -414,7 +439,7 @@ static void myexit(int sig) {
 }
 
 /* see axiom-run.h */
-void manage_master_services(axiom_dev_t *_dev, int _services, uint64_t _nodes, int _flags) {
+int manage_master_services(axiom_dev_t *_dev, int _services, uint64_t _nodes, int _flags) {
     pthread_t threcv, thsend;
     thread_info_t recvinfo, sendinfo;
     sigset_t oldset;
@@ -477,4 +502,6 @@ void manage_master_services(axiom_dev_t *_dev, int _services, uint64_t _nodes, i
     }
 
     zlogmsg(LOG_INFO, LOGZ_MASTER, "MASTER: all service threads are dead");
+    
+    return exit_status;
 }
