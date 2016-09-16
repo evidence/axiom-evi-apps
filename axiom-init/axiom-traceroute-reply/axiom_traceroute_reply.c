@@ -1,7 +1,7 @@
 /*!
  * \file axiom_traceroute_reply.c
  *
- * \version     v0.7
+ * \version     v0.8
  * \date        2016-05-03
  *
  * This file contains the functions used in the axiom-init deamon to handle
@@ -66,7 +66,7 @@ axiom_traceroute_reply(axiom_dev_t *dev, axiom_if_id_t src,
         /* send raw neighbour traceroute message */
         msg_err = axiom_send_raw_init(dev, if_id, AXIOM_TYPE_RAW_NEIGHBOUR,
                                         &send_payload);
-        if (!AXIOM_RET_IS_OK(ret)) {
+        if (!AXIOM_RET_IS_OK(msg_err)) {
             EPRINTF("send raw init error");
             return;
         }

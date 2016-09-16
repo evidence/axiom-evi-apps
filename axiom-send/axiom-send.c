@@ -1,7 +1,7 @@
 /*!
  * \file axiom-send.c
  *
- * \version     v0.7
+ * \version     v0.8
  * \date        2016-05-03
  *
  * This file contains the implementation of axiom-send application.
@@ -26,7 +26,7 @@
 #include "axiom_nic_init.h"
 #include "dprintf.h"
 
-#define AXIOM_RECV_DEF_TYPE             AXNP_RAW
+#define AXIOM_RECV_DEF_TYPE             (AXNP_RAW | AXNP_LONG)
 
 int verbose = 0;
 
@@ -37,16 +37,17 @@ usage(void)
     printf("Send AXIOM raw or long message to specified dest (dest can be remote node\n");
     printf("or local interface, if you send a message to neighbour [-n])\n\n");
     printf("Arguments:\n");
-    printf("-t, --type      raw|long  message type to use [default: RAW]\n");
-    printf("-d, --dest      dest      dest node id or local if (TO_NEIGHBOUR) \n");
-    printf("-r, --repeat    rep       repeat rep times the payload specified\n");
-    printf("-p, --port      port      port used for sending this message\n");
-    printf("-n, --neighbour           send message to neighbour (dest is used\n");
-    printf("                          to specify the local interface)\n");
-    printf("-c, --count     count     send the same message multiple times [def: 1]\n");
-    printf("-s, --sleep     sec       second to sleep between two send \n");
-    printf("-v, --verbose             verbose\n");
-    printf("-h, --help                print this help\n\n");
+    printf("-t, --type      raw|long|any  message type to use [default: ANY]\n");
+    printf("                              (any allow to send packet that best fit the payload)\n");
+    printf("-d, --dest      dest          dest node id or local if (TO_NEIGHBOUR) \n");
+    printf("-r, --repeat    rep           repeat rep times the payload specified\n");
+    printf("-p, --port      port          port used for sending this message\n");
+    printf("-n, --neighbour               send message to neighbour (dest is used\n");
+    printf("                              to specify the local interface)\n");
+    printf("-c, --count     count         send the same message multiple times [def: 1]\n");
+    printf("-s, --sleep     sec           second to sleep between two send \n");
+    printf("-v, --verbose                 verbose\n");
+    printf("-h, --help                    print this help\n\n");
 }
 
 int
@@ -59,10 +60,11 @@ main(int argc, char **argv)
     axiom_node_id_t node_id, dst_id;
     axiom_type_t type = AXIOM_TYPE_RAW_DATA;
     axiom_long_payload_t payload;
-    int payload_size = 0;
+    size_t payload_size = 0;
     int count = 1, repeat = 0, port_ok = 0, dst_ok = 0, to_neighbour = 0;
-    int msg_id, i;
+    int seq, i;
     float sleep_time = 0;
+    char msg_type_str[16];
 
     int long_index =0;
     int opt = 0;
@@ -105,6 +107,8 @@ main(int argc, char **argv)
                     np_type = AXNP_LONG;
                 } else if (strncmp(type_string, "raw", 3) == 0) {
                     np_type = AXNP_RAW;
+                } else if (strncmp(type_string, "any", 3) == 0) {
+                    np_type = AXNP_RAW | AXNP_LONG;
                 } else {
                     EPRINTF("wrong message type");
                     free(type_string);
@@ -228,27 +232,30 @@ main(int argc, char **argv)
 
     node_id = axiom_get_node_id(dev);
 
-    /* bind the current process on port */
-#if 0
-    if (port_ok == 1) {
-        err = axiom_bind(dev, port);
-    }
-#endif
-
-    if (np_type == AXNP_RAW) {
+    if (np_type == (AXNP_RAW | AXNP_LONG)) {
+        if (payload_size > AXIOM_LONG_PAYLOAD_MAX_SIZE)
+            payload_size = AXIOM_LONG_PAYLOAD_MAX_SIZE;
+        type = -1;
+        strcpy(msg_type_str, "RAW or LONG");
+    } else if (np_type == AXNP_RAW) {
         if (payload_size > AXIOM_RAW_PAYLOAD_MAX_SIZE)
             payload_size = AXIOM_RAW_PAYLOAD_MAX_SIZE;
-        printf("[node %u] sending %d RAW messages...\n", node_id, count);
+        strcpy(msg_type_str, "RAW");
     } else if (np_type == AXNP_LONG) {
         if (payload_size > AXIOM_LONG_PAYLOAD_MAX_SIZE)
             payload_size = AXIOM_LONG_PAYLOAD_MAX_SIZE;
         type = AXIOM_TYPE_LONG_DATA;
-        printf("[node %u] sending %d LONG messages...\n", node_id, count);
+        strcpy(msg_type_str, "LONG");
     }
 
-    for (msg_id = 0; msg_id < count; msg_id++) {
-        /* send a raw message*/
-        if (np_type == AXNP_RAW) {
+    printf("[node %u] sending %d %s messages...\n", node_id, count, msg_type_str);
+
+    for (seq = 0; seq < count; seq++) {
+
+        if (np_type == (AXNP_RAW | AXNP_LONG)) {
+            send_ret = axiom_send(dev, (axiom_node_id_t)dst_id,
+                    (axiom_port_t)port, payload_size, &payload);
+        } else if (np_type == AXNP_RAW) {
             axiom_raw_payload_size_t raw_psize = payload_size;
             send_ret =  axiom_send_raw(dev, (axiom_node_id_t)dst_id,
                             (axiom_port_t)port, type, raw_psize, &payload);
@@ -263,23 +270,21 @@ main(int argc, char **argv)
             goto err;
         }
 
-        printf("[node %u msg-id %d] message sent - payload_size %d dest_id %d "
-                "port %u\n",
-                node_id, msg_id + 1, payload_size, dst_id, port);
+        printf("[node %u seq %d] %s msg sent - msg_id %d dest_id %d "
+                "port %u payload_size %zu\n",
+                node_id, seq + 1, msg_type_str, send_ret, dst_id, port,
+                payload_size);
 
         if (verbose) {
             if (type == AXIOM_TYPE_RAW_NEIGHBOUR) {
                 printf("\t- local_interface = %u\n", dst_id);
-                printf("\t- type = %s\n", "NEIGHBOUR");
-            } else if (type == AXIOM_TYPE_RAW_DATA) {
+                printf("\t- type = %s\n", "RAW NEIGHBOUR");
+            } else {
                 printf("\t- destination_node_id = %u\n", dst_id);
-                printf("\t- type = %s\n", "DATA");
-            } else if (type == AXIOM_TYPE_LONG_DATA) {
-                printf("\t- destination_node_id = %u\n", dst_id);
-                printf("\t- type = %s\n", "LONG DATA");
+                printf("\t- type = %s\n", msg_type_str);
             }
 
-            printf("\t- payload_size = %u\n", payload_size);
+            printf("\t- payload_size = %zu\n", payload_size);
             printf("\t- payload = ");
             for (i = 0; i < payload_size; i++)
                 printf("0x%x ", payload.raw[i]);

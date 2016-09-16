@@ -1,7 +1,7 @@
 /*!
  * \file axiom-info.c
  *
- * \version     v0.7
+ * \version     v0.8
  * \date        2016-05-03
  *
  * This file contains the implementation of axiom-info application.
@@ -29,6 +29,7 @@
 #define PRINT_STATUS            0x0020
 #define PRINT_CONTROL           0x0040
 #define PRINT_NUMNODES          0x0080
+#define PRINT_DEBUG             0x0100
 
 #define PRINT_ALL               0xFFFF
 
@@ -52,6 +53,7 @@ usage(void)
     printf("-R, --routing-all           print routing table (all nodes)\n");
     printf("-s, --status                print status register\n");
     printf("-c, --control               print control register\n");
+    printf("-d, --debug                 print axiom-nic debug info\n");
     printf("-q, --quiet                 easy script parsing\n");
     printf("-h, --help                  print this help\n\n");
 }
@@ -244,21 +246,18 @@ main(int argc, char **argv)
         {"routing-all", no_argument, 0, 'R'},
         {"status", no_argument, 0, 's'},
         {"control", no_argument, 0, 'c'},
+        {"debug", no_argument, 0, 'd'},
         {"quiet", no_argument, 0, 'q'},
         {"help", no_argument, 0, 'h'},
         {0, 0, 0, 0}
     };
 
-    while ((opt = getopt_long(argc, argv, "anqifrRNsch",
+    while ((opt = getopt_long(argc, argv, "anqifrRNscdh",
             long_options, &long_index)) != -1) {
         switch(opt) {
             case 'a':
                 print_bitmap |= PRINT_ALL;
                 break;
-		
-            case 'q':
-	        quiet = 1;
-	        break;
 
             case 'n':
                 print_bitmap |= PRINT_NODEID;
@@ -291,6 +290,13 @@ main(int argc, char **argv)
             case 'c':
                 print_bitmap |= PRINT_CONTROL;
                 break;
+
+            case 'd':
+                print_bitmap |= PRINT_DEBUG;
+
+            case 'q':
+	        quiet = 1;
+	        break;
 
             case 'h':
             default:
@@ -332,6 +338,9 @@ main(int argc, char **argv)
 
     if (print_bitmap & PRINT_CONTROL)
         print_ni_control(dev);
+
+    if (print_bitmap & PRINT_DEBUG)
+        axiom_debug_info(dev);
 
     axiom_close(dev);
 
