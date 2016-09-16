@@ -426,7 +426,7 @@ int manage_slave_services(axiom_dev_t *_dev, int _services, int *_fd, pid_t _pid
         }
         zlogmsg(LOG_INFO, LOGZ_SLAVE, "SLAVE: working threads died");
 
-        {
+        if (_services & REDIRECT_SERVICE) {
             struct timeval tv;
             fd_set set;
             buffer_t buffer;
