@@ -271,7 +271,7 @@ main(int argc, char **argv)
         }
 
         printf("[node %u seq %d] %s msg sent - msg_id %d dest_id %d "
-                "port %u payload_size %d\n",
+                "port %u payload_size %zu\n",
                 node_id, seq + 1, msg_type_str, send_ret, dst_id, port,
                 payload_size);
 
@@ -284,7 +284,7 @@ main(int argc, char **argv)
                 printf("\t- type = %s\n", msg_type_str);
             }
 
-            printf("\t- payload_size = %u\n", payload_size);
+            printf("\t- payload_size = %zu\n", payload_size);
             printf("\t- payload = ");
             for (i = 0; i < payload_size; i++)
                 printf("0x%x ", payload.raw[i]);
