@@ -28,6 +28,7 @@
 #include "dprintf.h"
 
 #define AXIOM_RECV_DEF_TYPE             (AXNP_RAW | AXNP_LONG)
+#define AXIOM_RECV_MAX_IOVEC            16
 
 int verbose = 0;
 
@@ -44,8 +45,67 @@ usage(void)
     printf("-f, --flush                    flush all messages previously received\n");
     printf("-s, --sleep      sec           second to sleep between two recv (only in"
                                            "noblocking)\n");
+    printf("-i, --iovec      num           use axiom API with iovec support\n");
+    printf("                               (num = number of buffers)\n");
+    printf("-m, --maxpayload max_payload   max payload to use\n");
     printf("-v, --verbose                  verbose\n");
     printf("-h, --help                     print this help\n\n");
+}
+
+static inline axiom_err_t
+axrcv_recv(axiom_dev_t *dev, axiom_netperf_type_t np_type,
+        axiom_node_id_t *src_id, axiom_port_t * port, axiom_type_t *type,
+        size_t *payload_size, void *payload)
+{
+    axiom_err_t ret = AXIOM_RET_ERROR;
+
+    if (np_type == (AXNP_RAW | AXNP_LONG)) {
+        ret =  axiom_recv(dev, src_id, port, type, payload_size, payload);
+    } else if (np_type == AXNP_RAW) {
+        axiom_raw_payload_size_t raw_psize;
+        if (*payload_size > AXIOM_RAW_PAYLOAD_MAX_SIZE)
+            raw_psize = AXIOM_RAW_PAYLOAD_MAX_SIZE;
+        else
+            raw_psize = *payload_size;
+        ret = axiom_recv_raw(dev, src_id, port, type, &raw_psize, payload);
+        *payload_size = raw_psize;
+    } else if (np_type == AXNP_LONG) {
+        axiom_long_payload_size_t long_psize = *payload_size;
+        ret = axiom_recv_long(dev, src_id, port, &long_psize, payload);
+        *payload_size = long_psize;
+        *type = AXIOM_TYPE_LONG_DATA;
+    }
+
+    return ret;
+}
+
+static inline axiom_err_t
+axrcv_recv_iov(axiom_dev_t *dev, axiom_netperf_type_t np_type,
+        axiom_node_id_t *src_id, axiom_port_t * port, axiom_type_t *type,
+        size_t *payload_size, struct iovec *iov, int iovcnt)
+{
+    axiom_err_t ret = AXIOM_RET_ERROR;
+
+    if (np_type == (AXNP_RAW | AXNP_LONG)) {
+        ret =  axiom_recv_iov(dev, src_id, port, type, payload_size, iov,
+                iovcnt);
+    } else if (np_type == AXNP_RAW) {
+        axiom_raw_payload_size_t raw_psize;
+        if (*payload_size > AXIOM_RAW_PAYLOAD_MAX_SIZE)
+            raw_psize = AXIOM_RAW_PAYLOAD_MAX_SIZE;
+        else
+            raw_psize = *payload_size;
+        ret = axiom_recv_iov_raw(dev, src_id, port, type, &raw_psize, iov,
+                iovcnt);
+        *payload_size = raw_psize;
+    } else if (np_type == AXNP_LONG) {
+        axiom_long_payload_size_t long_psize = *payload_size;
+        ret = axiom_recv_iov_long(dev, src_id, port, &long_psize, iov, iovcnt);
+        *payload_size = long_psize;
+        *type = AXIOM_TYPE_LONG_DATA;
+    }
+
+    return ret;
 }
 
 int
@@ -56,6 +116,9 @@ main(int argc, char **argv)
     axiom_args_t axiom_args;
     axiom_node_id_t src_id, node_id;
     axiom_port_t port = 1, recv_port;
+    axiom_long_payload_t payload;
+    struct iovec recv_iov[AXIOM_RECV_MAX_IOVEC];
+    int recv_iovcnt = 0, max_payload = sizeof(payload);
     int port_ok = 0, once = 0;
     axiom_type_t type;
     axiom_err_t err;
@@ -71,14 +134,16 @@ main(int argc, char **argv)
             {"once", no_argument,        0, 'o'},
             {"sleep", required_argument, 0, 's'},
             {"noblocking", no_argument,  0, 'n'},
-            {"flush", no_argument,  0, 'f'},
+            {"flush", no_argument,       0, 'f'},
+            {"iovec", required_argument, 0, 'i'},
+            {"maxpayload", required_argument,  0, 'm'},
             {"verbose", no_argument,     0, 'v'},
             {"help", no_argument,        0, 'h'},
             {0, 0, 0, 0}
     };
 
 
-    while ((opt = getopt_long(argc, argv,"hop:s:nft:v",
+    while ((opt = getopt_long(argc, argv,"hop:s:nft:m:i:v",
                          long_options, &long_index )) != -1) {
         char *type_string = NULL;
 
@@ -134,6 +199,20 @@ main(int argc, char **argv)
                 }
                 break;
 
+            case 'i':
+                if (sscanf(optarg, "%d", &recv_iovcnt) != 1) {
+                    usage();
+                    exit(-1);
+                }
+                break;
+
+            case 'm':
+                if (sscanf(optarg, "%d", &max_payload) != 1) {
+                    usage();
+                    exit(-1);
+                }
+                break;
+
             case 'v':
                 verbose = 1;
                 break;
@@ -170,6 +249,12 @@ main(int argc, char **argv)
 
     node_id = axiom_get_node_id(dev);
 
+    if (recv_iovcnt < 0 || recv_iovcnt > AXIOM_RECV_MAX_IOVEC) {
+        printf("Number of iovec not allowed [%d]; [0 <= iovcnt <= %d]\n",
+                recv_iovcnt, AXIOM_RECV_MAX_IOVEC);
+        exit(-1);
+    }
+
     printf("[node %u] device opened - bind-flush: %d no-blocking: %d\n",
             node_id, flush, no_blocking);
 
@@ -189,27 +274,43 @@ main(int argc, char **argv)
                 port);
     }
 
-    do {
-        axiom_long_payload_t long_payload;
-        axiom_err_t recv_ret = AXIOM_RET_ERROR;
-        char msg_type_str[16];
-        size_t payload_size = sizeof(long_payload);
+    if (max_payload < recv_iovcnt) {
+        recv_iovcnt = 0;
+    }
 
-        if (np_type == (AXNP_RAW | AXNP_LONG)) {
-            recv_ret =  axiom_recv(dev, &src_id, (axiom_port_t *)&recv_port,
-                &type, &payload_size, &long_payload);
-        } else if (np_type == AXNP_RAW) {
-            axiom_raw_payload_size_t raw_psize = AXIOM_RAW_PAYLOAD_MAX_SIZE;
-            recv_ret = axiom_recv_raw(dev, &src_id, (axiom_port_t *)&recv_port,
-                    &type, &raw_psize, &long_payload);
-            payload_size = raw_psize;
-        } else if (np_type == AXNP_LONG) {
-            axiom_long_payload_size_t long_psize = sizeof(long_payload);
-            recv_ret = axiom_recv_long(dev, &src_id, (axiom_port_t *)&recv_port,
-                    &long_psize, &long_payload);
-            payload_size = long_psize;
+    if (recv_iovcnt > 0) {
+        int i;
+        size_t new_size = max_payload / recv_iovcnt, offset = 0;
+
+        for (i = 0; (i < recv_iovcnt) && (offset < max_payload); i++) {
+            recv_iov[i].iov_base = &payload.raw[offset];
+            recv_iov[i].iov_len = new_size;
+
+            offset += new_size;
         }
 
+        recv_iov[recv_iovcnt - 1].iov_len = max_payload -
+            (new_size * (recv_iovcnt - 1));
+        printf("[node %u] using %d iovec - iovec.size: %zu, last_size: %zu\n",
+                node_id, recv_iovcnt, new_size,
+                recv_iov[recv_iovcnt - 1].iov_len);
+    } else {
+        printf("[node %u] using one buffer of %d bytes\n", node_id,
+                max_payload);
+    }
+
+    do {
+        axiom_err_t recv_ret = AXIOM_RET_ERROR;
+        char msg_type_str[16];
+        size_t payload_size = max_payload;
+
+        if (recv_iovcnt > 0) {
+            recv_ret =  axrcv_recv_iov(dev, np_type, &src_id, &recv_port,
+                &type, &payload_size, recv_iov, recv_iovcnt);
+        } else {
+            recv_ret =  axrcv_recv(dev, np_type, &src_id, &recv_port,
+                &type, &payload_size, &payload);
+        }
 
         if (!AXIOM_RET_IS_OK(recv_ret)) {
             if (recv_ret == AXIOM_RET_NOTAVAIL) {
@@ -238,23 +339,19 @@ main(int argc, char **argv)
         IPRINTF(verbose, "recv_ret: %d", recv_ret);
 
         if (verbose) {
-            uint8_t *payload = ((uint8_t *)(&long_payload));
             int i;
             if (type == AXIOM_TYPE_RAW_NEIGHBOUR) {
                 printf("\t- local_interface = %u\n", src_id);
                 printf("\t- type = %s\n", "RAW NEIGHBOUR");
-            } else if (type == AXIOM_TYPE_RAW_DATA) {
+            } else {
                 printf("\t- source_node_id = %u\n", src_id);
-                printf("\t- type = %s\n", "RAW DATA");
-            } else if (type == AXIOM_TYPE_LONG_DATA) {
-                printf("\t- source_node_id = %u\n", src_id);
-                printf("\t- type = %s\n", "LONG DATA");
+                printf("\t- type = %s\n", msg_type_str);
             }
 
             printf("\t- payload_size = %zu\n", payload_size);
             printf("\t- payload = ");
             for (i = 0; i < payload_size; i++)
-                printf("0x%x ", payload[i]);
+                printf("0x%x ", payload.raw[i]);
 
             printf("\n");
         }
