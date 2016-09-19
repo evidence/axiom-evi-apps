@@ -111,7 +111,7 @@ void axiom_session_req(axiom_dev_t *dev, axiom_node_id_t src, axiom_raw_payload_
         payload2->session_id = next();
 
         ret = axiom_send_raw(dev, src, port, AXIOM_TYPE_RAW_DATA, sizeof (*payload2), payload2);
-        if (ret != AXIOM_RET_OK) {
+        if (!AXIOM_RET_IS_OK(ret)) {
             EPRINTF("ERROR - send small message to node %u error", src);
         }
     }
