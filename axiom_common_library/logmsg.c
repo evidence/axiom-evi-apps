@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <pthread.h>
+#include <sys/param.h>
 
 #include "axiom_common.h"
 
@@ -73,6 +74,7 @@ void _slogmsg(char *msg, ...) {
 }
 
 void logmsg_init() {
+    char buf[MAXPATHLEN];
     char *value;
     //
     value = getenv("AXIOM_LOG_LEVEL");
@@ -92,6 +94,10 @@ void logmsg_init() {
     //
     logmsg_fout = stderr;
     value = getenv("AXIOM_LOG_FILE");
+    if (strstr(value,"%ld")!=NULL) {
+        snprintf(buf,sizeof(buf),value,(long)getpid());
+        value=buf;
+    }
     if (value != NULL) {
         logmsg_to(value);
     }
