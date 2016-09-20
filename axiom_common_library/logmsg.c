@@ -94,7 +94,7 @@ void logmsg_init() {
     //
     logmsg_fout = stderr;
     value = getenv("AXIOM_LOG_FILE");
-    if (strstr(value,"%ld")!=NULL) {
+    if (value!=NULL&&strstr(value,"%ld")!=NULL) {
         snprintf(buf,sizeof(buf),value,(long)getpid());
         value=buf;
     }
