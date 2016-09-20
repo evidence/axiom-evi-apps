@@ -19,6 +19,7 @@
 
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <sys/uio.h>
 
 #include "axiom_nic_types.h"
 #include "axiom_nic_api_user.h"
@@ -27,6 +28,7 @@
 #include "dprintf.h"
 
 #define AXIOM_RECV_DEF_TYPE             (AXNP_RAW | AXNP_LONG)
+#define AXIOM_SEND_MAX_IOVEC            16
 
 int verbose = 0;
 
@@ -46,9 +48,49 @@ usage(void)
     printf("                              to specify the local interface)\n");
     printf("-c, --count     count         send the same message multiple times [def: 1]\n");
     printf("-s, --sleep     sec           second to sleep between two send \n");
+    printf("-i, --iovec     num           use axiom API with iovec support\n");
+    printf("                              (num = number of buffers)\n");
     printf("-v, --verbose                 verbose\n");
     printf("-h, --help                    print this help\n\n");
 }
+
+static inline axiom_err_t
+axsnd_send(axiom_dev_t *dev, axiom_netperf_type_t np_type,
+        axiom_node_id_t dst_id, axiom_port_t port, axiom_type_t type,
+        size_t payload_size, void *payload)
+{
+    if (np_type == (AXNP_RAW | AXNP_LONG)) {
+        return axiom_send(dev, dst_id, port, payload_size, payload);
+    } else if (np_type == AXNP_RAW) {
+        axiom_raw_payload_size_t raw_psize = payload_size;
+        return axiom_send_raw(dev, dst_id, port, type, raw_psize, payload);
+    } else if (np_type == AXNP_LONG) {
+        axiom_long_payload_size_t long_psize = payload_size;
+        return axiom_send_long(dev, dst_id, port, long_psize, payload);
+    }
+
+    return AXIOM_RET_ERROR;
+}
+
+static inline axiom_err_t
+axsnd_send_iov(axiom_dev_t *dev, axiom_netperf_type_t np_type,
+        axiom_node_id_t dst_id, axiom_port_t port, axiom_type_t type,
+        size_t payload_size, struct iovec *iov, int iovcnt)
+{
+    if (np_type == (AXNP_RAW | AXNP_LONG)) {
+        return axiom_send_iov(dev, dst_id, port, payload_size, iov, iovcnt);
+    } else if (np_type == AXNP_RAW) {
+        axiom_raw_payload_size_t raw_psize = payload_size;
+        return axiom_send_iov_raw(dev, dst_id, port, type, raw_psize, iov,
+                iovcnt);
+    } else if (np_type == AXNP_LONG) {
+        axiom_long_payload_size_t long_psize = payload_size;
+        return axiom_send_iov_long(dev, dst_id, port, long_psize, iov, iovcnt);
+    }
+
+    return AXIOM_RET_ERROR;
+}
+
 
 int
 main(int argc, char **argv)
@@ -60,6 +102,8 @@ main(int argc, char **argv)
     axiom_node_id_t node_id, dst_id;
     axiom_type_t type = AXIOM_TYPE_RAW_DATA;
     axiom_long_payload_t payload;
+    struct iovec send_iov[AXIOM_SEND_MAX_IOVEC];
+    int send_iovcnt = 0;
     size_t payload_size = 0;
     int count = 1, repeat = 0, port_ok = 0, dst_ok = 0, to_neighbour = 0;
     int seq, i;
@@ -75,13 +119,14 @@ main(int argc, char **argv)
         {"port", required_argument, 0, 'p'},
         {"count", required_argument, 0, 'c'},
         {"sleep", required_argument, 0, 's'},
+        {"iovec", required_argument, 0, 'i'},
         {"neighbour", no_argument, 0, 'n'},
         {"help", no_argument, 0, 'h'},
         {0, 0, 0, 0}
     };
 
 
-    while ((opt = getopt_long(argc, argv,"ht:p:d:nr:c:s:v",
+    while ((opt = getopt_long(argc, argv,"ht:p:d:nr:c:s:i:v",
                          long_options, &long_index )) != -1) {
         char *type_string = NULL;
 
@@ -156,6 +201,14 @@ main(int argc, char **argv)
                 }
                 break;
 
+            case 'i':
+                if (sscanf(optarg, "%d", &send_iovcnt) != 1) {
+                    EPRINTF("wrong iovec parameter");
+                    usage();
+                    exit(-1);
+                }
+                break;
+
             case 'v':
                 verbose = 1;
                 break;
@@ -169,8 +222,9 @@ main(int argc, char **argv)
 
     /* check port parameter */
     if (port_ok == 1) {
-        if ((port < 0) || (port > 7)) {
-            printf("Port not allowed [%u]; [0 <= port <= 7]\n", port);
+        if ((port < 0) || (port >= AXIOM_PORT_MAX)) {
+            printf("Port not allowed [%u]; [0 <= port < %d]\n", port,
+                    AXIOM_PORT_MAX);
             exit(-1);
         }
     }
@@ -184,13 +238,19 @@ main(int argc, char **argv)
     /* check destination node parameter */
     if (dst_ok == 1) {
         /* port arameter inserted */
-        if ((dst_id < 0) || (dst_id > 255)) {
-            printf("Destination node id not allowed [%u]; [0 <= dst_id < 256]\n", dst_id);
+        if ((dst_id < 0) || (dst_id >= AXIOM_NODES_MAX)) {
+            printf("Destination node id not allowed [%u]; [0 <= dst_id < %d]\n",
+                    dst_id, AXIOM_NODES_MAX);
             exit(-1);
         }
-    }
-    else {
+    } else {
         usage();
+        exit(-1);
+    }
+
+    if (send_iovcnt < 0 || send_iovcnt > AXIOM_SEND_MAX_IOVEC) {
+        printf("Number of iovec not allowed [%d]; [0 <= iovcnt <= %d]\n",
+                send_iovcnt, AXIOM_SEND_MAX_IOVEC);
         exit(-1);
     }
 
@@ -250,19 +310,33 @@ main(int argc, char **argv)
 
     printf("[node %u] sending %d %s messages...\n", node_id, count, msg_type_str);
 
+    if (payload_size < send_iovcnt) {
+        send_iovcnt = 0;
+    } else if (send_iovcnt > 0) {
+        size_t new_size = payload_size / send_iovcnt, offset = 0;
+
+        for (i = 0; (i < send_iovcnt) && (offset < payload_size); i++) {
+            send_iov[i].iov_base = &payload.raw[offset];
+            send_iov[i].iov_len = new_size;
+
+            offset += new_size;
+        }
+
+        send_iov[send_iovcnt - 1].iov_len = payload_size -
+            (new_size * (send_iovcnt - 1));
+        printf("[node %u] using %d iovec - iovec.size: %zu, last_size: %zu\n",
+                node_id, send_iovcnt, new_size,
+                send_iov[send_iovcnt - 1].iov_len);
+    }
+
     for (seq = 0; seq < count; seq++) {
 
-        if (np_type == (AXNP_RAW | AXNP_LONG)) {
-            send_ret = axiom_send(dev, (axiom_node_id_t)dst_id,
-                    (axiom_port_t)port, payload_size, &payload);
-        } else if (np_type == AXNP_RAW) {
-            axiom_raw_payload_size_t raw_psize = payload_size;
-            send_ret =  axiom_send_raw(dev, (axiom_node_id_t)dst_id,
-                            (axiom_port_t)port, type, raw_psize, &payload);
-        } else if (np_type == AXNP_LONG) {
-            axiom_long_payload_size_t long_psize = payload_size;
-            send_ret =  axiom_send_long(dev, (axiom_node_id_t)dst_id,
-                            (axiom_port_t)port, long_psize, &payload);
+        if (send_iovcnt > 0) {
+            send_ret = axsnd_send_iov(dev, np_type, dst_id, port, type,
+                    payload_size, send_iov, send_iovcnt);
+        } else {
+            send_ret = axsnd_send(dev, np_type, dst_id, port, type,
+                    payload_size, &payload);
         }
 
         if (!AXIOM_RET_IS_OK(send_ret)) {
