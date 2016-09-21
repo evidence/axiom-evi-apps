@@ -38,8 +38,7 @@ axiom_netperf_status_t status[AXIOM_NODES_MAX];
 
 void
 axiom_netperf_send_reply(axiom_dev_t *dev, axiom_netperf_status_t *cur_status,
-        axiom_node_id_t src, axiom_netperf_payload_t *recv_payload,
-        uint8_t error_report, int verbose)
+        axiom_node_id_t src, uint8_t error_report, int verbose)
 {
         axiom_err_t err;
         axiom_netperf_payload_t payload;
@@ -130,7 +129,7 @@ axiom_netperf_reply(axiom_dev_t *dev, axiom_node_id_t src, size_t payload_size,
             axiom_rdma_munmap(dev);
         }
 
-        axiom_netperf_send_reply(dev, cur_status, src, recv_payload, failed, verbose);
+        axiom_netperf_send_reply(dev, cur_status, src, failed, verbose);
     } else if (recv_payload->command == AXIOM_CMD_NETPERF) {
         /* RAW message */
         cur_status->received_bytes += payload_size;
@@ -141,7 +140,7 @@ axiom_netperf_reply(axiom_dev_t *dev, axiom_node_id_t src, size_t payload_size,
                 (long long unsigned)cur_status->received_bytes);
 
         if (cur_status->received_bytes >= cur_status->expected_bytes)
-            axiom_netperf_send_reply(dev, cur_status, src, recv_payload, 0, verbose);
+            axiom_netperf_send_reply(dev, cur_status, src, 0, verbose);
     } else {
         EPRINTF("receive a not AXIOM_CMD_NETPERF message");
         return;
