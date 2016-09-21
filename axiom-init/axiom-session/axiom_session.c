@@ -85,7 +85,7 @@ int axiom_session_is_used(uint8_t ses) {
  * @param _payload the payload.
  * @param verbose Emit verbose messages.
  */
-void axiom_session_req(axiom_dev_t *dev, axiom_node_id_t src, axiom_raw_payload_size_t payload_size, axiom_init_payload_t *_payload, int verbose) {
+void axiom_session_req(axiom_dev_t *dev, axiom_node_id_t src, size_t payload_size, void *_payload, int verbose) {
     axiom_session_req_payload_t *payload = ((axiom_session_req_payload_t *) _payload);
     axiom_session_reply_payload_t *payload2 = ((axiom_session_reply_payload_t *) _payload);
     axiom_port_t port;

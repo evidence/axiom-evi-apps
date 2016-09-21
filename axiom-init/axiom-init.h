@@ -35,9 +35,8 @@ axiom_discovery_master(axiom_dev_t *dev,
  * \param verbose               Enable verbose output
  */
 void
-axiom_discovery_slave(axiom_dev_t *dev,
-        axiom_node_id_t first_src, axiom_init_payload_t *first_payload,
-        axiom_node_id_t topology[][AXIOM_INTERFACES_MAX],
+axiom_discovery_slave(axiom_dev_t *dev, axiom_node_id_t first_src,
+        void *first_payload, axiom_node_id_t topology[][AXIOM_INTERFACES_MAX],
         axiom_if_id_t routing_table[AXIOM_NODES_MAX], int verbose);
 
 /*!
@@ -49,8 +48,8 @@ axiom_discovery_slave(axiom_dev_t *dev,
  * \param verbose               Enable verbose output
  */
 void
-axiom_pong(axiom_dev_t *dev, axiom_if_id_t first_src,
-        axiom_init_payload_t *first_payload, int verbose);
+axiom_pong(axiom_dev_t *dev, axiom_if_id_t first_src, void *first_payload,
+        int verbose);
 
 /*!
  * \brief This function implements the reply to the netperf message.
@@ -62,9 +61,8 @@ axiom_pong(axiom_dev_t *dev, axiom_if_id_t first_src,
  * \param verbose               enable verbose output
  */
 void
-axiom_netperf_reply(axiom_dev_t *dev, axiom_node_id_t src,
-        axiom_raw_payload_size_t payload_size,
-        axiom_init_payload_t *payload, int verbose);
+axiom_netperf_reply(axiom_dev_t *dev, axiom_node_id_t src, size_t payload_size,
+        void *payload, int verbose);
 
 /*!
  * \brief This function implements the reply to the traceroute message.
@@ -76,10 +74,11 @@ axiom_netperf_reply(axiom_dev_t *dev, axiom_node_id_t src,
  */
 void
 axiom_traceroute_reply(axiom_dev_t *dev, axiom_if_id_t src,
-        axiom_init_payload_t *payload, int verbose);
+        void *payload, int verbose);
 
 /*!
- * \brief This function initialize the internal structures used by the spawn service implementation.
+ * \brief This function initialize the internal structures used by the spawn
+ *        service implementation.
  */
 void axiom_spawn_init();
 
@@ -92,7 +91,8 @@ void axiom_spawn_init();
  * \param payload               Payload of spawn request message
  * \param verbose               Enable verbose output
  */
-void axiom_spawn_req(axiom_dev_t *dev, axiom_node_id_t src, axiom_raw_payload_size_t payload_size, axiom_init_payload_t *payload, int verbose);
+void axiom_spawn_req(axiom_dev_t *dev, axiom_node_id_t src,
+        size_t payload_size, void *payload, int verbose);
 
 /*!
  * \brief This function implement the session request handling..
@@ -103,6 +103,7 @@ void axiom_spawn_req(axiom_dev_t *dev, axiom_node_id_t src, axiom_raw_payload_si
  * \param payload               Payload of spawn request message
  * \param verbose               Enable verbose output
  */
-void axiom_session_req(axiom_dev_t *dev, axiom_node_id_t src, axiom_raw_payload_size_t payload_size, axiom_init_payload_t *payload, int verbose);
+void axiom_session_req(axiom_dev_t *dev, axiom_node_id_t src,
+        size_t payload_size, void *payload, int verbose);
 
 #endif /*! AXIOM_INIT_h*/

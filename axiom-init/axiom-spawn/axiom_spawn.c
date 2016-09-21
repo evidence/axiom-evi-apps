@@ -84,7 +84,7 @@ void axiom_spawn_init() {
  * @param _payload the payload.
  * @param verbose 1 to emit verbose messages.
  */
-void axiom_spawn_req(axiom_dev_t *dev, axiom_node_id_t src, axiom_raw_payload_size_t payload_size, axiom_init_payload_t *_payload, int verbose) {
+void axiom_spawn_req(axiom_dev_t *dev, axiom_node_id_t src, size_t payload_size, void *_payload, int verbose) {
 
     axiom_spawn_req_payload_t *payload = ((axiom_spawn_req_payload_t *) _payload);
     int idx, idx_free;
