@@ -31,9 +31,10 @@
 
 #define AXIOM_NETPERF_DEF_CHAR_SCALE    'B'
 #define AXIOM_NETPERF_DEF_DATA_SCALE    10
-#define AXIOM_NETPERF_DEF_DATA_LENGTH   512
+#define AXIOM_NETPERF_DEF_DATA_LENGTH   1024
 #define AXIOM_NETPERF_DEF_RDMA_PSIZE    AXIOM_RDMA_PAYLOAD_MAX_SIZE
 #define AXIOM_NETPERF_DEF_RAW_PSIZE     AXIOM_RAW_PAYLOAD_MAX_SIZE
+#define AXIOM_NETPERF_DEF_LONG_PSIZE    AXIOM_LONG_PAYLOAD_MAX_SIZE
 #define AXIOM_NETPERF_DEF_TYPE          AXNP_RDMA
 
 typedef struct axnetperf_status {
@@ -42,7 +43,7 @@ typedef struct axnetperf_status {
     axiom_node_id_t dest_node;
     struct timespec start_ts;
     struct timespec end_ts;
-    int  payload_size;
+    size_t  payload_size;
     uint64_t total_packets;
     uint64_t total_bytes;
     uint64_t sent_bytes;
@@ -62,15 +63,16 @@ usage(void)
     printf("AXIOM netperf: estimate the throughput between this node and the\n");
     printf("               specified dest_node\n\n");
     printf("Arguments:\n");
-    printf("-t, --type      rdma|raw    message type to use [default: RDMA]\n");
-    printf("-d, --dest      dest_node   destination node id of axiom-netperf\n");
-    printf("-l, --length    x[B|K|M|G]  bytes to send to the destination node\n");
-    printf("                            The suffix specifies the length unit\n");
-    printf("-p, --payload   size        payload size in bytes [default: "
-            "raw - %d rdma - %d]\n",
-            AXIOM_NETPERF_DEF_RAW_PSIZE, AXIOM_NETPERF_DEF_RDMA_PSIZE);
-    printf("-v, --verbose               verbose output\n");
-    printf("-h, --help                  print this help\n\n");
+    printf("-t, --type      raw|rdma|long  message type to use [default: RDMA]\n");
+    printf("-d, --dest      dest_node      destination node id of axiom-netperf\n");
+    printf("-l, --length    x[B|K|M|G]     bytes to send to the destination node\n");
+    printf("                               The suffix specifies the length unit\n");
+    printf("-p, --payload   size           payload size in bytes [default: "
+            "raw - %d rdma - %d long - %d]\n",
+            AXIOM_NETPERF_DEF_RAW_PSIZE, AXIOM_NETPERF_DEF_RDMA_PSIZE,
+            AXIOM_NETPERF_DEF_LONG_PSIZE);
+    printf("-v, --verbose                  verbose output\n");
+    printf("-h, --help                     print this help\n\n");
 }
 
 static int
@@ -137,23 +139,48 @@ axnetperf_raw_init(axnetperf_status_t *s)
 }
 
 static int
-axnetperf_raw(axnetperf_status_t *s)
+axnetperf_long_init(axnetperf_status_t *s)
+{
+    /* set default payload size if it is unspecified */
+    if (s->payload_size == 0) {
+        s->payload_size = AXIOM_NETPERF_DEF_LONG_PSIZE;
+    }
+
+    if (s->payload_size < 1 || s->payload_size > AXIOM_LONG_PAYLOAD_MAX_SIZE) {
+        EPRINTF("LONG payload size must be between 1 and %d bytes",
+                AXIOM_LONG_PAYLOAD_MAX_SIZE);
+        return -1;
+    }
+
+    return 0;
+}
+
+static int
+axnetperf_raw_long(axnetperf_status_t *s)
 {
     axiom_netperf_payload_t payload;
-    axiom_raw_payload_size_t payload_size = s->payload_size;
+    axiom_long_payload_t long_payload;
     axiom_err_t err;
+
+    payload.command = AXIOM_CMD_NETPERF;
+
+    memcpy(&long_payload, &payload, sizeof(payload));
 
     /* get time of the first sent netperf message */
     axnetperf_start_time(s);
 
-    payload.command = AXIOM_CMD_NETPERF;
-
     for (s->sent_bytes = 0; s->sent_bytes < s->total_bytes;
-            s->sent_bytes += payload_size) {
+            s->sent_bytes += s->payload_size) {
 
         /* send netperf message */
-        err = axiom_send_raw(s->dev, s->dest_node, AXIOM_RAW_PORT_INIT,
-                AXIOM_TYPE_RAW_DATA, payload_size, &payload);
+        if (s->np_type == AXNP_RAW) {
+            err = axiom_send_raw(s->dev, s->dest_node, AXIOM_RAW_PORT_INIT,
+                    AXIOM_TYPE_RAW_DATA, s->payload_size, &payload);
+        } else {
+            err = axiom_send_long(s->dev, s->dest_node, AXIOM_RAW_PORT_INIT,
+                    s->payload_size, &long_payload);
+        }
+
         if (unlikely(!AXIOM_RET_IS_OK(err))) {
             EPRINTF("send error");
             return err;
@@ -308,7 +335,9 @@ axnetperf_start(axnetperf_status_t *s)
         printf("   message type: RAW\n");
     else if (s->np_type == AXNP_RDMA)
         printf("   message type: RDMA\n");
-    printf("   payload size: %u bytes\n", s->payload_size);
+    else if (s->np_type == AXNP_LONG)
+        printf("   message type: LONG\n");
+    printf("   payload size: %zu bytes\n", s->payload_size);
     printf("   total bytes: %" PRIu64 " bytes\n", s->total_bytes);
     printf("   magic number: %" PRIu8 "\n", s->magic);
 
@@ -423,6 +452,8 @@ main(int argc, char **argv)
 
                 if (strncmp(type_string, "rdma", 4) == 0) {
                     s.np_type = AXNP_RDMA;
+                } else if (strncmp(type_string, "long", 4) == 0) {
+                    s.np_type = AXNP_LONG;
                 } else if (strncmp(type_string, "raw", 3) == 0) {
                     s.np_type = AXNP_RAW;
                 } else {
@@ -445,7 +476,7 @@ main(int argc, char **argv)
                 break;
 
             case 'p' :
-                if (sscanf(optarg, "%d", &s.payload_size) != 1) {
+                if (sscanf(optarg, "%zu", &s.payload_size) != 1) {
                     EPRINTF("wrong number of payload size");
                     usage();
                     exit(-1);
@@ -494,6 +525,10 @@ main(int argc, char **argv)
             ret = axnetperf_raw_init(&s);
             break;
 
+        case AXNP_LONG:
+            ret = axnetperf_long_init(&s);
+            break;
+
         default:
             EPRINTF("axiom-netperf type invalid");
             ret = -1;
@@ -523,7 +558,8 @@ main(int argc, char **argv)
             break;
 
         case AXNP_RAW:
-            ret = axnetperf_raw(&s);
+        case AXNP_LONG:
+            ret = axnetperf_raw_long(&s);
             break;
 
         default:

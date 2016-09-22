@@ -86,7 +86,7 @@ main(int argc, char **argv)
         exit(-1);
     }
 
-    /* TODO: bind the current process on port 0 */
+    /* bind the current process on port 0 */
     ret = axiom_bind(dev, AXIOM_RAW_PORT_INIT);
     if (ret != AXIOM_RAW_PORT_INIT) {
         EPRINTF("error binding port");
@@ -97,15 +97,15 @@ main(int argc, char **argv)
         axiom_discovery_master(dev, topology, final_routing_table, verbose);
     }
     axiom_spawn_init();
-    
+
     while(run) {
         axiom_node_id_t src;
         axiom_type_t type;
         axiom_init_cmd_t cmd;
-        axiom_init_payload_t payload;
-        axiom_raw_payload_size_t payload_size = sizeof(payload);
+        axiom_long_payload_t payload;
+        size_t payload_size = sizeof(payload);
 
-        ret = axiom_recv_raw_init(dev, &src, &type, &cmd, &payload_size,
+        ret = axiom_recv_init(dev, &src, &type, &cmd, &payload_size,
                 &payload);
         if (!AXIOM_RET_IS_OK(ret)) {
             EPRINTF("error receiving message");
@@ -130,7 +130,7 @@ main(int argc, char **argv)
             case AXIOM_CMD_NETPERF_END:
                 axiom_netperf_reply(dev, src, payload_size, &payload, verbose);
                 break;
-                
+
             case AXIOM_CMD_SPAWN_REQ:
                 axiom_spawn_req(dev, src, payload_size, &payload, verbose);
                 break;

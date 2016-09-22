@@ -21,8 +21,8 @@
 #include "../axiom-init.h"
 
 void
-axiom_pong(axiom_dev_t *dev, axiom_if_id_t first_src,
-        axiom_init_payload_t *first_payload, int verbose)
+axiom_pong(axiom_dev_t *dev, axiom_if_id_t first_src, void *first_payload,
+        int verbose)
 {
     axiom_err_t ret;
     axiom_ping_payload_t *payload = ((axiom_ping_payload_t *) first_payload);

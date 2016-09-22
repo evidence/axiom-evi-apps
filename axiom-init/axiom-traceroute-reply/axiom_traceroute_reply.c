@@ -22,12 +22,12 @@
 
 void
 axiom_traceroute_reply(axiom_dev_t *dev, axiom_if_id_t src,
-        axiom_init_payload_t *payload, int verbose) {
+        void *payload, int verbose) {
     axiom_err_t ret;
     axiom_if_id_t if_id;
     axiom_err_t msg_err;
     axiom_node_id_t node_id;
-    axiom_init_payload_t send_payload;
+    axiom_traceroute_payload_t send_payload;
     axiom_traceroute_payload_t *recv_payload =
             ((axiom_traceroute_payload_t *) payload);
 
@@ -40,7 +40,7 @@ axiom_traceroute_reply(axiom_dev_t *dev, axiom_if_id_t src,
             recv_payload->src_id, recv_payload->step);
 
     recv_payload->step++;
-    send_payload = *payload;
+    send_payload = *recv_payload;
 
     /* send reply to the node who has started the traceroute */
     recv_payload->command = AXIOM_CMD_TRACEROUTE_REPLY;
@@ -64,8 +64,8 @@ axiom_traceroute_reply(axiom_dev_t *dev, axiom_if_id_t src,
         }
 
         /* send raw neighbour traceroute message */
-        msg_err = axiom_send_raw_init(dev, if_id, AXIOM_TYPE_RAW_NEIGHBOUR,
-                                        &send_payload);
+        msg_err = axiom_send_raw(dev, if_id, AXIOM_RAW_PORT_INIT,
+                AXIOM_TYPE_RAW_NEIGHBOUR, sizeof(send_payload), &send_payload);
         if (!AXIOM_RET_IS_OK(msg_err)) {
             EPRINTF("send raw init error");
             return;
