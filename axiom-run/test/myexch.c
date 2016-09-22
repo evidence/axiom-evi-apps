@@ -4,6 +4,7 @@
  * A simple program to test axiom long message exchange
  *
  */
+#include <sys/types.h>
 #include <stdint.h>
 
 #include "axiom_nic_types.h"
@@ -12,7 +13,6 @@
 #include "axiom_nic_regs.h"
 #include "axiom_nic_packets.h"
 
-#include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
 #include <stdio.h>
