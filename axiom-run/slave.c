@@ -5,6 +5,8 @@
  * @version v0.7
  */
 
+#include <sys/select.h>
+#include <sys/eventfd.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <sys/socket.h>
@@ -32,6 +34,8 @@ typedef struct {
 
     int sock;
     struct sockaddr_un youraddr;
+    
+    int endfd;
 } thread_info_t;
 
 /**
@@ -45,6 +49,8 @@ static void *send_thread(void *data) {
     axiom_msg_id_t msg;
     buffer_t buffer;
     size_t sz;
+    fd_set set;
+    int res, maxfd;
     char *id = (info->cmd == CMD_SEND_TO_STDOUT) ? "STDOUT" : "STDERR";
 
     zlogmsg(LOG_INFO, LOGZ_SLAVE, "SLAVE: redirect loop for %s started (thread=%ld)", id, (long) pthread_self());
@@ -52,9 +58,25 @@ static void *send_thread(void *data) {
     //
     // main loop
     // (exit in case of read failure)
+    maxfd=info->endfd>info->fd?info->endfd+1:info->fd+1;
     for (;;) {
         // read slave stdout/stderr...
         zlogmsg(LOG_TRACE, LOGZ_SLAVE, "SLAVE: %s waiting data...", id);
+        FD_ZERO(&set);
+        FD_SET(info->fd,&set);
+        FD_SET(info->endfd,&set);
+        res=select(maxfd,&set,NULL,NULL,NULL);
+        if (res==-1) {
+            if (errno == EINTR) continue; // paranoia
+            elogmsg("select() on send_thread thread");
+            break;
+        }
+        if (FD_ISSET(info->endfd,&set)) {
+            eventfd_t value;
+            eventfd_read(info->endfd,&value); // not really needed
+            zlogmsg(LOG_DEBUG, LOGZ_MASTER, "SLAVE: redirect loop for %s received termination request",id);
+            break;
+        }
         sz = read(info->fd, buffer.raw, sizeof (buffer.raw));
         zlogmsg(LOG_TRACE, LOGZ_SLAVE, "SLAVE: %s read %d bytes from fd", id, (int) sz);
         if (sz == -1) {
@@ -119,7 +141,10 @@ static void *recv_thread(void *data) {
     axiom_raw_payload_size_t size;
     struct sockaddr_un itsaddr;
     int sock, res;
-
+    axiom_err_t err;
+    int maxfd,rawfd;
+    fd_set set;
+    
     zlogmsg(LOG_INFO, LOGZ_SLAVE, "SLAVE: receiver thread started (thread=%ld)", (long) pthread_self());
 
     if (info->services & BARRIER_SERVICE) {
@@ -133,13 +158,36 @@ static void *recv_thread(void *data) {
     }
 
     // this is needed because axiom_recv_raw is not a cancellation point and is blocking...
+    // PS: not used anymore but keepd for failsafe
     pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
 
     //
     // MAIN LOOP
     // (forever)
     //
+    err=axiom_get_fds(info->dev,&rawfd,NULL,NULL);
+    if (!AXIOM_RET_IS_OK(err)) {
+        elogmsg("axiom_get_fds() on recv_thread thread result=%d",err);
+        zlogmsg(LOG_INFO, LOGZ_SLAVE, "SLAVE: receiver thread end");        
+        return NULL;
+    }
+    maxfd=rawfd>info->endfd?rawfd+1:info->endfd+1;
     for (;;) {
+        FD_ZERO(&set);
+        FD_SET(info->endfd,&set);
+        FD_SET(rawfd,&set);
+        res=select(maxfd,&set,NULL,NULL,NULL);
+        if (res==-1) {
+            if (errno == EINTR) continue; // paranoia
+            elogmsg("select() on recv_thread thread");
+            break;
+        }
+        if (FD_ISSET(info->endfd,&set)) {
+            eventfd_t value;
+            eventfd_read(info->endfd,&value); // not really needed
+            zlogmsg(LOG_DEBUG, LOGZ_MASTER, "SLAVE: recv_thread received termination request");
+            break;
+        }                        
         // wait master messages...
         size = sizeof (buffer);
         msg = axiom_recv_raw(info->dev, &node, &port, &type, &size, &buffer);
@@ -213,7 +261,9 @@ static void *sock_thread(void *data) {
     struct sockaddr_un myaddr;
     int sock, res;
     unsigned id;
-
+    fd_set set;
+    int maxfd;
+    
     // read synchornization request from a socket and send the request to the master...
 
     zlogmsg(LOG_INFO, LOGZ_SLAVE, "SLAVE: socket thread started (thread=%ld)", (long) pthread_self());
@@ -237,7 +287,23 @@ static void *sock_thread(void *data) {
     // MAIN LOOP
     // (forever)
     //
+    maxfd=info->endfd>sock?info->endfd+1:sock+1;
     for (;;) {
+        FD_ZERO(&set);
+        FD_SET(sock,&set);
+        FD_SET(info->endfd,&set);
+        res=select(maxfd,&set,NULL,NULL,NULL);
+        if (res==-1) {
+            if (errno == EINTR) continue; // paranoia
+            elogmsg("select() on sock_thread thread");
+            break;
+        }
+        if (FD_ISSET(info->endfd,&set)) {
+            eventfd_t value;
+            eventfd_read(info->endfd,&value); // not really needed
+            zlogmsg(LOG_DEBUG, LOGZ_MASTER, "SLAVE: sock_thread received termination request");
+            break;
+        }
         // receive data from child...
         res = recv(sock, &id, sizeof (unsigned), MSG_WAITALL);
         if (res == -1 && errno == EAGAIN) continue;
@@ -343,6 +409,11 @@ int manage_slave_services(axiom_dev_t *_dev, int _services, int *_fd, pid_t _pid
         if (_services & REDIRECT_SERVICE) {
             forout.cmd = CMD_SEND_TO_STDOUT;
             forout.fd = _fd[1];
+            forout.endfd=eventfd(0,EFD_SEMAPHORE);
+            if (forout.endfd==-1) {
+                elogmsg("eventfd()");
+                exit(EXIT_FAILURE);        
+            }
             res = pthread_create(&thout, NULL, send_thread, &forout);
             if (res != 0) {
                 elogmsg("pthread_create()");
@@ -350,6 +421,11 @@ int manage_slave_services(axiom_dev_t *_dev, int _services, int *_fd, pid_t _pid
             }
             forerr.cmd = CMD_SEND_TO_STDERR;
             forerr.fd = _fd[2];
+            forerr.endfd=eventfd(0,EFD_SEMAPHORE);
+            if (forerr.endfd==-1) {
+                elogmsg("eventfd()");
+                exit(EXIT_FAILURE);        
+            }
             res = pthread_create(&therr, NULL, send_thread, &forerr);
             if (res != 0) {
                 elogmsg("pthread_create()");
@@ -359,6 +435,11 @@ int manage_slave_services(axiom_dev_t *_dev, int _services, int *_fd, pid_t _pid
         if ((_services & REDIRECT_SERVICE) || (_services && EXIT_SERVICE)) {
             forin.cmd = 0;
             forin.fd = ((_services & REDIRECT_SERVICE) ? _fd[0] : -1);
+            forin.endfd=eventfd(0,EFD_SEMAPHORE);
+            if (forin.endfd==-1) {
+                elogmsg("eventfd()");
+                exit(EXIT_FAILURE);        
+            }            
             res = pthread_create(&thin, NULL, recv_thread, &forin);
             if (res != 0) {
                 elogmsg("pthread_create()");
@@ -366,6 +447,11 @@ int manage_slave_services(axiom_dev_t *_dev, int _services, int *_fd, pid_t _pid
             }
         }
         if (_services & BARRIER_SERVICE) {
+            forsock.endfd=eventfd(0,EFD_SEMAPHORE);
+            if (forsock.endfd==-1) {
+                elogmsg("eventfd()");
+                exit(EXIT_FAILURE);        
+            }            
             res = pthread_create(&thsock, NULL, sock_thread, &forsock);
             if (res != 0) {
                 elogmsg("pthread_create()");
@@ -412,15 +498,19 @@ int manage_slave_services(axiom_dev_t *_dev, int _services, int *_fd, pid_t _pid
         //
         zlogmsg(LOG_INFO, LOGZ_SLAVE, "SLAVE: waiting working threads...");
         if (_services & REDIRECT_SERVICE) {
-            terminate_thread_slave(thout);
-            terminate_thread_slave(therr);
+            terminate_thread_slave(thout,forout.endfd);
+            close(forout.endfd);
+            terminate_thread_slave(therr,forerr.endfd);
+            close(forerr.endfd);
         }
         if ((_services & REDIRECT_SERVICE) || (_services && EXIT_SERVICE)) {
-            terminate_thread_slave(thin);
+            terminate_thread_slave(thin,forin.endfd);
+            close(forin.endfd);
         }
         if (_services & BARRIER_SERVICE) {
             char sname[UNIX_PATH_MAX];
-            terminate_thread_slave(thsock);
+            terminate_thread_slave(thsock,forsock.endfd);
+            close(forsock.endfd);
             snprintf(sname, sizeof (sname), BARRIER_MASTER_TEMPLATE_NAME, (int) getpid());
             unlink(sname);
         }

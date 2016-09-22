@@ -5,6 +5,7 @@
  * @version v0.7
  */
 
+#include <sys/eventfd.h>
 #include <getopt.h>
 #include <stdio.h>
 #include <stdint.h>
@@ -203,14 +204,25 @@ void restore_signals_and_set_quit_handler(sigset_t *oldset, void (*myhandler)(in
 }
 
 /* see axiom-run.h */
-void terminate_thread(pthread_t th, char *logheader) {
+void terminate_thread(pthread_t th, int endfd, char *logheader) {
     int res;
-    zlogmsg(LOG_DEBUG, LOGZ_SLAVE, "%s: sendind cancellation request to %ld", logheader, (long) th);
-    res = pthread_cancel(th);
-    if (res != 0) {
-        // it is normal to have an error if the thread has already died
-        zlogmsg(LOG_DEBUG, LOGZ_SLAVE, "%s: pthread_cancel() error res=%d '%s'", logheader, res, strerror(res));
-        return;
+    if (endfd!=-1) {
+        zlogmsg(LOG_DEBUG, LOGZ_SLAVE, "%s: sending eventfd exit request to %ld", logheader, (long) th);
+        res = eventfd_write(endfd,1);;
+        if (res==-1) {
+            // should not happen
+            zlogmsg(LOG_DEBUG, LOGZ_SLAVE, "%s: eventfd_write() error res=%d '%s'", logheader, res, strerror(res));
+            endfd=-1;            
+        }        
+    } 
+    if (endfd==-1) {
+        zlogmsg(LOG_DEBUG, LOGZ_SLAVE, "%s: sendind DEPRECATED cancellation request to %ld", logheader, (long) th);
+        res = pthread_cancel(th);
+        if (res != 0) {
+            // it is normal to have an error if the thread has already died
+            zlogmsg(LOG_DEBUG, LOGZ_SLAVE, "%s: pthread_cancel() error res=%d '%s'", logheader, res, strerror(res));
+            return;
+        }
     }
     zlogmsg(LOG_DEBUG, LOGZ_SLAVE, "%s: join %ld", logheader, (long) th);
     res = pthread_join(th, NULL);

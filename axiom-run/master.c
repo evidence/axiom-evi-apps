@@ -5,6 +5,9 @@
  * @version v0.7
  */
 
+#include <sys/select.h>
+#include <sys/eventfd.h>
+
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
@@ -30,6 +33,8 @@ typedef struct {
     int nnodes;
     /** running flags. see axiom-run.h */
     int flags;
+    /** eventfd for end */
+    int endfd;
 } thread_info_t;
 /**
  * Send the same axiom raw message to all nodes.
@@ -391,7 +396,9 @@ static void *master_sender(void *data) {
     thread_info_t *info = (thread_info_t*) data;
     buffer_t buffer;
     size_t sz;
-
+    fd_set set;
+    int res;
+    
     //
     // read stdin and send this data to all slaves...
     //
@@ -402,6 +409,21 @@ static void *master_sender(void *data) {
     // main loop
     // forever...
     for (;;) {
+        FD_ZERO(&set);
+        FD_SET(STDIN_FILENO,&set);
+        FD_SET(info->endfd,&set);
+        res=select(info->endfd+1,&set,NULL,NULL,NULL);
+        if (res==-1) {
+            if (errno == EINTR) continue; // paranoia
+            elogmsg("select() on master_sender thread");
+            break;
+        }
+        if (FD_ISSET(info->endfd,&set)) {
+            eventfd_t value;
+            eventfd_read(info->endfd,&value); // not really needed
+            zlogmsg(LOG_DEBUG, LOGZ_MASTER, "MASTER: redirect loop for STDIN received termination request");
+            break;
+        }
         sz = read(STDIN_FILENO, buffer.raw, sizeof (buffer.raw));
         if (sz == -1) {
             if (errno == EINTR) continue;
@@ -460,7 +482,12 @@ int manage_master_services(axiom_dev_t *_dev, int _services, uint64_t _nodes, in
     recvinfo.nodes = sendinfo.nodes = _nodes;
     recvinfo.services = sendinfo.services = _services;
     recvinfo.flags = sendinfo.flags = _flags;
-
+    recvinfo.endfd=-1;    
+    sendinfo.endfd=eventfd(0,EFD_SEMAPHORE);
+    if (sendinfo.endfd==-1) {
+        elogmsg("eventfd()");
+        exit(EXIT_FAILURE);        
+    }
     zlogmsg(LOG_INFO, LOGZ_MASTER, "MASTER: starting service threads");
 
     //
@@ -498,7 +525,8 @@ int manage_master_services(axiom_dev_t *_dev, int _services, uint64_t _nodes, in
         exit(EXIT_FAILURE);
     }
     if (_services & REDIRECT_SERVICE) {
-        terminate_thread_master(thsend);
+        terminate_thread_master(thsend, sendinfo.endfd);
+        close(sendinfo.endfd);
     }
 
     zlogmsg(LOG_INFO, LOGZ_MASTER, "MASTER: all service threads are dead");

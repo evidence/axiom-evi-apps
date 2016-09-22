@@ -114,20 +114,20 @@ extern "C" {
      * @param th the thread to terminate
      * @param logheader a header to prefix all message log (can't be null)
      */
-    void terminate_thread(pthread_t th, char *logheader);
+    void terminate_thread(pthread_t th, int endfd, char *logheader);
 
     /**
      * Terminate a thread from slave process.
      * Use terminate_thread().
      * @param th the thread to terminate
      */
-#define terminate_thread_slave(th) terminate_thread(th,"SLAVE");
+#define terminate_thread_slave(th, endfd) terminate_thread(th, endfd, "SLAVE");
     /**
      * Terminate a thread from master process.
      * Use terminate_thread().
      * @param th the thread to terminate
      */
-#define terminate_thread_master(th) terminate_thread(th,"MASTER");
+#define terminate_thread_master(th, endfd) terminate_thread(th, endfd, "MASTER");
 
     /* service bitwise */
 
