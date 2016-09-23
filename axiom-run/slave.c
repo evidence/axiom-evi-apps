@@ -78,7 +78,7 @@ static void *send_thread(void *data) {
             break;
         }
         sz = read(info->fd, buffer.raw, sizeof (buffer.raw));
-        zlogmsg(LOG_TRACE, LOGZ_SLAVE, "SLAVE: %s read %d bytes from fd", id, (int) sz);
+        zlogmsg(LOG_TRACE, LOGZ_MASTER, "SLAVE: SEND_THREAD: read() %d bytes for %s", (int)sz,id);
         if (sz == -1) {
             if (errno == EINTR) continue; // paranoia
             zlogmsg(LOG_WARN, LOGZ_SLAVE, "SLAVE: %s thread read error (errno=%d '%s')", id, errno, strerror(errno));
@@ -147,7 +147,7 @@ static void *recv_thread(void *data) {
     
     zlogmsg(LOG_INFO, LOGZ_SLAVE, "SLAVE: receiver thread started (thread=%ld)", (long) pthread_self());
 
-    if (info->services & BARRIER_SERVICE) {
+    if (info->services & (BARRIER_SERVICE|RPC_SERVICE)) {
         // socket used to inform the child process of barrier synchronization...
         sock = socket(AF_UNIX, SOCK_DGRAM, 0);
         if (sock == -1) {
@@ -195,7 +195,15 @@ static void *recv_thread(void *data) {
             zlogmsg(LOG_DEBUG, LOGZ_SLAVE, "SLAVE: receiver thread error into axiom_recv_raw() %d", msg);
             continue;
         }
-        zlogmsg(LOG_TRACE, LOGZ_SLAVE, "SLAVE: received %d bytes command=%d", size, buffer.header.command);
+        if (logmsg_is_zenabled(LOG_TRACE, LOGZ_MASTER)) {
+            if (buffer.header.command==CMD_RPC) {
+                zlogmsg(LOG_TRACE, LOGZ_MASTER, "SLAVE: RECV_THREAD: received %d bytes command 0x%02x '%s' function 0x%02x '%s'",
+                        size, buffer.header.command, CMD_TO_NAME(buffer.header.command),buffer.header.rpc.function,RPCFUNC_TO_NAME(buffer.header.rpc.function));
+            } else {
+                zlogmsg(LOG_TRACE, LOGZ_MASTER, "SLAVE: RECV_THREAD: received %d bytes command 0x%02x '%s'",
+                        size, buffer.header.command, CMD_TO_NAME(buffer.header.command));
+            }
+        }
         if (buffer.header.command == CMD_RECV_FROM_STDIN) {
             //
             // manage stdin redirect service
@@ -232,14 +240,29 @@ static void *recv_thread(void *data) {
             // manage barrier service
             //
             if (info->services & BARRIER_SERVICE) {
+                int sz=res;
                 zlogmsg(LOG_INFO, LOGZ_SLAVE, "SLAVE: received CMD_BARRIER");
-                snprintf(itsaddr.sun_path, sizeof (itsaddr.sun_path), BARRIER_SLAVE_TEMPLATE_NAME, (int) getpid(), buffer.header.barrier_id);
-                res = sendto(sock, &buffer.header.barrier_id, sizeof (unsigned), 0, (struct sockaddr*) &itsaddr, sizeof (itsaddr));
+                snprintf(itsaddr.sun_path, sizeof (itsaddr.sun_path), BARRIER_CHILD_TEMPLATE_NAME, (int) getpid(), buffer.header.barrier.barrier_id);
+                res = sendto(sock, &buffer, sz, 0, (struct sockaddr*) &itsaddr, sizeof (itsaddr));
+                if (res != sz) {
+                    zlogmsg(LOG_WARN, LOGZ_SLAVE, "SLAVE: receiver thread sendto() error (errno=%d '%s') to '%s'!", errno, strerror(errno),itsaddr.sun_path);
+                }
+            } else {
+                zlogmsg(LOG_WARN, LOGZ_SLAVE, "SLAVE: received an unwanted message CMD_BARRIER");
+            }
+        } else if (buffer.header.command == CMD_RPC) {
+            //
+            // manage RPC service
+            //
+            if (info->services & RPC_SERVICE) {
+                zlogmsg(LOG_INFO, LOGZ_SLAVE, "SLAVE: received CMD_RPC (func=%d '%s' id=%ld size=%d)",buffer.header.rpc.function,RPCFUNC_TO_NAME(buffer.header.rpc.function),buffer.header.rpc.id,buffer.header.rpc.size);
+                snprintf(itsaddr.sun_path, sizeof (itsaddr.sun_path), RPC_CHILD_TEMPLATE_NAME, (int) getpid(), buffer.header.rpc.id);
+                res = sendto(sock, &buffer, size, 0, (struct sockaddr*) &itsaddr, sizeof (itsaddr));
                 if (res != sizeof (unsigned)) {
                     zlogmsg(LOG_WARN, LOGZ_SLAVE, "SLAVE: receiver thread sendto() error (errno=%d '%s')!", errno, strerror(errno));
                 }
             } else {
-                zlogmsg(LOG_WARN, LOGZ_SLAVE, "SLAVE: received an unwanted message CMD_BARRIER");
+                zlogmsg(LOG_WARN, LOGZ_SLAVE, "SLAVE: received an unwanted message CMD_RPC");
             }
         } else {
             zlogmsg(LOG_WARN, LOGZ_SLAVE, "SLAVE: unknown message command 0x%02x", buffer.header.command);
@@ -260,7 +283,6 @@ static void *sock_thread(void *data) {
     buffer_t buffer;
     struct sockaddr_un myaddr;
     int sock, res;
-    unsigned id;
     fd_set set;
     int maxfd;
     
@@ -275,14 +297,13 @@ static void *sock_thread(void *data) {
         exit(EXIT_FAILURE);
     }
     myaddr.sun_family = AF_UNIX;
-    snprintf(myaddr.sun_path, sizeof (myaddr.sun_path), BARRIER_MASTER_TEMPLATE_NAME, (int) getpid());
+    snprintf(myaddr.sun_path, sizeof (myaddr.sun_path), SLAVE_TEMPLATE_NAME, (int) getpid());
     res = bind(sock, &myaddr, sizeof (myaddr));
     if (res == -1) {
         elogmsg("bind()");
         exit(EXIT_FAILURE);
     }
 
-    buffer.header.command = CMD_BARRIER;
     //
     // MAIN LOOP
     // (forever)
@@ -305,19 +326,15 @@ static void *sock_thread(void *data) {
             break;
         }
         // receive data from child...
-        res = recv(sock, &id, sizeof (unsigned), MSG_WAITALL);
+        res = recv(sock, &buffer, sizeof (buffer), MSG_WAITALL);
         if (res == -1 && errno == EAGAIN) continue;
         if (res == -1) {
             zlogmsg(LOG_WARN, LOGZ_SLAVE, "SLAVE: socket thread recv error (errno=%d '%s')", errno, strerror(errno));
             continue;
         }
-        if (res != sizeof (unsigned)) {
-            zlogmsg(LOG_WARN, LOGZ_SLAVE, "SLAVE: socket thread recv bad message");
-            continue;
-        }
+        zlogmsg(LOG_TRACE, LOGZ_SLAVE, "SLAVE: SOCK_THREAD: received command 0x%02x (size=%d) from CHILD",buffer.header.command,res);
         // send request to master...
-        buffer.header.barrier_id = id;
-        msg = axiom_send_raw(info->dev, master_node, master_port, AXIOM_TYPE_RAW_DATA, sizeof (header_t), &buffer);
+        msg = axiom_send_raw(info->dev, master_node, master_port, AXIOM_TYPE_RAW_DATA, res, &buffer);
         if (!AXIOM_RET_IS_OK(msg))
             zlogmsg(LOG_WARN, LOGZ_SLAVE, "SLAVE: socket thread axiom_send_raw() write error (err=%d)", msg);
     }
@@ -361,7 +378,7 @@ static void myexit(int sig) {
     {
         // paranoia
         char sname[UNIX_PATH_MAX];
-        snprintf(sname, sizeof (sname), BARRIER_MASTER_TEMPLATE_NAME, (int) getpid());
+        snprintf(sname, sizeof (sname), SLAVE_TEMPLATE_NAME, (int) getpid());
         unlink(sname);
     }
     //
@@ -446,7 +463,7 @@ int manage_slave_services(axiom_dev_t *_dev, int _services, int *_fd, pid_t _pid
                 exit(EXIT_FAILURE);
             }
         }
-        if (_services & BARRIER_SERVICE) {
+        if (_services & (BARRIER_SERVICE|RPC_SERVICE)) {
             forsock.endfd=eventfd(0,EFD_SEMAPHORE);
             if (forsock.endfd==-1) {
                 elogmsg("eventfd()");
@@ -507,11 +524,11 @@ int manage_slave_services(axiom_dev_t *_dev, int _services, int *_fd, pid_t _pid
             terminate_thread_slave(thin,forin.endfd);
             close(forin.endfd);
         }
-        if (_services & BARRIER_SERVICE) {
+        if (_services & (BARRIER_SERVICE|RPC_SERVICE)) {
             char sname[UNIX_PATH_MAX];
             terminate_thread_slave(thsock,forsock.endfd);
             close(forsock.endfd);
-            snprintf(sname, sizeof (sname), BARRIER_MASTER_TEMPLATE_NAME, (int) getpid());
+            snprintf(sname, sizeof (sname), SLAVE_TEMPLATE_NAME, (int) getpid());
             unlink(sname);
         }
         zlogmsg(LOG_INFO, LOGZ_SLAVE, "SLAVE: working threads died");

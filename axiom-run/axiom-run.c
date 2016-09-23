@@ -18,7 +18,8 @@
 #include "axiom-run.h"
 
 /** Table to convert command code to command name. */
-char *cmd_to_name[] = {"CMD_EXIT", "CMD_KILL", "CMD_SEND_TO_STDOUT", "CMD_SEND_TO_STDERR", "CMD_RECV_FROM_STDIN", "CMD_BARRIER"};
+char *cmd_to_name[] = {"CMD_EXIT", "CMD_KILL", "CMD_SEND_TO_STDOUT", "CMD_SEND_TO_STDERR", "CMD_RECV_FROM_STDIN", "CMD_BARRIER", "CMD_RPC"};
+char *rpcfunc_to_name[] = {"RPC_PING"};
 
 /*
 static char *debug_dump(char *ptr, int sz) {
@@ -88,6 +89,8 @@ static void _usage(char *msg, ...) {
     fprintf(stderr, "    exit service\n");
     fprintf(stderr, "-b, --barrier\n");
     fprintf(stderr, "    barrier service\n");
+    fprintf(stderr, "-c, --rpc\n");
+    fprintf(stderr, "    rpc service\n");
     fprintf(stderr, "-h, --help\n");
     fprintf(stderr, "    print this help\n");
     fprintf(stderr, "note:\n");
@@ -107,6 +110,7 @@ static struct option long_options[] = {
     {"ident", optional_argument, 0, 'i'},
     {"exit", no_argument, 0, 'e'},
     {"barrier", no_argument, 0, 'b'},
+    {"rpc", no_argument, 0, 'c'},
     {"slave", no_argument, 0, 's'},
     {"master", required_argument, 0, 'm'},
     {"nodes", required_argument, 0, 'n'},
@@ -508,7 +512,7 @@ int main(int argc, char **argv) {
     // command line parsing
     //
 
-    while ((opt = getopt_long(argc, argv, "+rebsp:m:hn:u:g:i::", long_options, &long_index)) != -1) {
+    while ((opt = getopt_long(argc, argv, "+rebcsp:m:hn:u:g:i::", long_options, &long_index)) != -1) {
         switch (opt) {
             case 'u':
                 envreg = 1;
@@ -536,6 +540,9 @@ int main(int argc, char **argv) {
                 break;
             case 'b':
                 services |= BARRIER_SERVICE;
+                break;
+            case 'c':
+                services |= RPC_SERVICE;
                 break;
             case 'e':
                 services |= EXIT_SERVICE;
@@ -725,10 +732,10 @@ int main(int argc, char **argv) {
     //
 
     sl_init(&env);
-    prepare_env(&env, envreg ? &_envreg : NULL, slave, slave && (services & BARRIER_SERVICE), nodes);
-    if (slave && (services & BARRIER_SERVICE)) {
+    prepare_env(&env, envreg ? &_envreg : NULL, slave, slave && (services & (BARRIER_SERVICE|RPC_SERVICE)), nodes);
+    if (slave && (services & (BARRIER_SERVICE|RPC_SERVICE))) {
         char var[128];
-        snprintf(var, sizeof (var), "AXIOM_BARRIER=%d", getpid());
+        snprintf(var, sizeof (var), "AXIOM_USOCK=%d", getpid());
         sl_append(&env, var);
         sl_append(&env, NULL);
     }
@@ -839,6 +846,8 @@ int main(int argc, char **argv) {
                     sl_append(&list, "-b");
                 if (services & EXIT_SERVICE)
                     sl_append(&list, "-e");
+                if (services & RPC_SERVICE)
+                    sl_append(&list, "-c");
             }
 
             if (gdb_nodes != 0) {

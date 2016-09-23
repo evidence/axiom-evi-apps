@@ -25,6 +25,10 @@ extern "C" {
      */
     int axrun_sync(unsigned barrier_id, int verbose);
 
+#define AXRUN_RPC_PING 0
+
+    int axrun_rpc(int function, int send_size, void *send_payload, int *recv_size, void *recv_payload, int verbose);
+
 #ifdef __cplusplus
 }
 #endif

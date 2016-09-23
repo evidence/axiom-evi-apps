@@ -1,33 +1,30 @@
 
+#include <sys/syscall.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <errno.h>
 #include <stdio.h>
+#include <stdint.h>
 #include <unistd.h>
 
 #include "../axiom-run.h"
 #include "axiom_run_api.h"
 #include "lib.h"
 
-/* see axiom_run_api.h */
-int axrun_sync(const unsigned barrier_id, int verbose) {
+int axrun_rpc(int function, int send_size, void *send_payload, int *recv_size, void *recv_payload, int verbose) {
     struct sockaddr_un myaddr, itsaddr;
     int sock, res;
     int line;
     char *s;
-    pid_t ppid;
+    int ppid;
+    struct msghdr msg;
+    struct iovec iov[2];
     header_t header;
-    //uint64_t tid=gettid();
+    uint64_t tid=gettid();
 
     sock = -1;
     myaddr.sun_path[0] = '\0';
-
-    if (barrier_id > AXRUN_MAX_BARRIER_ID) {
-        line = __LINE__;
-        errno = EINVAL;
-        goto error;
-    }
 
     //
     // search pid of the barrier service
@@ -47,34 +44,53 @@ int axrun_sync(const unsigned barrier_id, int verbose) {
     sock = socket(AF_UNIX, SOCK_DGRAM, 0);
     if (sock == -1) goto error;
     myaddr.sun_family = AF_UNIX;
-    snprintf(myaddr.sun_path, sizeof (myaddr.sun_path), BARRIER_CHILD_TEMPLATE_NAME, (int) ppid, barrier_id);
+    snprintf(myaddr.sun_path, sizeof (myaddr.sun_path), RPC_CHILD_TEMPLATE_NAME, ppid, tid);
     res = bind(sock, &myaddr, sizeof (myaddr));
     if (res == -1) {
         line = __LINE__;
         goto error;
     }
+
     //
-    // send the barrier id to axbar$PARENT_PID
+    // send RPC to axbar$PARENT_PID
     //
     itsaddr.sun_family = AF_UNIX;
     snprintf(itsaddr.sun_path, sizeof (itsaddr.sun_path), SLAVE_TEMPLATE_NAME, (int) ppid);
-    header.command=CMD_BARRIER;
-    header.barrier.barrier_id=barrier_id;
-    res = sendto(sock, &header, sizeof (header), 0, (struct sockaddr*) &itsaddr, sizeof (itsaddr));
-    if (res != sizeof (header)) {
+
+    header.command=CMD_RPC;
+    header.rpc.id=tid;
+    header.rpc.function=function;
+    header.rpc.size=send_size;
+    iov[0].iov_base=&header;
+    iov[0].iov_len=sizeof(header);
+    iov[1].iov_base=send_payload;
+    iov[1].iov_len=send_size;
+    msg.msg_name=(void*)&itsaddr;
+    msg.msg_namelen=sizeof(itsaddr);
+    msg.msg_iov=iov;
+    msg.msg_iovlen=2;
+    msg.msg_control=NULL;
+    msg.msg_controllen=0;
+    msg.msg_flags=0;
+    res=sendmsg(sock,&msg,0);
+    if (res != sizeof(header)+send_size) {
         line = __LINE__;
         goto error;
     }
+
     //
     // wait the replay from the parent (blocking!)
     //
-    res = recv(sock, &header, sizeof (header), MSG_WAITALL);
-    if (res == -1) goto error;
-    if (header.barrier.barrier_id != barrier_id || header.command!=CMD_BARRIER) {
-        line = __LINE__;
-        errno = ENOMSG;
-        goto error;
+    if (recv_payload!=NULL&&*recv_size>0) {
+        msg.msg_name=NULL;
+        msg.msg_namelen=0;
+        iov[1].iov_base=recv_payload;
+        iov[1].iov_len=*recv_size;
+        res = recvmsg(sock, &msg, MSG_WAITALL);
+        if (res == -1) goto error;
+        *recv_size=res-sizeof(header_t);
     }
+
     //
     // release resource and return
     //
@@ -88,7 +104,7 @@ int axrun_sync(const unsigned barrier_id, int verbose) {
 error:
     if (verbose) {
         char msg[256];
-        snprintf(msg, sizeof (msg), "axrun_sync() errno %d at line %d", errno, line);
+        snprintf(msg, sizeof (msg), "axrun_rpc() errno %d at line %d", errno, line);
         perror(msg);
     }
     if (sock != -1) close(sock);

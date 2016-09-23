@@ -36,6 +36,7 @@ typedef struct {
     /** eventfd for end */
     int endfd;
 } thread_info_t;
+
 /**
  * Send the same axiom raw message to all nodes.
  *
@@ -46,7 +47,7 @@ typedef struct {
  * @param payload the payload
  * @return AXIOM_RET_OK in case of succes
  */
-static axiom_err_t my_axiom_send_raw(axiom_dev_t *dev, uint64_t nodes, axiom_port_t port, axiom_raw_payload_size_t size, axiom_raw_payload_t *payload)
+axiom_err_t my_axiom_send_raw(axiom_dev_t *dev, uint64_t nodes, axiom_port_t port, axiom_raw_payload_size_t size, axiom_raw_payload_t *payload)
 {
     axiom_node_id_t node = 0;
     axiom_err_t err = AXIOM_RET_OK;
@@ -64,6 +65,7 @@ static axiom_err_t my_axiom_send_raw(axiom_dev_t *dev, uint64_t nodes, axiom_por
     }
     return err;
 }
+
 /**
  * Send the same axiom raw message to all nodes using safe log message.
  * Is the same as my_axiom_send_raw but use signal safe handler log message.
@@ -275,7 +277,15 @@ static void *master_receiver(void *data) {
             zlogmsg(LOG_WARN, LOGZ_MASTER, "MASTER: axiom_recv_raw() error %d", msg);
             continue;
         }
-        logmsg(LOG_TRACE, "MASTER: received %d bytes command=%d '%s'", size, buffer.header.command, CMD_TO_NAME(buffer.header.command));
+       if (logmsg_is_zenabled(LOG_TRACE, LOGZ_MASTER)) {
+            if (buffer.header.command==CMD_RPC) {
+                zlogmsg(LOG_TRACE, LOGZ_MASTER, "MASTER: RECV_THREAD: received %d bytes command 0x%02x '%s' function 0x%02x '%s'",
+                        size, buffer.header.command, CMD_TO_NAME(buffer.header.command),buffer.header.rpc.function,RPCFUNC_TO_NAME(buffer.header.rpc.function));
+            } else {
+                zlogmsg(LOG_TRACE, LOGZ_MASTER, "MASTER: RECV_THREAD: received %d bytes command 0x%02x '%s'",
+                        size, buffer.header.command, CMD_TO_NAME(buffer.header.command));
+            }
+        }
         if (buffer.header.command == CMD_SEND_TO_STDERR) {
             //
             // redirect stderr service...
@@ -347,10 +357,10 @@ static void *master_receiver(void *data) {
             //
             // barrier service...
             //
-            zlogmsg(LOG_INFO, LOGZ_MASTER, "MASTER: received BARRIER message from %d (barrier=%d)", node,(unsigned)buffer.header.barrier_id);
+            zlogmsg(LOG_INFO, LOGZ_MASTER, "MASTER: received BARRIER message from %d (barrier=%d)", node,(unsigned)buffer.header.barrier.barrier_id);
             if (info->services & BARRIER_SERVICE) {
-                if (buffer.header.barrier_id <= AXRUN_MAX_BARRIER_ID) {
-                    unsigned id = buffer.header.barrier_id;
+                if (buffer.header.barrier.barrier_id <= AXRUN_MAX_BARRIER_ID) {
+                    unsigned id = buffer.header.barrier.barrier_id;
                     if (barrier[id].counter == 0) {
                         barrier[id].counter = info->nnodes;
                     }
@@ -361,10 +371,20 @@ static void *master_receiver(void *data) {
                         my_axiom_send_raw(info->dev, info->nodes, slave_port, sizeof (header_t), (axiom_raw_payload_t*) & buffer);
                     }
                 } else {
-                    zlogmsg(LOG_WARN, LOGZ_MASTER, "MASTER: BARRIER message from node %d with id=%d out of bound", node, buffer.header.barrier_id);
+                    zlogmsg(LOG_WARN, LOGZ_MASTER, "MASTER: BARRIER message from node %d with id=%d out of bound", node, buffer.header.barrier.barrier_id);
                 }
             } else {
                 zlogmsg(LOG_WARN, LOGZ_MASTER, "MASTER: received not served BARRIER message from node %d", node);
+            }
+        } else if (buffer.header.command == CMD_RPC) {
+            //
+            // rpc service...
+            //
+            zlogmsg(LOG_INFO, LOGZ_MASTER, "MASTER: received RPC message from %d (function=%d)", node,buffer.header.rpc.function);
+            if (info->services & RPC_SERVICE) {
+                rpc_service(info->dev, node, size, &buffer);
+            } else {
+                zlogmsg(LOG_WARN, LOGZ_MASTER, "MASTER: received not served RPC message from node %d", node);
             }
         } else {
             zlogmsg(LOG_ERROR, LOGZ_MASTER, "unknown message command 0x%02x", buffer.header.command);
@@ -430,6 +450,7 @@ static void *master_sender(void *data) {
             zlogmsg(LOG_WARN, LOGZ_MASTER, "MASTER: read() failure (errno=%d '%s')", errno, strerror(errno));
             break;
         }
+        zlogmsg(LOG_TRACE, LOGZ_MASTER, "MASTER: SEND_THREAD: read() %d bytes for STDIN", (int)sz);
         if (sz > 0) {
             my_axiom_send_raw(info->dev, info->nodes, slave_port, sz + sizeof (header_t), (axiom_raw_payload_t *) & buffer);
         }

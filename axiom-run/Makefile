@@ -5,7 +5,7 @@ AXIOM_APPS_UL := ../axiom-init/lib
 AXIOM_COMMON_UL := ../axiom_common_library
 
 APPS := axiom-run 
-TAPPS := test/myinfo test/mybar test/myexch
+TAPPS := test/myinfo test/mybar test/myexch test/myrpc
 LIBS := lib/libaxiom_run_api.a
 
 CLEANFILES = $(APPS) $(TAPPS) $(LIBS) *.o test/*.o lib/*.o
@@ -28,9 +28,9 @@ LDLIBS += -laxiom_user_api -laxiom_init_api -laxiom_common -lpthread
 
 all: $(APPS) $(LIBS) $(TAPPS)
 
-axiom-run: axiom-run.o master.o slave.o $(AXIOM_COMMON_UL)/libaxiom_common.a $(AXIOM_APPS_UL)/libaxiom_init_api.a
+axiom-run: axiom-run.o master.o slave.o rpcfuncs.o $(AXIOM_COMMON_UL)/libaxiom_common.a $(AXIOM_APPS_UL)/libaxiom_init_api.a
 
-lib/libaxiom_run_api.a: lib/sync.o
+lib/libaxiom_run_api.a: lib/sync.o lib/rpc.o
 	$(AR) rcs $@ $?
 	
 test/myinfo: test/myinfo.o
@@ -40,6 +40,9 @@ test/myexch: test/myexch.o
 
 test/mybar: test/mybar.o lib/libaxiom_run_api.a
 	$(CC) -L$(PWD)/lib -o test/mybar test/mybar.o -laxiom_run_api
+
+test/myrpc: test/myrpc.o lib/libaxiom_run_api.a
+	$(CC) -L$(PWD)/lib -o test/myrpc test/myrpc.o -laxiom_run_api
 
 $(AXIOM_NIC_UL)/%:
 	cd $(AXIOM_NIC_UL) && make CCPREFIX=$(CCPREFIX) DFLAGS="$(DFLAGS)"

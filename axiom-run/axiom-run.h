@@ -25,6 +25,7 @@ extern "C" {
 #include "axiom_nic_packets.h"
 #include "axiom_init_api.h"
 #include "axiom_common.h"
+#include "axiom_run_api.h"
 
     /* message log zones */
 
@@ -64,9 +65,13 @@ extern "C" {
 #define CMD_RECV_FROM_STDIN 0x84
     /** command barrier (master<->slave) */
 #define CMD_BARRIER         0x85
+    /** command rpc (master<->slave) */
+#define CMD_RPC             0x86
 
     extern char *cmd_to_name[];
-#define CMD_TO_NAME(cmd) ((cmd)>=CMD_EXIT&&(cmd)<=CMD_BARRIER?cmd_to_name[(cmd)-CMD_EXIT]:"unknown")
+#define CMD_TO_NAME(cmd) ((cmd)>=CMD_EXIT&&(cmd)<=CMD_RPC?cmd_to_name[(cmd)-CMD_EXIT]:"unknown")
+    extern char *rpcfunc_to_name[];
+#define RPCFUNC_TO_NAME(func) ((func)>=AXRUN_RPC_PING&&(func)<=AXRUN_RPC_PING?rpcfunc_to_name[(func)-AXRUN_RPC_PING]:"unknown")
 
     /**
      * header of all raws message between master ans slave
@@ -81,7 +86,15 @@ extern "C" {
             /** exit status. used only by CMD_EXIT messages */
             int status;
             /** barried id. used only by CMD_BARRIER messages */
-            unsigned barrier_id;
+            struct {
+               unsigned barrier_id;
+            } barrier;
+            /** rpc data. used only for CMD_RPC message */
+            struct {
+                uint64_t id;
+                uint16_t function;
+                uint16_t size;
+            } rpc;
         } __attribute__((__packed__));
         
     } __attribute__((__packed__)) header_t;
@@ -137,6 +150,8 @@ extern "C" {
 #define EXIT_SERVICE 0x02
     /* redirect service */
 #define REDIRECT_SERVICE 0x04
+    /** rpc service*/
+#define RPC_SERVICE 0x08
 
     /* flags */
 
@@ -146,9 +161,11 @@ extern "C" {
 #define ALTERNATE_IDENT_FLAG 0x02
 
     /** template name for the master unix domani socket port */
-#define BARRIER_MASTER_TEMPLATE_NAME "/tmp/axbar%d"
+#define SLAVE_TEMPLATE_NAME "/tmp/ax%d"
     /** template name for the slave unix domain socket port */
-#define BARRIER_SLAVE_TEMPLATE_NAME "/tmp/axbar%d.%d"
+#define BARRIER_CHILD_TEMPLATE_NAME "/tmp/axbar%d.%d"
+    /** template name for the slave unix domain socket port */
+#define RPC_CHILD_TEMPLATE_NAME "/tmp/axrpc%d.%ld"
 
     /*
      * Run and manage services for master process.
@@ -177,6 +194,8 @@ extern "C" {
     /** port number of the slave */
     extern int slave_port;
     
+    int rpc_service(axiom_dev_t *dev, axiom_node_id_t src_node, int size, buffer_t *inmsg);
+
 #ifdef __cplusplus
 }
 #endif
