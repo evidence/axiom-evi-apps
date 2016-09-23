@@ -93,10 +93,12 @@ main(int argc, char **argv)
         exit(-1);
     }
 
+    axiom_spawn_init();
+    axiom_allocator_init();
+
     if (master) {
         axiom_discovery_master(dev, topology, final_routing_table, verbose);
     }
-    axiom_spawn_init();
 
     while(run) {
         axiom_node_id_t src;
@@ -138,6 +140,12 @@ main(int argc, char **argv)
             case AXIOM_CMD_SESSION_REQ:
             case AXIOM_CMD_SESSION_RELEASE:
                 axiom_session(dev, src, payload_size, &payload, verbose);
+                break;
+
+            case AXIOM_CMD_ALLOC:
+            case AXIOM_CMD_ALLOC_APPID:
+            case AXIOM_CMD_ALLOC_REGIONS:
+                axiom_allocator(dev, src, payload_size, &payload, verbose);
                 break;
 
             default:

@@ -18,6 +18,7 @@ BUILDROOT := ${PWD}/../../axiom-evi-buildroot
 DESTDIR := ${BUILDROOT}/output/target
 CCPREFIX := ${BUILDROOT}/output/host/usr/bin/$(CCARCH)-linux-
 CC := ${CCPREFIX}gcc
+AR := ${CCPREFIX}ar
 
 DFLAGS := -g -DPDEBUG
 CFLAGS += -Wall -D_GNU_SOURCE $(DFLAGS) -I$(PWD)/$(AXIOM_INCLUDE) -I$(PWD)/$(AXIOM_APPS_INCLUDE)
