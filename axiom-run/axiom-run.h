@@ -152,6 +152,8 @@ extern "C" {
 #define REDIRECT_SERVICE 0x04
     /** rpc service*/
 #define RPC_SERVICE 0x08
+    /* appid service */
+#define APPID_SERVICE 0x10
 
     /* flags */
 
@@ -175,7 +177,7 @@ extern "C" {
      * @param flags flags
      * @return exit status (see 'man 2 waitpid')
      */
-    int manage_master_services(axiom_dev_t *dev, int services, uint64_t nodes, int flags);
+    int manage_master_services(axiom_dev_t *dev, int services, uint64_t nodes, int flags, axiom_app_id_t app_id);
 
     /**
      * Run and manage services for slave process.

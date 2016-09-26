@@ -91,6 +91,8 @@ static void _usage(char *msg, ...) {
     fprintf(stderr, "    barrier service\n");
     fprintf(stderr, "-c, --rpc\n");
     fprintf(stderr, "    rpc service\n");
+    fprintf(stderr, "-a, --appid\n");
+    fprintf(stderr, "    app-id service: assign an unique application ID exported in the env of all process (AXIOM_APPID)\n");
     fprintf(stderr, "-h, --help\n");
     fprintf(stderr, "    print this help\n");
     fprintf(stderr, "note:\n");
@@ -117,6 +119,7 @@ static struct option long_options[] = {
     {"port", required_argument, 0, 'p'},
     {"env", required_argument, 0, 'u'},
     {"gdb", required_argument, 0, 'g'},
+    {"appid", no_argument, 0, 'a'},
     {"help", no_argument, 0, 'h'},
     {0, 0, 0, 0}
 };
@@ -488,6 +491,7 @@ static inline int __clz(register uint64_t n) {
  */
 int main(int argc, char **argv) {
     axiom_dev_t *dev = NULL;
+    axiom_app_id_t app_id = AXIOM_NULL_APP_ID;
     int long_index = 0;
     int opt = 0;
     int port = -1;
@@ -512,7 +516,7 @@ int main(int argc, char **argv) {
     // command line parsing
     //
 
-    while ((opt = getopt_long(argc, argv, "+rebcsp:m:hn:u:g:i::", long_options, &long_index)) != -1) {
+    while ((opt = getopt_long(argc, argv, "+rebcasp:m:hn:u:g:i::", long_options, &long_index)) != -1) {
         switch (opt) {
             case 'u':
                 envreg = 1;
@@ -546,6 +550,9 @@ int main(int argc, char **argv) {
                 break;
             case 'e':
                 services |= EXIT_SERVICE;
+                break;
+            case 'a':
+                services |= APPID_SERVICE;
                 break;
             case 'n':
                 nodes = decode_node_arg(optarg);
@@ -642,7 +649,7 @@ int main(int argc, char **argv) {
     }
 
     //
-    // open/bing axiom device
+    // open/bind axiom device
     //
 
     if (services || !slave || gdb_nodes > 0) {
@@ -736,6 +743,28 @@ int main(int argc, char **argv) {
     if (slave && (services & (BARRIER_SERVICE|RPC_SERVICE))) {
         char var[128];
         snprintf(var, sizeof (var), "AXIOM_USOCK=%d", getpid());
+        sl_append(&env, var);
+        sl_append(&env, NULL);
+    }
+
+    if (!slave && (services & APPID_SERVICE)) {
+        char var[128];
+
+        /* send request for unique app-id */
+        err = axinit_get_appid(dev, master_port);
+        if (!AXIOM_RET_IS_OK(err)) {
+            elogmsg("axinit_get_appid()");
+            exit(EXIT_FAILURE);
+        }
+
+        /* wait reply of unique app-id */
+        err = axinit_get_appid_reply(dev, &app_id);
+        if (!AXIOM_RET_IS_OK(err)) {
+            elogmsg("axinit_get_appid_reply()");
+            exit(EXIT_FAILURE);
+        }
+
+        snprintf(var, sizeof(var), "AXIOM_APPID=%d", app_id);
         sl_append(&env, var);
         sl_append(&env, NULL);
     }
@@ -873,7 +902,7 @@ int main(int argc, char **argv) {
 
         // manage servicies...
         if (services) {
-            exitval=manage_master_services(dev, services, nodes, flags);
+            exitval=manage_master_services(dev, services, nodes, flags, app_id);
         }
     }
 

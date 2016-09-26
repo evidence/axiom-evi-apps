@@ -482,7 +482,7 @@ static void myexit(int sig) {
 }
 
 /* see axiom-run.h */
-int manage_master_services(axiom_dev_t *_dev, int _services, uint64_t _nodes, int _flags) {
+int manage_master_services(axiom_dev_t *_dev, int _services, uint64_t _nodes, int _flags, axiom_app_id_t app_id) {
     pthread_t threcv, thsend;
     thread_info_t recvinfo, sendinfo;
     sigset_t oldset;

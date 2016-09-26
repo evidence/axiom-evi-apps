@@ -26,6 +26,7 @@ BUILDROOT := ${PWD}/../../axiom-evi-buildroot
 DESTDIR := ${BUILDROOT}/output/target
 CCPREFIX := ${BUILDROOT}/output/host/usr/bin/$(CCARCH)-linux-
 CC := ${CCPREFIX}gcc
+AR := ${CCPREFIX}ar
 
 DFLAGS := -g -DPDEBUG
 CFLAGS += -Wall $(DFLAGS) -I$(PWD)/$(AXIOM_INCLUDE) -I$(PWD)/$(AXIOM_APPS_INCLUDE)
@@ -44,7 +45,7 @@ axiom-init: axiom-init.o \
 
 axiom-init.o: axiom-init.c axiom-init.h $(HEADERS)
 
-lib/libaxiom_init_api.a: lib/execvpe.o
+lib/libaxiom_init_api.a: lib/execvpe.o lib/allocator.o
 	$(AR) rcs $@ $?
 
 $(AXIOM_NIC_UL)/%:
