@@ -17,6 +17,7 @@ axiom-run/axiom-run
 axiom-run/test/myinfo
 axiom-run/test/mybar
 axiom-run/test/myexch
+axiom-run/test/myrpc
 
 #
 # Normal rules
