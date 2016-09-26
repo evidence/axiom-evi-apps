@@ -91,6 +91,9 @@ static void _usage(char *msg, ...) {
     fprintf(stderr, "    barrier service\n");
     fprintf(stderr, "-c, --rpc\n");
     fprintf(stderr, "    rpc service\n");
+    fprintf(stderr, "-P, --profile PROFILE_NAME\n");
+    fprintf(stderr, "    set the options for a profile:\n");
+    fprintf(stderr, "    gasnet = -r -i -e -b -c -u 'PATH|SHELL|AXIOM_.*|GASNET_.*'\n");
     fprintf(stderr, "-h, --help\n");
     fprintf(stderr, "    print this help\n");
     fprintf(stderr, "note:\n");
@@ -117,6 +120,7 @@ static struct option long_options[] = {
     {"port", required_argument, 0, 'p'},
     {"env", required_argument, 0, 'u'},
     {"gdb", required_argument, 0, 'g'},
+    {"profile", required_argument, 0, 'P'},
     {"help", no_argument, 0, 'h'},
     {0, 0, 0, 0}
 };
@@ -512,8 +516,19 @@ int main(int argc, char **argv) {
     // command line parsing
     //
 
-    while ((opt = getopt_long(argc, argv, "+rebcsp:m:hn:u:g:i::", long_options, &long_index)) != -1) {
+    while ((opt = getopt_long(argc, argv, "+rebcsp:P:m:hn:u:g:i::", long_options, &long_index)) != -1) {
         switch (opt) {
+            case 'P':
+                if (strcmp(optarg,"gasnet")==0) {
+                    services |= REDIRECT_SERVICE|EXIT_SERVICE|RPC_SERVICE|BARRIER_SERVICE;
+                    flags |= IDENT_FLAG;
+                    envreg = 1;
+                    regcomp(&_envreg, "PATH|SHELL|AXIOM_.*|GASNET_.*", REG_EXTENDED);
+                } else {
+                    _usage("error on -P and/or --profile argument");
+                    exit(-1);
+                }
+                break;
             case 'u':
                 envreg = 1;
                 res = regcomp(&_envreg, optarg, REG_EXTENDED);
