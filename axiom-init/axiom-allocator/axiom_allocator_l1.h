@@ -13,16 +13,18 @@
 #include "evi_queue.h"
 
 typedef struct axiom_allocator_l1 {
+    uint64_t memory_start;
     uint64_t memory_size;
     uint64_t block_size;
     evi_alloc_t alloc_table;
     evi_queue_t app_id;
 } axiom_allocator_l1_t;
 
-void
+static void
 axal_l1_init(axiom_allocator_l1_t *l1)
 {
     l1->memory_size = AXIOM_ALLOCATOR_MEM_SIZE;
+    l1->memory_start = AXIOM_ALLOCATOR_MEM_START;
     l1->block_size = AXIOM_ALLOCATOR_L1_BSIZE;
     evia_init(&l1->alloc_table,
             l1->memory_size / l1->block_size);
@@ -30,7 +32,7 @@ axal_l1_init(axiom_allocator_l1_t *l1)
 }
 
 static int
-axal_l1_alloc_blocks(axiom_allocator_l1_t *l1, uint64_t *size,
+axal_l1_alloc(axiom_allocator_l1_t *l1, uint64_t *addr, uint64_t *size,
         axiom_app_id_t app_id)
 {
     int num_blocks, start;
@@ -42,8 +44,12 @@ axal_l1_alloc_blocks(axiom_allocator_l1_t *l1, uint64_t *size,
     *size = num_blocks * l1->block_size;
 
     start = evia_alloc(&l1->alloc_table, app_id, num_blocks);
+    if (start < 0)
+        return start;
 
-    return start;
+    *addr = (((uint64_t)start) * l1->block_size) + l1->memory_start;
+
+    return 0;
 }
 
 static axiom_app_id_t

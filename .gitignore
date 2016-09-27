@@ -19,6 +19,7 @@ axiom-run/test/mybar
 axiom-run/test/myexch
 axiom-run/test/myrpc
 axiom-run/test/mylong
+lib/tests/axiom-test-galloc
 
 #
 # Normal rules

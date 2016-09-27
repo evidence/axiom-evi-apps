@@ -298,7 +298,7 @@ static void *sock_thread(void *data) {
     }
     myaddr.sun_family = AF_UNIX;
     snprintf(myaddr.sun_path, sizeof (myaddr.sun_path), SLAVE_TEMPLATE_NAME, (int) getpid());
-    res = bind(sock, &myaddr, sizeof (myaddr));
+    res = bind(sock, (struct sockaddr *) &myaddr, sizeof (myaddr));
     if (res == -1) {
         elogmsg("bind()");
         exit(EXIT_FAILURE);

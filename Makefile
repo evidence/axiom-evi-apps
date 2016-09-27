@@ -1,6 +1,8 @@
+AXIOM_INCLUDE := ../axiom-evi-nic/include
+AXIOM_APPS_INCLUDE := ./include
 APPS_DIR := axiom-init axiom-recv axiom-send axiom-whoami axiom-info
 APPS_DIR += axiom-ping axiom-traceroute axiom-netperf axiom-rdma axiom-run
-LIBS_DIR := axiom_common_library
+LIBS_DIR := axiom_common_library lib
 CLEAN_DIR := $(addprefix _clean_, $(APPS_DIR) $(LIBS_DIR))
 INSTALL_DIR := $(addprefix _install_, $(APPS_DIR))
 
@@ -12,6 +14,7 @@ DESTDIR := ${BUILDROOT}/output/target
 CCPREFIX := ${BUILDROOT}/output/host/usr/bin/$(CCARCH)-linux-
 
 DFLAGS := -g -DPDEBUG
+CFLAGS += -Wall $(DFLAGS) -I$(PWD)/$(AXIOM_INCLUDE) -I$(PWD)/$(AXIOM_APPS_INCLUDE)
 
 .PHONY: all clean install $(APPS_DIR) $(LIBS_DIR) $(CLEAN_DIR) $(INSTALL_DIR)
 
@@ -22,12 +25,12 @@ $(APPS_DIR):: $(LIBS_DIR)
 axiom-run:: axiom-init
 
 $(LIBS_DIR) $(APPS_DIR)::
-	cd $@ && make CCPREFIX=$(CCPREFIX) DFLAGS="$(DFLAGS)"
+	cd $@ && CFLAGS="$(CFLAGS)" make CCPREFIX=$(CCPREFIX) DFLAGS="$(DFLAGS)"
 
-install: $(INSTALL_DIR)
+install: all $(INSTALL_DIR)
 
 $(INSTALL_DIR):
-	cd $(subst _install_,,$@) && make install CCPREFIX=$(CCPREFIX) DESTDIR=$(DESTDIR) DFLAGS="$(DFLAGS)"
+	cd $(subst _install_,,$@) &&  CFLAGS="$(CFLAGS)" make install CCPREFIX=$(CCPREFIX) DESTDIR=$(DESTDIR) DFLAGS="$(DFLAGS)"
 
 
 clean: $(CLEAN_DIR)

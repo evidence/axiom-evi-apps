@@ -49,13 +49,13 @@ lib/libaxiom_init_api.a: lib/execvpe.o lib/allocator.o
 	$(AR) rcs $@ $?
 
 $(AXIOM_NIC_UL)/%:
-	cd $(AXIOM_NIC_UL) && make CCPREFIX=$(CCPREFIX) DFLAGS="$(DFLAGS)"
+	cd $(AXIOM_NIC_UL) && make CCPREFIX=$(CCPREFIX) DFLAGS="$(DFLAGS)" CFLAGS="$(CFLAGS)"
 
 $(AXIOM_COMMON_UL)/%:
-	cd $(AXIOM_COMMON_UL) && make CCPREFIX=$(CCPREFIX) DFLAGS="$(DFLAGS)"
+	cd $(AXIOM_COMMON_UL) && make CCPREFIX=$(CCPREFIX) DFLAGS="$(DFLAGS)" CFLAGS="$(CFLAGS)"
 
 $(AXIOM_DISC)/%.o:
-	cd $(AXIOM_DISC) && make CCPREFIX=$(CCPREFIX) DFLAGS="$(DFLAGS)"
+	cd $(AXIOM_DISC) && make CCPREFIX=$(CCPREFIX) DFLAGS="$(DFLAGS)" CFLAGS="$(CFLAGS)"
 
 install: all
 	cp $(APPS) $(DESTDIR)/usr/bin/

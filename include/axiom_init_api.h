@@ -45,10 +45,10 @@ extern "C" {
     axiom_err_t axinit_get_appid(axiom_dev_t *dev, axiom_port_t reply_port);
 
     /*
-     * \brief Request an unique application ID to the AXIOM_MASTER_NODE_INIT
+     * \brief Waiting for a reply from AXIOM_MASTER_NODE_INIT with an
+     *        unique application ID
      *
      * \param dev           Axiom device private data pointer
-     * \param node          Destination node id (default AXIOM_MASTER_NODE_INIT)
      * \param[out] appid    Application ID received for the application
      *
      * \return Returns AXIOM_RET_OK on success, an error otherwise.
@@ -72,18 +72,19 @@ extern "C" {
     axiom_err_t axinit_alloc(axiom_dev_t *dev, axiom_port_t reply_port,
             axiom_app_id_t appid, uint64_t private_size, uint64_t shared_size);
 
+    axiom_err_t axinit_alloc_parsereply(void *payload, size_t payload_size,
+            uint64_t *private_start, uint64_t *private_size,
+            uint64_t *shared_start, uint64_t *shared_size);
     /*
      * \brief Request to the AXIOM_MASTER_NODE_INIT to release the application
      *        ID and the private and shared regions.
      *
      * \param dev               Axiom device private data pointer
-     * \param reply_port        Port where you want to receive the reply
      * \param appid             Application ID of the application
      *
      * \return Returns AXIOM_RET_OK on success, an error otherwise.
      */
-    axiom_err_t axinit_release(axiom_dev_t *dev, axiom_port_t reply_port,
-            axiom_app_id_t appid);
+    axiom_err_t axinit_release(axiom_dev_t *dev, axiom_app_id_t appid);
 
 #ifdef __cplusplus
 }

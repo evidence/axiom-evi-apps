@@ -18,6 +18,7 @@
 
 #include "axiom-run.h"
 #include "axiom_run_api.h"
+#include "axiom_nic_raw_commands.h"
 
 /**
  * Some information for the threads.
@@ -35,6 +36,8 @@ typedef struct {
     int flags;
     /** eventfd for end */
     int endfd;
+    /** application ID */
+    axiom_app_id_t app_id;
 } thread_info_t;
 
 /**
@@ -262,6 +265,12 @@ static void *master_receiver(void *data) {
     lassert(barrier != NULL);
     memset(barrier, 0, sizeof (barrier_info_t)*(AXRUN_MAX_BARRIER_ID + 1));
 
+    /* init the allocator handled through RPC */
+    if (rpc_init_allocator(info->app_id)) {
+        elogmsg("rpc_init_allocator()");
+        exit(EXIT_FAILURE);
+    }
+
     //
     // thread MAIN LOOP
     //
@@ -386,6 +395,16 @@ static void *master_receiver(void *data) {
             } else {
                 zlogmsg(LOG_WARN, LOGZ_MASTER, "MASTER: received not served RPC message from node %d", node);
             }
+        } else if (buffer.header.command == AXIOM_CMD_ALLOC_REPLY) {
+            //
+            // Reply from AXIOM ALLOCATOR MASTER INIT
+            //
+            zlogmsg(LOG_INFO, LOGZ_MASTER, "MASTER: received REPLY from MASTER INIT message from %d", node);
+            if (info->services & (APPID_SERVICE | RPC_SERVICE)) {
+                rpc_setup_allocator(info->dev, node, size, &buffer);
+            } else {
+                zlogmsg(LOG_WARN, LOGZ_MASTER, "MASTER: received not served RPC message from node %d", node);
+            }
         } else {
             zlogmsg(LOG_ERROR, LOGZ_MASTER, "unknown message command 0x%02x", buffer.header.command);
         }
@@ -395,6 +414,7 @@ static void *master_receiver(void *data) {
     zlogmsg(LOG_INFO, LOGZ_MASTER, "MASTER: exiting receiver thread");
 
     // release resources
+    rpc_release_allocator(info->dev);
     free(barrier);
     for (i = 0; i < MAX_NUM_NODES; i++) {
         free(infoout[i].buffer);
@@ -503,11 +523,12 @@ int manage_master_services(axiom_dev_t *_dev, int _services, uint64_t _nodes, in
     recvinfo.nodes = sendinfo.nodes = _nodes;
     recvinfo.services = sendinfo.services = _services;
     recvinfo.flags = sendinfo.flags = _flags;
-    recvinfo.endfd=-1;    
+    recvinfo.app_id = sendinfo.app_id = app_id;
+    recvinfo.endfd=-1;
     sendinfo.endfd=eventfd(0,EFD_SEMAPHORE);
     if (sendinfo.endfd==-1) {
         elogmsg("eventfd()");
-        exit(EXIT_FAILURE);        
+        exit(EXIT_FAILURE);
     }
     zlogmsg(LOG_INFO, LOGZ_MASTER, "MASTER: starting service threads");
 

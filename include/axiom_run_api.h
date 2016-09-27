@@ -25,13 +25,16 @@ extern "C" {
      */
     int axrun_sync(unsigned barrier_id, int verbose);
 
-#define AXRUN_RPC_PING 0
+#define AXRUN_RPC_PING                  0
+#define AXRUN_RPC_ALLOC                 1
+#define AXRUN_RPC_GET_PRBLOCK           2
+#define AXRUN_RPC_GET_SHBLOCK           3
 
-    int axrun_rpc(int function, int send_size, void *send_payload, int *recv_size, void *recv_payload, int verbose);
+    int axrun_rpc(int function, size_t send_size, void *send_payload,
+            size_t *recv_size, void *recv_payload, int verbose);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif
-
+#endif /* AXIOM_RUN_API_H */

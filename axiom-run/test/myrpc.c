@@ -34,7 +34,7 @@ int main(int argc, char**argv) {
     useconds_t delay = 0;
     int opt, long_index, res;
     double n;
-    int size;
+    size_t size;
     int i;
 
     signal(SIGQUIT, mysigquit);

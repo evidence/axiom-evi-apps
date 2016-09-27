@@ -144,7 +144,7 @@ main(int argc, char **argv)
 
             case AXIOM_CMD_ALLOC:
             case AXIOM_CMD_ALLOC_APPID:
-            case AXIOM_CMD_ALLOC_REGIONS:
+            case AXIOM_CMD_ALLOC_RELEASE:
                 axiom_allocator(dev, src, payload_size, &payload, verbose);
                 break;
 

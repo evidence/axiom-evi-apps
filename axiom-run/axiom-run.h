@@ -1,6 +1,6 @@
 /**
  * Used internally by axiom-run.
- * 
+ *
  * @file   axiom-run.h
  * @version v0.7
  */
@@ -17,7 +17,7 @@ extern "C" {
 #include <stdint.h>
 #include <signal.h>
 #include <pthread.h>
-    
+
 #include "axiom_nic_types.h"
 #include "axiom_nic_limits.h"
 #include "axiom_nic_api_user.h"
@@ -74,10 +74,10 @@ extern "C" {
 #define RPCFUNC_TO_NAME(func) ((func)>=AXRUN_RPC_PING&&(func)<=AXRUN_RPC_PING?rpcfunc_to_name[(func)-AXRUN_RPC_PING]:"unknown")
 
     /**
-     * header of all raws message between master ans slave
+     * header of all raws message between master and slave
      */
     typedef struct {
-        /** command. see CMD_??? deines */
+        /** command. see CMD_??? defines */
         uint8_t command;
         /** dont't care */
         uint8_t pad[3];
@@ -92,11 +92,11 @@ extern "C" {
             /** rpc data. used only for CMD_RPC message */
             struct {
                 uint64_t id;
-                uint16_t function;
-                uint16_t size;
+                uint32_t function;
+                uint32_t size;
             } rpc;
         } __attribute__((__packed__));
-        
+
     } __attribute__((__packed__)) header_t;
 
     /**
@@ -195,8 +195,11 @@ extern "C" {
     extern int master_port;
     /** port number of the slave */
     extern int slave_port;
-    
-    int rpc_service(axiom_dev_t *dev, axiom_node_id_t src_node, int size, buffer_t *inmsg);
+
+    int rpc_init_allocator(axiom_app_id_t app_id);
+    void rpc_release_allocator(axiom_dev_t *dev);
+    int rpc_setup_allocator(axiom_dev_t *dev, axiom_node_id_t src_node, size_t size, void *inmsg);
+    int rpc_service(axiom_dev_t *dev, axiom_node_id_t src_node, size_t size, buffer_t *inmsg);
 
 #ifdef __cplusplus
 }

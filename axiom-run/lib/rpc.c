@@ -12,7 +12,7 @@
 #include "axiom_run_api.h"
 #include "lib.h"
 
-int axrun_rpc(int function, int send_size, void *send_payload, int *recv_size, void *recv_payload, int verbose) {
+int axrun_rpc(int function, size_t send_size, void *send_payload, size_t *recv_size, void *recv_payload, int verbose) {
     struct sockaddr_un myaddr, itsaddr;
     int sock, res;
     int line;
@@ -45,7 +45,7 @@ int axrun_rpc(int function, int send_size, void *send_payload, int *recv_size, v
     if (sock == -1) goto error;
     myaddr.sun_family = AF_UNIX;
     snprintf(myaddr.sun_path, sizeof (myaddr.sun_path), RPC_CHILD_TEMPLATE_NAME, ppid, tid);
-    res = bind(sock, &myaddr, sizeof (myaddr));
+    res = bind(sock, (struct sockaddr *) &myaddr, sizeof (myaddr));
     if (res == -1) {
         line = __LINE__;
         goto error;

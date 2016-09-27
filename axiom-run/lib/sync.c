@@ -48,7 +48,7 @@ int axrun_sync(const unsigned barrier_id, int verbose) {
     if (sock == -1) goto error;
     myaddr.sun_family = AF_UNIX;
     snprintf(myaddr.sun_path, sizeof (myaddr.sun_path), BARRIER_CHILD_TEMPLATE_NAME, (int) ppid, barrier_id);
-    res = bind(sock, &myaddr, sizeof (myaddr));
+    res = bind(sock, (struct sockaddr *) &myaddr, sizeof (myaddr));
     if (res == -1) {
         line = __LINE__;
         goto error;
