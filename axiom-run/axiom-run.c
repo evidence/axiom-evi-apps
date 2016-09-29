@@ -93,7 +93,8 @@ static void _usage(char *msg, ...) {
     fprintf(stderr, "    rpc service\n");
     fprintf(stderr, "-P, --profile PROFILE_NAME\n");
     fprintf(stderr, "    set the options for a profile:\n");
-    fprintf(stderr, "    gasnet = -r -i -e -b -c -u 'PATH|SHELL|AXIOM_.*|GASNET_.*'\n");
+    fprintf(stderr, "    gasnet = -r -i -e -b -c -u 'PATH|SHELL|AXIOM_.*|GASNET_.*' (flags required by gasnet)\n");
+    fprintf(stderr, "    all = -r -i -b -c (all services but NOT exit service)\n");
     fprintf(stderr, "-h, --help\n");
     fprintf(stderr, "    print this help\n");
     fprintf(stderr, "note:\n");
@@ -524,6 +525,9 @@ int main(int argc, char **argv) {
                     flags |= IDENT_FLAG;
                     envreg = 1;
                     regcomp(&_envreg, "PATH|SHELL|AXIOM_.*|GASNET_.*", REG_EXTENDED);
+                } else if (strcmp(optarg,"all")==0) {
+                    services |= REDIRECT_SERVICE|RPC_SERVICE|BARRIER_SERVICE;
+                    flags |= IDENT_FLAG;
                 } else {
                     _usage("error on -P and/or --profile argument");
                     exit(-1);
