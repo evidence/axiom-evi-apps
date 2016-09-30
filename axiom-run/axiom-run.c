@@ -73,6 +73,9 @@ static void _usage(char *msg, ...) {
     fprintf(stderr, "-n, --nodes NODELIST\n");
     fprintf(stderr, "    nodes where spawn application \n");
     fprintf(stderr, "    [default: all nodes] ex: 0-3,7\n");
+    fprintf(stderr, "-N, --numnodes NODECOUNT\n");
+    fprintf(stderr, "    nodes where spawn application\n");
+    fprintf(stderr, "    equivalent to '-n 0-$((NODECOUNT-1))'\n");
     fprintf(stderr, "-g, --gdb NODELIST:PORT\n");
     fprintf(stderr, "    run application using gdb server on port PORT on selected nodes\n");
     fprintf(stderr, "    [default: no run gdb server]\n");
@@ -118,6 +121,7 @@ static struct option long_options[] = {
     {"slave", no_argument, 0, 's'},
     {"master", required_argument, 0, 'm'},
     {"nodes", required_argument, 0, 'n'},
+    {"numnodes", required_argument, 0, 'N'},
     {"port", required_argument, 0, 'p'},
     {"env", required_argument, 0, 'u'},
     {"gdb", required_argument, 0, 'g'},
@@ -517,7 +521,7 @@ int main(int argc, char **argv) {
     // command line parsing
     //
 
-    while ((opt = getopt_long(argc, argv, "+rebcsp:P:m:hn:u:g:i::", long_options, &long_index)) != -1) {
+    while ((opt = getopt_long(argc, argv, "+rebcsp:P:m:hn:N:u:g:i::", long_options, &long_index)) != -1) {
         switch (opt) {
             case 'P':
                 if (strcmp(optarg,"gasnet")==0) {
@@ -569,6 +573,15 @@ int main(int argc, char **argv) {
             case 'n':
                 nodes = decode_node_arg(optarg);
                 break;
+            case 'N': {
+                int numnodes=atoi(optarg);
+                if (numnodes<=0) {
+                    _usage("error on -N|--numnodes: number of nodes must be greather than zero\n");
+                    exit(-1);
+                }
+                nodes=(1<<numnodes)-1;
+                break;
+            }
             case 'g':
                 decode_gdb_arg(optarg, &gdb_nodes, &gdb_port);
                 break;
