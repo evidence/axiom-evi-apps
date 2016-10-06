@@ -104,7 +104,7 @@ int main(int argc, char**argv) {
     while ((opt = getopt_long(argc, argv, "h", long_options, &long_index)) != -1) {
         switch (opt) {
             case 'h':
-                fprintf(stderr, "usage: myexch\n");
+                fprintf(stderr, "usage: myputbulk\n");
                 exit(0);
             case '?':
                 break;
