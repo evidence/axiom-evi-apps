@@ -39,7 +39,7 @@ static inline void exec_flush(void) {
     size_t size;
     uint8_t buffer[AXIOM_LONG_PAYLOAD_MAX_SIZE];
     axiom_dev_t *dev=NULL;
-    int counter;
+    int counter,oldcounter;
 
     axiom_args.flags |= AXIOM_FLAG_NOFLUSH;
     for (port=0;port<AXIOM_PORT_MAX;port++) {
@@ -58,11 +58,17 @@ static inline void exec_flush(void) {
             printf("flushing port %i... ",port);
             fflush(stdout);
         }
+        oldcounter=-1;
         counter=0;
-        while (axiom_recv_raw_avail(dev)||axiom_recv_long_avail(dev)) {
-            size=AXIOM_LONG_PAYLOAD_MAX_SIZE;
-            axiom_recv(dev,&node,&port,&type,&size,buffer);
-            counter++;
+        for (;;) {
+            while (axiom_recv_raw_avail(dev)||axiom_recv_long_avail(dev)) {
+                size=AXIOM_LONG_PAYLOAD_MAX_SIZE;
+                axiom_recv(dev,&node,&port,&type,&size,buffer);
+                counter++;
+            }
+            if (counter==oldcounter) break;
+            oldcounter=counter;
+            usleep(250000);
         }
         if (verbose) printf("flushed (found %d lost packets)!\n",counter);
     }
