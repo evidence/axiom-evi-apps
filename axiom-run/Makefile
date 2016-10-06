@@ -5,7 +5,7 @@ AXIOM_APPS_UL := ../axiom-init/lib
 AXIOM_COMMON_UL := ../axiom_common_library
 
 APPS := axiom-run 
-TAPPS := test/myinfo test/mybar test/myexch test/myrpc
+TAPPS := test/myinfo test/mybar test/myexch test/myrpc test/myputbulk
 LIBS := lib/libaxiom_run_api.a
 
 CLEANFILES = $(APPS) $(TAPPS) $(LIBS) *.o test/*.o lib/*.o
@@ -43,6 +43,9 @@ test/mybar: test/mybar.o lib/libaxiom_run_api.a
 
 test/myrpc: test/myrpc.o lib/libaxiom_run_api.a
 	$(CC) -L$(PWD)/lib -o test/myrpc test/myrpc.o -laxiom_run_api
+
+test/myputbulk: test/myputbulk.o
+	$(CC) -L$(PWD)/../../axiom-evi-nic/axiom_user_library -o test/myputbulk test/myputbulk.o -laxiom_user_api
 
 $(AXIOM_NIC_UL)/%:
 	cd $(AXIOM_NIC_UL) && make CCPREFIX=$(CCPREFIX) DFLAGS="$(DFLAGS)"

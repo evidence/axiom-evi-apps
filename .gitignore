@@ -18,6 +18,7 @@ axiom-run/test/myinfo
 axiom-run/test/mybar
 axiom-run/test/myexch
 axiom-run/test/myrpc
+axiom-run/test/myputbulk
 axiom-utility/axiom-utility
 
 #
