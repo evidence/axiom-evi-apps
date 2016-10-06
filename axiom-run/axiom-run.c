@@ -58,6 +58,7 @@ static void _usage(char *msg, ...) {
         vfprintf(stderr, msg, list);
         va_end(list);
         fputc('\n', stderr);
+        fputc('\n', stderr);
     }
     fprintf(stderr, "usage: axiom-run [ARG]* APPLICATION [APP_ARG]*\n");
     fprintf(stderr, "Spawn application on multiple nodes\n");
@@ -420,7 +421,7 @@ static uint64_t decode_node_arg(char *arg) {
     if (strncmp(arg, "0x", 2) == 0) {
         n = sscanf(arg, "%lx", &r);
         if (n != 1) {
-            usage();
+            _usage("bad option for -n|--nodes: can't decode 0x number");
             exit(EXIT_FAILURE);
         }
     } else {
@@ -428,8 +429,8 @@ static uint64_t decode_node_arg(char *arg) {
         while (s != NULL) {
             if (strchr(s, '-') != NULL) {
                 n = sscanf(s, "%d-%d", &a, &b);
-                if (n != 2 || a < 0 || a >= b || b >= MAX_NUM_NODES) {
-                    usage();
+                if (n != 2 || a < 0 || a > b || b >= MAX_NUM_NODES) {
+                    _usage("bad option for -n|--nodes: can't decode or bad range");
                     exit(EXIT_FAILURE);
                 }
                 if (b - a + 1 == MAX_NUM_NODES)
@@ -439,7 +440,7 @@ static uint64_t decode_node_arg(char *arg) {
             } else {
                 n = sscanf(s, "%d", &a);
                 if (n != 1 || a < 0 || a >= MAX_NUM_NODES) {
-                    usage();
+                    _usage("bad option for -n|--nodes: can't decode or bad node number");
                     exit(EXIT_FAILURE);
                 }
                 r |= ((uint64_t) 1 << a);
