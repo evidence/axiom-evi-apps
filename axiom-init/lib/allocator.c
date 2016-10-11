@@ -46,7 +46,7 @@ axinit_get_appid_reply(axiom_dev_t *dev, axiom_app_id_t *appid)
 
     if ((src != AXIOM_MASTER_NODE_INIT) ||
             (payload.command != AXIOM_CMD_ALLOC_APPID_REPLY) ||
-            (payload.error != AXIOM_RET_OK)) {
+            (payload.info.error != AXIOM_RET_OK)) {
         return AXIOM_RET_ERROR;
     }
 
@@ -86,7 +86,7 @@ axinit_alloc_parsereply(void *payload, size_t payload_size,
         ((axiom_allocator_payload_t *) payload);
 
     if (payload_size != sizeof(*alloc_payload) ||
-            !AXIOM_RET_IS_OK(alloc_payload->error) ||
+            !AXIOM_RET_IS_OK(alloc_payload->info.error) ||
             alloc_payload->command != AXIOM_CMD_ALLOC_REPLY) {
         return AXIOM_RET_NOMEM;
     }

@@ -63,7 +63,7 @@ axiom_allocator(axiom_dev_t *dev, axiom_node_id_t src, size_t payload_size,
 
     IPRINTF(verbose, "ALLOCATOR: message received - src_node: %u", src);
 
-    alloc_payload->error = AXIOM_RET_OK;
+    alloc_payload->info.error = AXIOM_RET_OK;
 
     switch (alloc_payload->command) {
         case AXIOM_CMD_ALLOC_APPID:
@@ -71,17 +71,17 @@ axiom_allocator(axiom_dev_t *dev, axiom_node_id_t src, size_t payload_size,
             /* alloc a new application ID */
             alloc_payload->info.app_id = axal_l1_alloc_appid(&l1_alloc);
             if (alloc_payload->info.app_id == AXIOM_NULL_APP_ID) {
-                alloc_payload->error = AXIOM_RET_ERROR;
+                alloc_payload->info.error = AXIOM_RET_ERROR;
             }
             break;
 
         case AXIOM_CMD_ALLOC:
             alloc_payload->command = AXIOM_CMD_ALLOC_REPLY;
             if (alloc_payload->info.app_id == AXIOM_NULL_APP_ID) {
-                alloc_payload->error = AXIOM_RET_ERROR;
+                alloc_payload->info.error = AXIOM_RET_ERROR;
             } else {
                 /* allocate private and shared regions */
-                alloc_payload->error = axiom_allocator_alloc(alloc_payload);
+                alloc_payload->info.error = axiom_allocator_alloc(alloc_payload);
             }
             break;
 
@@ -93,7 +93,7 @@ axiom_allocator(axiom_dev_t *dev, axiom_node_id_t src, size_t payload_size,
 
         default:
             EPRINTF("receive a not AXIOM_ALLOC message");
-            alloc_payload->error = AXIOM_RET_ERROR;
+            alloc_payload->info.error = AXIOM_RET_ERROR;
             break;
     }
 
