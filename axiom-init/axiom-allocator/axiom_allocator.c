@@ -22,34 +22,10 @@
 #include "../axiom-init.h"
 #include "axiom_allocator_l1.h"
 
-static axiom_allocator_l1_t l1_alloc;
-
 void
 axiom_allocator_init()
 {
-    axal_l1_init(&l1_alloc);
-}
-
-static axiom_err_t
-axiom_allocator_alloc(axiom_allocator_payload_t *alloc_payload)
-{
-    int ret;
-
-    /* shared blocks */
-    ret = axal_l1_alloc(&l1_alloc, &(alloc_payload->info.shared_start),
-            &(alloc_payload->info.shared_size), alloc_payload->info.app_id);
-
-    if (ret < 0)
-        return AXIOM_RET_ERROR;
-
-    /* private blocks */
-    ret = axal_l1_alloc(&l1_alloc, &(alloc_payload->info.private_start),
-            &(alloc_payload->info.private_size), alloc_payload->info.app_id);
-
-    if (ret < 0)
-        return AXIOM_RET_ERROR;
-
-    return AXIOM_RET_OK;
+    axiom_allocator_l1_init();
 }
 
 void
@@ -63,32 +39,22 @@ axiom_allocator(axiom_dev_t *dev, axiom_node_id_t src, size_t payload_size,
 
     IPRINTF(verbose, "ALLOCATOR: message received - src_node: %u", src);
 
-    alloc_payload->info.error = AXIOM_RET_OK;
-
     switch (alloc_payload->command) {
         case AXIOM_CMD_ALLOC_APPID:
             alloc_payload->command = AXIOM_CMD_ALLOC_APPID_REPLY;
             /* alloc a new application ID */
-            alloc_payload->info.app_id = axal_l1_alloc_appid(&l1_alloc);
-            if (alloc_payload->info.app_id == AXIOM_NULL_APP_ID) {
-                alloc_payload->info.error = AXIOM_RET_ERROR;
-            }
+            reply = axiom_allocator_l1_alloc(&alloc_payload->info);
             break;
 
         case AXIOM_CMD_ALLOC:
             alloc_payload->command = AXIOM_CMD_ALLOC_REPLY;
-            if (alloc_payload->info.app_id == AXIOM_NULL_APP_ID) {
-                alloc_payload->info.error = AXIOM_RET_ERROR;
-            } else {
-                /* allocate private and shared regions */
-                alloc_payload->info.error = axiom_allocator_alloc(alloc_payload);
-            }
+            /* allocate private and shared regions */
+            reply = axiom_allocator_l1_alloc(&alloc_payload->info);
             break;
 
         case AXIOM_CMD_ALLOC_RELEASE:
             /* release the app_id and all blocks owned by app_id */
-            axal_l1_release(&l1_alloc, alloc_payload->info.app_id);
-            reply = 0;
+            reply = axiom_allocator_l1_release(&alloc_payload->info);
             break;
 
         default:

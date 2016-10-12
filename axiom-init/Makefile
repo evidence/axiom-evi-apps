@@ -39,7 +39,7 @@ all: $(APPS) $(LIBS)
 axiom-init: axiom-init.o \
 	$(AXIOM_DISC)/axiom_discovery_node.o $(AXIOM_DISC)/axiom_discovery_protocol.o $(AXIOM_DISC)/axiom_routing.o \
 	$(AXIOM_PONG)/axiom_pong.o $(AXIOM_TR_REPLY)/axiom_traceroute_reply.o $(AXIOM_NETPERF_REPLY)/axiom_netperf_reply.o \
-	$(AXIOM_ALLOCATOR)/axiom_allocator.o \
+	$(AXIOM_ALLOCATOR)/axiom_allocator.o $(AXIOM_ALLOCATOR)/axiom_allocator_l1.o \
 	$(AXIOM_NIC_UL)/libaxiom_user_api.a $(AXIOM_SPAWN)/axiom_spawn.o $(AXIOM_COMMON_UL)/libaxiom_common.a \
 	$(AXIOM_SESSION)/axiom_session.o $(AXIOM_COMMON_UL)/libaxiom_common.a
 
