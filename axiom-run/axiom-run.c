@@ -751,16 +751,16 @@ int main(int argc, char **argv) {
         char var[128];
 
         /* send request for unique app-id */
-        err = axinit_get_appid(dev, master_port);
+        err = axal12_get_appid(dev, master_port);
         if (!AXIOM_RET_IS_OK(err)) {
-            elogmsg("axinit_get_appid()");
+            elogmsg("axal12_get_appid()");
             exit(EXIT_FAILURE);
         }
 
         /* wait reply of unique app-id */
-        err = axinit_get_appid_reply(dev, &app_id);
+        err = axal12_get_appid_reply(dev, &app_id);
         if (!AXIOM_RET_IS_OK(err)) {
-            elogmsg("axinit_get_appid_reply()");
+            elogmsg("axal12_get_appid_reply()");
             exit(EXIT_FAILURE);
         }
 

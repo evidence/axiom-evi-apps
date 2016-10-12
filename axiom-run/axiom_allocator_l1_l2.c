@@ -8,11 +8,11 @@
 #include "axiom_nic_packets.h"
 #include "axiom_nic_api_user.h"
 #include "axiom_nic_init.h"
-#include "axiom_init_api.h"
+#include "axiom_allocator_l1_l2.h"
 
 
 axiom_err_t
-axinit_get_appid(axiom_dev_t *dev, axiom_port_t reply_port)
+axal12_get_appid(axiom_dev_t *dev, axiom_port_t reply_port)
 {
     axiom_allocator_payload_t alloc_payload;
     axiom_err_t ret;
@@ -30,7 +30,7 @@ axinit_get_appid(axiom_dev_t *dev, axiom_port_t reply_port)
 }
 
 axiom_err_t
-axinit_get_appid_reply(axiom_dev_t *dev, axiom_app_id_t *appid)
+axal12_get_appid_reply(axiom_dev_t *dev, axiom_app_id_t *appid)
 {
     axiom_allocator_payload_t payload;
     axiom_raw_payload_size_t size = sizeof(payload);
@@ -56,7 +56,7 @@ axinit_get_appid_reply(axiom_dev_t *dev, axiom_app_id_t *appid)
 }
 
 axiom_err_t
-axinit_alloc(axiom_dev_t *dev, axiom_port_t reply_port, axiom_app_id_t appid,
+axal12_alloc(axiom_dev_t *dev, axiom_port_t reply_port, axiom_app_id_t appid,
         uint64_t private_size, uint64_t shared_size)
 {
     axiom_allocator_payload_t alloc_payload;
@@ -78,7 +78,7 @@ axinit_alloc(axiom_dev_t *dev, axiom_port_t reply_port, axiom_app_id_t appid,
 }
 
 axiom_err_t
-axinit_alloc_parsereply(void *payload, size_t payload_size,
+axal12_alloc_parsereply(void *payload, size_t payload_size,
         uint64_t *private_start, uint64_t *private_size, uint64_t *shared_start,
         uint64_t *shared_size)
 {
@@ -100,7 +100,7 @@ axinit_alloc_parsereply(void *payload, size_t payload_size,
 }
 
 axiom_err_t
-axinit_release(axiom_dev_t *dev, axiom_app_id_t appid)
+axal12_release(axiom_dev_t *dev, axiom_app_id_t appid)
 {
     axiom_allocator_payload_t alloc_payload;
     axiom_err_t ret;

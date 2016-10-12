@@ -45,7 +45,7 @@ axiom-init: axiom-init.o \
 
 axiom-init.o: axiom-init.c axiom-init.h $(HEADERS)
 
-lib/libaxiom_init_api.a: lib/execvpe.o lib/allocator.o
+lib/libaxiom_init_api.a: lib/execvpe.o
 	$(AR) rcs $@ $?
 
 $(AXIOM_NIC_UL)/%:

@@ -26,6 +26,7 @@ extern "C" {
 #include "axiom_init_api.h"
 #include "axiom_common.h"
 #include "axiom_run_api.h"
+#include "axiom_allocator_l1_l2.h"
 
     /* message log zones */
 

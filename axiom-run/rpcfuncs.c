@@ -44,10 +44,10 @@ void rpc_release_allocator(axiom_dev_t *dev) {
     axiom_err_t ret;
 
     if (rpc_alloc.status == RA_SETUP) {
-        ret = axinit_release(dev, rpc_alloc.info.app_id);
+        ret = axal12_release(dev, rpc_alloc.info.app_id);
         if (!AXIOM_RET_IS_OK(ret)) {
             zlogmsg(LOG_ERROR, LOGZ_MASTER,
-                    "MASTER: axinit_release() error %d", ret);
+                    "MASTER: axal12_release() error %d", ret);
         }
 
         axal_l2_release(&rpc_alloc.l2_alloc);
@@ -68,12 +68,12 @@ int rpc_setup_allocator(axiom_dev_t *dev, axiom_node_id_t src_node, size_t size,
         return -1;
     }
 
-    ret = axinit_alloc_parsereply(inmsg, size, &rpc_alloc.info.private_start,
+    ret = axal12_alloc_parsereply(inmsg, size, &rpc_alloc.info.private_start,
             &rpc_alloc.info.private_size, &rpc_alloc.info.shared_start,
             &rpc_alloc.info.shared_size);
     if (!AXIOM_RET_IS_OK(ret)) {
         zlogmsg(LOG_ERROR, LOGZ_MASTER,
-                "MASTER: axinit_alloc_parsereply() error %d", ret);
+                "MASTER: axal12_alloc_parsereply() error %d", ret);
         rpc_alloc.info.error = ret;
         goto reply;
     }
@@ -120,10 +120,10 @@ static void axrun_rpc_alloc(axiom_dev_t *dev, axiom_node_id_t src_node, int size
 
     rpc_alloc.status = RA_ALLOC;
 
-    ret = axinit_alloc(dev, master_port, rpc_alloc.info.app_id,
+    ret = axal12_alloc(dev, master_port, rpc_alloc.info.app_id,
             info->private_size, info->shared_size);
     if (!AXIOM_RET_IS_OK(ret)) {
-        zlogmsg(LOG_ERROR, LOGZ_MASTER, "MASTER: axinit_alloc error %d", ret);
+        zlogmsg(LOG_ERROR, LOGZ_MASTER, "MASTER: axal12_alloc error %d", ret);
         rpc_alloc.status = RA_INIT;
         info->error = AXIOM_RET_ERROR;
         goto reply;
