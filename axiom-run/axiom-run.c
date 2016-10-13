@@ -91,6 +91,13 @@ static void _usage(char *msg, ...) {
     fprintf(stderr, "         1   NODE:\n");
     fprintf(stderr, "-e, --exit\n");
     fprintf(stderr, "    exit service\n");
+    fprintf(stderr, "-E, --exitmode [MODE]\n");
+    fprintf(stderr, "    the exit code returned by axiom-run master when the exit service is enabled [default:0]\n");
+    fprintf(stderr, "    MODE 0   normal or greather (i.e. the greather exit code of all spawn process)\n");
+    fprintf(stderr, "         1   lesser mode (i.e. the lesser exit code of all spawn process):\n");
+    fprintf(stderr, "         2   first mode (i.e. the first exit code of all spawn process):\n");
+    fprintf(stderr, "         3   last mode (i.e. the last exit code of all spawn process):\n");
+    fprintf(stderr, "    (if some spawned process died for a signal then the exit code is the first signal caught)\n");
     fprintf(stderr, "-b, --barrier\n");
     fprintf(stderr, "    barrier service\n");
     fprintf(stderr, "-c, --rpc\n");
@@ -117,6 +124,7 @@ static struct option long_options[] = {
     {"redirect", no_argument, 0, 'r'},
     {"ident", optional_argument, 0, 'i'},
     {"exit", no_argument, 0, 'e'},
+    {"exitmode", required_argument, 0, 'E'},
     {"barrier", no_argument, 0, 'b'},
     {"rpc", no_argument, 0, 'c'},
     {"slave", no_argument, 0, 's'},
@@ -514,7 +522,8 @@ int main(int argc, char **argv) {
     strlist_t env;
     int exitval=0,myexit;
     int res;
-
+    int _mode;
+    
     logmsg_init();
     zlogmsg(LOG_INFO, LOGZ_MAIN, "axiom-run started");
 
@@ -522,7 +531,7 @@ int main(int argc, char **argv) {
     // command line parsing
     //
 
-    while ((opt = getopt_long(argc, argv, "+rebcsp:P:m:hn:N:u:g:i::", long_options, &long_index)) != -1) {
+    while ((opt = getopt_long(argc, argv, "+rebcsp:E:P:m:hn:N:u:g:i::", long_options, &long_index)) != -1) {
         switch (opt) {
             case 'P':
                 if (strcmp(optarg,"gasnet")==0) {
@@ -570,6 +579,15 @@ int main(int argc, char **argv) {
                 break;
             case 'e':
                 services |= EXIT_SERVICE;
+                break;
+            case 'E':
+                _mode = atoi(optarg);
+                if (_mode<0||_mode>3) {
+                    _usage("error on -E|--exitmode: mode must be between 0 and 3");
+                    exit(-1);
+                }
+                flags&=~EXIT_FLAG_MASK;
+                flags|=(_mode<<EXIT_FLAG_SHIFT);
                 break;
             case 'n':
                 nodes = decode_node_arg(optarg);
