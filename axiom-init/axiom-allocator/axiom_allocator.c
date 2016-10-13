@@ -43,7 +43,7 @@ axiom_allocator(axiom_dev_t *dev, axiom_node_id_t src, size_t payload_size,
         case AXIOM_CMD_ALLOC_APPID:
             alloc_payload->command = AXIOM_CMD_ALLOC_APPID_REPLY;
             /* alloc a new application ID */
-            reply = axiom_allocator_l1_alloc(&alloc_payload->info);
+            reply = axiom_allocator_l1_alloc_appid(&alloc_payload->info);
             break;
 
         case AXIOM_CMD_ALLOC:

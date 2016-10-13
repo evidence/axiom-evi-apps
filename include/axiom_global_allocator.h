@@ -18,7 +18,7 @@ typedef struct axiom_galloc_info {
     uint64_t private_start;     /*!< \brief Start address of private region */
     uint64_t private_size;      /*!< \brief Size of private region */
     uint8_t  app_id;            /*!< \brief Application ID */
-    uint8_t  error;             /*!< \brief axiom_err_t error */
+    int8_t   error;             /*!< \brief axiom_err_t error */
     uint8_t  spare[7];
 } axiom_galloc_info_t;
 

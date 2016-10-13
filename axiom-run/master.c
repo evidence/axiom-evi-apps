@@ -265,9 +265,9 @@ static void *master_receiver(void *data) {
     lassert(barrier != NULL);
     memset(barrier, 0, sizeof (barrier_info_t)*(AXRUN_MAX_BARRIER_ID + 1));
 
-    /* init the allocator handled through RPC */
-    if (rpc_init_allocator(info->app_id)) {
-        elogmsg("rpc_init_allocator()");
+    /* init the RPC */
+    if (rpc_init(info->app_id)) {
+        elogmsg("rpc_init()");
         exit(EXIT_FAILURE);
     }
 
@@ -385,23 +385,13 @@ static void *master_receiver(void *data) {
             } else {
                 zlogmsg(LOG_WARN, LOGZ_MASTER, "MASTER: received not served BARRIER message from node %d", node);
             }
-        } else if (buffer.header.command == CMD_RPC) {
+        } else if (buffer.header.command == CMD_RPC || buffer.header.command == AXIOM_CMD_ALLOC_REPLY) {
             //
             // rpc service...
             //
             zlogmsg(LOG_INFO, LOGZ_MASTER, "MASTER: received RPC message from %d (function=%d)", node,buffer.header.rpc.function);
             if (info->services & RPC_SERVICE) {
                 rpc_service(info->dev, node, size, &buffer);
-            } else {
-                zlogmsg(LOG_WARN, LOGZ_MASTER, "MASTER: received not served RPC message from node %d", node);
-            }
-        } else if (buffer.header.command == AXIOM_CMD_ALLOC_REPLY) {
-            //
-            // Reply from AXIOM ALLOCATOR MASTER INIT
-            //
-            zlogmsg(LOG_INFO, LOGZ_MASTER, "MASTER: received REPLY from MASTER INIT message from %d", node);
-            if (info->services & (APPID_SERVICE | RPC_SERVICE)) {
-                rpc_setup_allocator(info->dev, node, size, &buffer);
             } else {
                 zlogmsg(LOG_WARN, LOGZ_MASTER, "MASTER: received not served RPC message from node %d", node);
             }
@@ -414,7 +404,7 @@ static void *master_receiver(void *data) {
     zlogmsg(LOG_INFO, LOGZ_MASTER, "MASTER: exiting receiver thread");
 
     // release resources
-    rpc_release_allocator(info->dev);
+    rpc_release(info->dev);
     free(barrier);
     for (i = 0; i < MAX_NUM_NODES; i++) {
         free(infoout[i].buffer);

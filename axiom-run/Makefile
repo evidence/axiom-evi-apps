@@ -29,7 +29,7 @@ LDLIBS += -laxiom_user_api -laxiom_init_api -laxiom_common -lpthread
 
 all: $(APPS) $(LIBS) $(TAPPS)
 
-axiom-run: axiom-run.o master.o slave.o rpcfuncs.o axiom_allocator_l1_l2.o $(AXIOM_COMMON_UL)/libaxiom_common.a $(AXIOM_APPS_UL)/libaxiom_init_api.a
+axiom-run: axiom-run.o master.o slave.o rpcfuncs.o axiom_allocator_l1_l2.o axiom_allocator_l2.o $(AXIOM_COMMON_UL)/libaxiom_common.a $(AXIOM_APPS_UL)/libaxiom_init_api.a
 
 lib/libaxiom_run_api.a: lib/sync.o lib/rpc.o
 	$(AR) rcs $@ $?

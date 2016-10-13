@@ -41,12 +41,14 @@ axal12_get_appid_reply(axiom_dev_t *dev, axiom_app_id_t *appid)
 
     ret = axiom_recv_raw(dev, &src, &port, &type, &size, &payload);
     if (!AXIOM_RET_IS_OK(ret)) {
+        EPRINTF("error: %d", ret);
         return ret;
     }
 
     if ((src != AXIOM_MASTER_NODE_INIT) ||
             (payload.command != AXIOM_CMD_ALLOC_APPID_REPLY) ||
             (payload.info.error != AXIOM_RET_OK)) {
+        EPRINTF("info.error: %d", payload.info.error);
         return AXIOM_RET_ERROR;
     }
 
