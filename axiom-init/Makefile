@@ -1,7 +1,7 @@
 AXIOM_INCLUDE := ../../axiom-evi-nic/include
 AXIOM_APPS_INCLUDE := ../include
-AXIOM_ALL_INCLUDE := ../../axiom-allocator/include
-AXIOM_ALL_LIB := ../../axiom-allocator/src/.libs
+AXIOM_ALLOC_INCLUDE := ../../axiom-allocator/include
+AXIOM_ALLOC_LIB := ../../axiom-allocator/src/.libs
 AXIOM_DISC := ./axiom-discovery
 AXIOM_PONG := ./axiom-pong
 AXIOM_SPAWN := ./axiom-spawn
@@ -15,7 +15,7 @@ AXIOM_COMMON_UL := ../axiom_common_library
 APPS := axiom-init
 LIBS := lib/libaxiom_init_api.a
 
-HEADERS := $(AXIOM_INCLUDE)/*.h $(AXIOM_APPS_INCLUDE)/*.h $(AXIOM_ALL_INCLUDE)/*.h
+HEADERS := $(AXIOM_INCLUDE)/*.h $(AXIOM_APPS_INCLUDE)/*.h $(AXIOM_ALLOC_INCLUDE)/*.h
 CLEANFILES = $(APPS) $(LIBS) *.o lib/*.o $(AXIOM_PONG)/*.o $(AXIOM_TR_REPLY)/*.o
 CLEANFILES += $(AXIOM_NETPERF_REPLY)/*.o $(AXIOM_SESSION)/*.o $(AXIOM_SPAWN)/*.o
 CLEANFILES += $(AXIOM_ALLOCATOR)/*.o
@@ -32,8 +32,8 @@ AR := ${CCPREFIX}ar
 
 DFLAGS := -g -DPDEBUG
 CFLAGS += -Wall $(DFLAGS) -I$(PWD)/$(AXIOM_INCLUDE) -I$(PWD)/$(AXIOM_APPS_INCLUDE)
-CFLAGS += -I$(PWD)/$(AXIOM_ALL_INCLUDE)
-LDFLAGS += -L$(PWD)/$(AXIOM_NIC_UL) -L$(PWD)/$(AXIOM_ALL_LIB) -L$(AXIOM_COMMON_UL)
+CFLAGS += -I$(PWD)/$(AXIOM_ALLOC_INCLUDE)
+LDFLAGS += -L$(PWD)/$(AXIOM_NIC_UL) -L$(PWD)/$(AXIOM_ALLOC_LIB) -L$(AXIOM_COMMON_UL)
 LDLIBS += -laxiom_user_api -laxiom_allocator_l1 -laxiom_common
 
 .PHONY: all install clean

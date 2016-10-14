@@ -750,17 +750,10 @@ int main(int argc, char **argv) {
     if (!slave && (services & APPID_SERVICE)) {
         char var[128];
 
-        /* send request for unique app-id */
-        err = axal12_get_appid(dev, master_port);
+        /* send request and wait the reply for unique app-id */
+        err = axiom_al2_alloc_appid(dev, master_port, &app_id);
         if (!AXIOM_RET_IS_OK(err)) {
-            elogmsg("axal12_get_appid()");
-            exit(EXIT_FAILURE);
-        }
-
-        /* wait reply of unique app-id */
-        err = axal12_get_appid_reply(dev, &app_id);
-        if (!AXIOM_RET_IS_OK(err)) {
-            elogmsg("axal12_get_appid_reply()");
+            elogmsg("axiom_al2_alloc_appid()");
             exit(EXIT_FAILURE);
         }
 

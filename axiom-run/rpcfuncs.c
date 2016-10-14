@@ -19,11 +19,11 @@ static rpc_reply_t rpc_reply;
 extern axiom_err_t my_axiom_send_raw(axiom_dev_t *dev, axiom_port_t port, axiom_raw_payload_size_t size, axiom_raw_payload_t *payload);
 
 int rpc_init(axiom_app_id_t app_id) {
-    return axiom_allocator_l2_init(app_id);
+    return axiom_al2_init(app_id);
 }
 
 void rpc_release(axiom_dev_t *dev) {
-    axiom_allocator_l2_release(dev);
+    axiom_al2_release(dev);
 }
 
 void rpc_postpone_reply(axiom_node_id_t reply_node, axiom_port_t reply_port,
@@ -52,6 +52,8 @@ int rpc_send_reply(axiom_dev_t *dev, size_t size, void *buffer)
         zlogmsg(LOG_ERROR, LOGZ_MASTER, "MASTER: axiom_send_raw error %d", err);
         return -1;
     }
+
+    return 0;
 }
 
 int rpc_service(axiom_dev_t *dev, axiom_node_id_t src_node, size_t size, buffer_t *inmsg) {
@@ -66,7 +68,7 @@ int rpc_service(axiom_dev_t *dev, axiom_node_id_t src_node, size_t size, buffer_
         axiom_galloc_info_t info;
         int ret;
 
-        ret = axiom_allocator_l2_alloc_reply(dev, src_node, size, inmsg, &info);
+        ret = axiom_al2_alloc_reply(dev, src_node, size, inmsg, &info);
         if (ret) {
             return ret;
         }
@@ -85,17 +87,17 @@ int rpc_service(axiom_dev_t *dev, axiom_node_id_t src_node, size_t size, buffer_
             reply = 1;
             break;
         case AXRUN_RPC_ALLOC:
-            reply = axiom_allocator_l2_alloc(dev, src_node, master_port, size - sizeof(inmsg->header), &inmsg->raw);
+            reply = axiom_al2_alloc(dev, src_node, master_port, size - sizeof(inmsg->header), &inmsg->raw);
             if (!reply) {
                 /* postpone reply to slave, because we are waiting the reply from MASTER INIT */
                 rpc_postpone_reply(src_node, slave_port, inmsg->header);
             }
             break;
         case AXRUN_RPC_GET_PRBLOCK:
-            reply = axiom_allocator_l2_get_prblock(dev, src_node, size - sizeof(inmsg->header), &inmsg->raw);
+            reply = axiom_al2_get_prblock(dev, src_node, size - sizeof(inmsg->header), &inmsg->raw);
             break;
         case AXRUN_RPC_GET_SHBLOCK:
-            reply = axiom_allocator_l2_get_shblock(dev, src_node, size - sizeof(inmsg->header), &inmsg->raw);
+            reply = axiom_al2_get_shblock(dev, src_node, size - sizeof(inmsg->header), &inmsg->raw);
             break;
         default:
             zlogmsg(LOG_ERROR, LOGZ_MASTER, "MASTER: unknow CMD_RPC from node "

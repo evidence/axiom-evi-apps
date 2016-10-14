@@ -1,5 +1,7 @@
 AXIOM_INCLUDE := ../../axiom-evi-nic/include
 AXIOM_APPS_INCLUDE := ..//include
+AXIOM_ALLOC_INCLUDE := ../../axiom-allocator/include
+AXIOM_ALLOC_LIB := ../../axiom-allocator/src/.libs
 AXIOM_NIC_UL := ../../axiom-evi-nic/axiom_user_library
 AXIOM_APPS_UL := ../axiom-init/lib
 AXIOM_COMMON_UL := ../axiom_common_library
@@ -22,19 +24,23 @@ AR := ${CCPREFIX}ar
 
 DFLAGS := -g -DPDEBUG
 CFLAGS += -Wall -D_GNU_SOURCE $(DFLAGS) -I$(PWD)/$(AXIOM_INCLUDE) -I$(PWD)/$(AXIOM_APPS_INCLUDE)
+CFLAGS += -I$(PWD)/$(AXIOM_ALLOC_INCLUDE)
 LDFLAGS += -L $(AXIOM_COMMON_UL) -L $(AXIOM_NIC_UL) -L $(AXIOM_APPS_UL)
+LDFLAGS += -L$(PWD)/$(AXIOM_ALLOC_LIB)
 LDLIBS += -laxiom_user_api -laxiom_init_api -laxiom_common -lpthread
+LDLIBS += -laxiom_allocator_l2
 
 .PHONY: all clean
 
 all: $(APPS) $(LIBS) $(TAPPS)
 
-axiom-run: axiom-run.o master.o slave.o rpcfuncs.o axiom_allocator_l1_l2.o axiom_allocator_l2.o $(AXIOM_COMMON_UL)/libaxiom_common.a $(AXIOM_APPS_UL)/libaxiom_init_api.a
+axiom-run: axiom-run.o master.o slave.o rpcfuncs.o
 
 lib/libaxiom_run_api.a: lib/sync.o lib/rpc.o
 	$(AR) rcs $@ $?
 
 test/myinfo: test/myinfo.o
+	$(CC) -L$(PWD)/lib -o test/myinfo test/myinfo.o -laxiom_run_api
 
 test/myexch: test/myexch.o
 	$(CC) -L$(PWD)/../../axiom-evi-nic/axiom_user_library -o test/myexch test/myexch.o -laxiom_user_api -lpthread
