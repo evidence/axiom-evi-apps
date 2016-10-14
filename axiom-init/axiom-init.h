@@ -109,10 +109,10 @@ void axiom_session(axiom_dev_t *dev, axiom_node_id_t src, size_t payload_size,
 /*!
  * \brief This function initialize the internal structures used by the allocator
  */
-void axiom_allocator_init();
+void axiom_allocator_l1_init();
 
 /*!
- * \brief This function implements the AXIOM allocator.
+ * \brief This function implements the AXIOM allocator L1.
  *
  * \param dev                   The axiom device private data pointer
  * \param src                   Source node of message
@@ -120,7 +120,7 @@ void axiom_allocator_init();
  * \param payload               Payload of message
  * \param verbose               Enable verbose output
  */
-void axiom_allocator(axiom_dev_t *dev, axiom_node_id_t src, size_t payload_size,
-        void *payload, int verbose);
+void axiom_allocator_l1(axiom_dev_t *dev, axiom_node_id_t src,
+        size_t payload_size, void *payload, int verbose);
 
 #endif /*! AXIOM_INIT_h*/

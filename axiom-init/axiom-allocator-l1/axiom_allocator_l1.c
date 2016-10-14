@@ -1,11 +1,11 @@
 /*!
- * \file axiom_allocator.c
+ * \file axiom_allocator_l1.c
  *
  * \version     v0.8
  * \date        2016-09-23
  *
  * This file contains the functions used in the axiom-init deamon to handle
- * the axiom-allocator messages.
+ * the AXIOM allocator L1 messages.
  */
 #include <stdio.h>
 #include <stdint.h>
@@ -23,13 +23,13 @@
 #include "axiom_allocator_l1.h"
 
 void
-axiom_allocator_init()
+axiom_allocator_l1_init()
 {
-    axiom_allocator_l1_init();
+    axiom_al1_init();
 }
 
 void
-axiom_allocator(axiom_dev_t *dev, axiom_node_id_t src, size_t payload_size,
+axiom_allocator_l1(axiom_dev_t *dev, axiom_node_id_t src, size_t payload_size,
         void *payload, int verbose)
 {
     axiom_err_t ret;
@@ -43,18 +43,18 @@ axiom_allocator(axiom_dev_t *dev, axiom_node_id_t src, size_t payload_size,
         case AXIOM_CMD_ALLOC_APPID:
             alloc_payload->command = AXIOM_CMD_ALLOC_APPID_REPLY;
             /* alloc a new application ID */
-            reply = axiom_allocator_l1_alloc_appid(&alloc_payload->info);
+            reply = axiom_al1_alloc_appid(&alloc_payload->info);
             break;
 
         case AXIOM_CMD_ALLOC:
             alloc_payload->command = AXIOM_CMD_ALLOC_REPLY;
             /* allocate private and shared regions */
-            reply = axiom_allocator_l1_alloc(&alloc_payload->info);
+            reply = axiom_al1_alloc(&alloc_payload->info);
             break;
 
         case AXIOM_CMD_ALLOC_RELEASE:
             /* release the app_id and all blocks owned by app_id */
-            reply = axiom_allocator_l1_release(&alloc_payload->info);
+            reply = axiom_al1_release(&alloc_payload->info);
             break;
 
         default:

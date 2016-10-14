@@ -94,7 +94,7 @@ main(int argc, char **argv)
     }
 
     axiom_spawn_init();
-    axiom_allocator_init();
+    axiom_allocator_l1_init();
 
     if (master) {
         axiom_discovery_master(dev, topology, final_routing_table, verbose);
@@ -145,7 +145,7 @@ main(int argc, char **argv)
             case AXIOM_CMD_ALLOC:
             case AXIOM_CMD_ALLOC_APPID:
             case AXIOM_CMD_ALLOC_RELEASE:
-                axiom_allocator(dev, src, payload_size, &payload, verbose);
+                axiom_allocator_l1(dev, src, payload_size, &payload, verbose);
                 break;
 
             default:
