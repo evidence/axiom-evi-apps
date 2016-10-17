@@ -1,8 +1,9 @@
 AXIOM_INCLUDE := ../axiom-evi-nic/include
 AXIOM_APPS_INCLUDE := ./include
+AXIOM_ALLOC_INCLUDE := ../axiom-allocator/include
 APPS_DIR := axiom-init axiom-recv axiom-send axiom-whoami axiom-info
 APPS_DIR += axiom-ping axiom-traceroute axiom-netperf axiom-rdma axiom-run
-LIBS_DIR := axiom_common_library lib
+LIBS_DIR := axiom_common_library
 CLEAN_DIR := $(addprefix _clean_, $(APPS_DIR) $(LIBS_DIR))
 INSTALL_DIR := $(addprefix _install_, $(APPS_DIR))
 
@@ -15,6 +16,7 @@ CCPREFIX := ${BUILDROOT}/output/host/usr/bin/$(CCARCH)-linux-
 
 DFLAGS := -g -DPDEBUG
 CFLAGS += -Wall $(DFLAGS) -I$(PWD)/$(AXIOM_INCLUDE) -I$(PWD)/$(AXIOM_APPS_INCLUDE)
+CFLAGS += -I$(PWD)/$(AXIOM_ALLOC_INCLUDE)
 
 .PHONY: all clean install $(APPS_DIR) $(LIBS_DIR) $(CLEAN_DIR) $(INSTALL_DIR)
 

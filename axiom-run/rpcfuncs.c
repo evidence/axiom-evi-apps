@@ -65,7 +65,7 @@ int rpc_service(axiom_dev_t *dev, axiom_node_id_t src_node, size_t size, buffer_
      * application (axiom-run slave on master node)
      */
     if (inmsg->header.command == AXIOM_CMD_ALLOC_REPLY) {
-        axiom_galloc_info_t info;
+        axiom_alloc_msg_t info;
         int ret;
 
         ret = axiom_al2_alloc_reply(dev, src_node, size, inmsg, &info);
