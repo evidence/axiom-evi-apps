@@ -12,6 +12,9 @@
 
 #include "axiom_run_api.h"
 
+#define AXIOM_ENV_ALLOC_APPMASTER  "AXIOM_ALLOC_APPMASTER"
+#define AXIOM_ENV_ALLOC_APPID   "AXIOM_ALLOC_APPID"
+
 typedef struct axiom_galloc_info {
     uint64_t shared_start;      /*!< \brief Start address of shared region */
     uint64_t shared_size;       /*!< \brief Size of shared region */

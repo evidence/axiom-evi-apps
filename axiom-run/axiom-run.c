@@ -91,8 +91,8 @@ static void _usage(char *msg, ...) {
     fprintf(stderr, "    barrier service\n");
     fprintf(stderr, "-c, --rpc\n");
     fprintf(stderr, "    rpc service\n");
-    fprintf(stderr, "-a, --appid\n");
-    fprintf(stderr, "    app-id service: assign an unique application ID exported in the env of all process (AXIOM_APPID)\n");
+    fprintf(stderr, "-a, --allocator\n");
+    fprintf(stderr, "    allocator service: handle axiom allocator and assign an unique application ID exported in the env of all process (AXIOM_ALLOC_APPID)\n");
     fprintf(stderr, "-h, --help\n");
     fprintf(stderr, "    print this help\n");
     fprintf(stderr, "note:\n");
@@ -255,7 +255,8 @@ extern char **environ;
  * @param env result (a list of environment variables)
  * @param re a regular expression to select the environment variables (can be null)
  * @param slave if this is the slave process
- * @param noclose if a null must be append to result
+ * @param noclose if it is true, a null is not appended to result
+ * @param nodes bitmap of nodes active in this session (bit0 = 1 if node0 is in the session)
  */
 static void prepare_env(strlist_t *env, regex_t *re, int slave, int noclose, uint64_t nodes) {
     char **ptr = environ;
@@ -552,7 +553,7 @@ int main(int argc, char **argv) {
                 services |= EXIT_SERVICE;
                 break;
             case 'a':
-                services |= APPID_SERVICE;
+                services |= ALLOCATOR_SERVICE;
                 break;
             case 'n':
                 nodes = decode_node_arg(optarg);
@@ -739,15 +740,15 @@ int main(int argc, char **argv) {
     //
 
     sl_init(&env);
-    prepare_env(&env, envreg ? &_envreg : NULL, slave, slave && (services & (BARRIER_SERVICE|RPC_SERVICE)), nodes);
+    prepare_env(&env, envreg ? &_envreg : NULL, slave, 1, nodes);
     if (slave && (services & (BARRIER_SERVICE|RPC_SERVICE))) {
         char var[128];
         snprintf(var, sizeof (var), "AXIOM_USOCK=%d", getpid());
         sl_append(&env, var);
-        sl_append(&env, NULL);
     }
 
-    if (!slave && (services & APPID_SERVICE)) {
+    if (!slave && (services & ALLOCATOR_SERVICE)) {
+        int app_master = __builtin_ctzll(nodes); /* the smallest ID in the session is the app master */
         char var[128];
 
         /* send request and wait the reply for unique app-id */
@@ -757,10 +758,14 @@ int main(int argc, char **argv) {
             exit(EXIT_FAILURE);
         }
 
-        snprintf(var, sizeof(var), "AXIOM_APPID=%d", app_id);
+        snprintf(var, sizeof(var), AXIOM_ENV_ALLOC_APPID"=%d", app_id);
         sl_append(&env, var);
-        sl_append(&env, NULL);
+
+        snprintf(var, sizeof(var), AXIOM_ENV_ALLOC_APPMASTER"=%d", app_master);
+        sl_append(&env, var);
     }
+
+    sl_append(&env, NULL);
 
     //
     // SLAVE or MASTER?

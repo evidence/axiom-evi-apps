@@ -153,8 +153,8 @@ extern "C" {
 #define REDIRECT_SERVICE 0x04
     /** rpc service*/
 #define RPC_SERVICE 0x08
-    /* appid service */
-#define APPID_SERVICE 0x10
+    /* allocator service */
+#define ALLOCATOR_SERVICE 0x10
 
     /* flags */
 
