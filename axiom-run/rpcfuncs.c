@@ -68,13 +68,13 @@ int rpc_service(axiom_dev_t *dev, axiom_node_id_t src_node, size_t size, buffer_
         axiom_alloc_msg_t info;
         int ret;
 
-        ret = axiom_al2_alloc_reply(dev, src_node, size, inmsg, &info);
+        ret = axiom_al2_alloc_reply(dev, size, inmsg, &info);
         if (ret) {
-            return ret;
+            /* now we can send the reply of AXRUN_RPC_ALLOC previously received */
+            return rpc_send_reply(dev, sizeof(info), &info);
         }
 
-        /* now we can send the reply of AXRUN_RPC_ALLOC previously received */
-        return rpc_send_reply(dev, sizeof(info), &info);
+        return 0;
     }
 
     switch (inmsg->header.rpc.function) {
@@ -87,7 +87,7 @@ int rpc_service(axiom_dev_t *dev, axiom_node_id_t src_node, size_t size, buffer_
             reply = 1;
             break;
         case AXRUN_RPC_ALLOC:
-            reply = axiom_al2_alloc(dev, src_node, master_port, size - sizeof(inmsg->header), &inmsg->raw);
+            reply = axiom_al2_alloc(dev, master_port, size - sizeof(inmsg->header), &inmsg->raw);
             if (!reply) {
                 /* postpone reply to slave, because we are waiting the reply from MASTER INIT */
                 rpc_postpone_reply(src_node, slave_port, inmsg->header);
