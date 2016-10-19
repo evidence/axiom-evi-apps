@@ -15,13 +15,14 @@
 
 #include "axiom_nic_packets.h"
 #include "axiom_nic_discovery.h"
+#include "axiom_nic_init.h"
 #include "axiom_routing.h"
 #include "axiom_discovery_protocol.h"
 #include "../axiom-init.h"
 
 static void
 print_topology(axiom_node_id_t tpl[][AXIOM_INTERFACES_MAX],
-        axiom_node_id_t total_nodes)
+        axiom_node_id_t last_node)
 {
     int i, j;
 
@@ -32,7 +33,7 @@ print_topology(axiom_node_id_t tpl[][AXIOM_INTERFACES_MAX],
     }
     printf("\n");
 
-    for (i = 0; i < total_nodes; i++) {
+    for (i = 0; i < last_node; i++) {
         printf("%d", i);
         for (j = 0; j < AXIOM_INTERFACES_MAX; j++) {
             printf("\t%u", tpl[i][j]);
@@ -79,13 +80,13 @@ axiom_discovery_master(axiom_dev_t *dev,
         axiom_if_id_t final_routing_table[AXIOM_NODES_MAX], int verbose)
 {
     axiom_msg_id_t ret;
-    axiom_node_id_t total_nodes = 0;
+    axiom_node_id_t last_node = 0, master_id = AXIOM_INIT_MASTER_NODE;
     axiom_if_id_t routing_tables[AXIOM_NODES_MAX][AXIOM_NODES_MAX];
 
     IPRINTF(verbose, "MASTER: start discovery protocol");
 
     /* Discovery phase: discover the global topology */
-    ret = axiom_master_node_discovery(dev, topology, &total_nodes);
+    ret = axiom_master_node_discovery(dev, topology, master_id, &last_node);
     if (!AXIOM_RET_IS_OK(ret)) {
         EPRINTF("MASTER: axiom_master_node_discovery failed");
         return;
@@ -94,29 +95,31 @@ axiom_discovery_master(axiom_dev_t *dev,
 
     IPRINTF(verbose, "MASTER: compute routing tables");
     /* compute each node routing table */
-    axiom_compute_routing_tables(topology, routing_tables, total_nodes);
+    axiom_compute_routing_tables(topology, routing_tables,
+            master_id, last_node);
 
     /* copy its routing table */
-    memcpy(final_routing_table, routing_tables[0],
+    memcpy(final_routing_table, routing_tables[master_id],
             sizeof(axiom_if_id_t)*AXIOM_NODES_MAX);
 
     IPRINTF(verbose, "MASTER: delivery routing tables");
 
     /* delivery of each node routing tables */
-    ret = axiom_delivery_routing_tables(dev, routing_tables, total_nodes);
+    ret = axiom_delivery_routing_tables(dev, routing_tables,
+            master_id, last_node);
     if (!AXIOM_RET_IS_OK(ret)) {
         EPRINTF("MASTER: axiom_delivery_routing_tables failed");
         return;
     }
     IPRINTF(verbose, "MASTER: wait for all delivery reply");
-    ret = axiom_wait_rt_received(dev, total_nodes);
+    ret = axiom_wait_rt_received(dev, master_id, last_node);
     if (!AXIOM_RET_IS_OK(ret)) {
         EPRINTF("Master: axiom_wait_rt_received failed");
         return;
     }
 
     /* Say to all nodes to set the received routing table */
-    ret = axiom_set_routing_table(dev, final_routing_table);
+    ret = axiom_set_routing_table(dev, final_routing_table, 1);
     if (!AXIOM_RET_IS_OK(ret)) {
         EPRINTF("Master: axiom_set_routing_table failed");
         return;
@@ -125,10 +128,10 @@ axiom_discovery_master(axiom_dev_t *dev,
     IPRINTF(verbose, "MASTER: end");
 
     /* print the final topology */
-    print_topology(topology, total_nodes);
+    print_topology(topology, last_node);
 
     /* print local routing table */
-    print_routing_table(dev, AXIOM_MASTER_ID, total_nodes - 1);
+    print_routing_table(dev, master_id, last_node - 1);
 }
 
 /* Slave node code*/
@@ -165,7 +168,7 @@ axiom_discovery_slave(axiom_dev_t *dev,
     IPRINTF(verbose, "SLAVE[%u]: routing table received", node_id);
 
     /* Set local final routing table*/
-    ret = axiom_set_routing_table(dev, final_routing_table);
+    ret = axiom_set_routing_table(dev, final_routing_table, 0);
     if (!AXIOM_RET_IS_OK(ret)) {
         EPRINTF("SLAVE[%u]: axiom_set_routing_table failed", node_id);
         return;

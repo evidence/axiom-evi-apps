@@ -18,12 +18,13 @@
  *
  * \param topology              Network topology discovered
  * \param[out] routing_tables   Routing table for all nodes
- * \param total_nodes           Number of nodes into network
+ * \param master_id             ID of master node
+ * \param last_node             Last ID into network
  */
 void
 axiom_compute_routing_tables(axiom_node_id_t topology[][AXIOM_INTERFACES_MAX],
         axiom_if_id_t routing_tables[][AXIOM_NODES_MAX],
-        axiom_node_id_t total_nodes);
+        axiom_node_id_t master_id, axiom_node_id_t last_node);
 
 /*!
  * \brief This function is executed by the Master node in order to
@@ -31,26 +32,29 @@ axiom_compute_routing_tables(axiom_node_id_t topology[][AXIOM_INTERFACES_MAX],
  *
  * \param dev                   The axiom device private data pointer
  * \param routing_tables        Routing table for all nodes
- * \param total_nodes           Number of nodes into network
+ * \param master_id             ID of master node
+ * \param last_node             Last ID into network
  *
  * \return AXIOM_RET_OK on success, otherwise AXIOM_RET_ERROR
  */
 axiom_err_t
 axiom_delivery_routing_tables(axiom_dev_t *dev,
         axiom_if_id_t routing_tables[][AXIOM_NODES_MAX],
-        axiom_node_id_t total_nodes);
+        axiom_node_id_t master_id, axiom_node_id_t last_node);
 
 /*!
  * \brief This function is executed by the Master node in order to wait for all
  *        nodes routing table receiption confirmation.
  *
  * \param dev                   The axiom device private data pointer
- * \param total_nodes           Number of nodes into network
+ * \param master_id             ID of master node
+ * \param last_node             Last ID into network
  *
  * \return AXIOM_RET_OK on success, otherwise AXIOM_RET_ERROR
  */
 axiom_err_t
-axiom_wait_rt_received(axiom_dev_t *dev,axiom_node_id_t total_nodes);
+axiom_wait_rt_received(axiom_dev_t *dev, axiom_node_id_t master_id,
+        axiom_node_id_t last_node);
 
 /*!
  * \brief This function is executed by each Slave nodes in order to receive its
@@ -74,6 +78,7 @@ axiom_receive_routing_tables(axiom_dev_t *dev, axiom_node_id_t node_id,
  *
  * \param dev                   The axiom device private data pointer
  * \param routing_table         Routing table to set
+ * \param master                Set to 1 in master node
  *
  * \return AXIOM_RET_OK on success, otherwise AXIOM_RET_ERROR
  *
@@ -84,6 +89,6 @@ axiom_receive_routing_tables(axiom_dev_t *dev, axiom_node_id_t node_id,
  */
 axiom_err_t
 axiom_set_routing_table(axiom_dev_t *dev,
-        axiom_if_id_t routing_table[AXIOM_NODES_MAX]);
+        axiom_if_id_t routing_table[AXIOM_NODES_MAX], int master);
 
 #endif /* !AXIOM_ROUTING_H */

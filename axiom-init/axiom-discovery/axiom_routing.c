@@ -110,7 +110,8 @@ axiom_compute_neighbours_route(axiom_node_id_t actual_node_id,
 void
 axiom_compute_routing_tables(axiom_node_id_t topology[][AXIOM_INTERFACES_MAX],
         axiom_if_id_t routing_tables[][AXIOM_NODES_MAX],
-        axiom_node_id_t total_nodes)
+        axiom_node_id_t master_id,
+        axiom_node_id_t last_node)
 {
     /* ID of the node of of which the master is computing the routing table*/
     axiom_node_id_t actual_node_id;
@@ -124,7 +125,8 @@ axiom_compute_routing_tables(axiom_node_id_t topology[][AXIOM_INTERFACES_MAX],
     uint8_t neighbours_counter;
 
     /* for each node of the network */
-    for (actual_node_id = 0; actual_node_id < total_nodes; actual_node_id++)
+    for (actual_node_id = master_id; actual_node_id < last_node;
+            actual_node_id++)
     {
         /* Init 'actual_node_id' node routing table and first and second
            level 'actual_node_id' neighbours tables */
@@ -139,7 +141,7 @@ axiom_compute_routing_tables(axiom_node_id_t topology[][AXIOM_INTERFACES_MAX],
        do
        {
             /* Compute the second level neighbours*/
-           for (node_index = 0; node_index < total_nodes; node_index++)
+           for (node_index = master_id; node_index < last_node; node_index++)
            {
                if (neighbour_table[0][node_index] == AXIOM_NULL_NODE)
                {
@@ -184,7 +186,7 @@ axiom_compute_routing_tables(axiom_node_id_t topology[][AXIOM_INTERFACES_MAX],
                    AXIOM_NODES_MAX*sizeof(axiom_node_id_t));
        /* exit from cycle when 'actual_node_id' routing table has
         * been completed with all the AXIOM_NODES_MAX - 1 nodes info */
-       } while (neighbours_counter < total_nodes - 1);
+       } while (neighbours_counter < last_node - 1);
     }
 }
 
@@ -205,19 +207,19 @@ axiom_init_routing_table(axiom_if_id_t routing_table[AXIOM_NODES_MAX])
 axiom_err_t
 axiom_delivery_routing_tables(axiom_dev_t *dev,
         axiom_if_id_t routing_tables[][AXIOM_NODES_MAX],
-        axiom_node_id_t total_nodes)
+        axiom_node_id_t master_id, axiom_node_id_t last_node)
 {
     axiom_node_id_t dest_node_index, rt_node_index;
     axiom_if_id_t ifaces;
     axiom_err_t ret = AXIOM_RET_OK;
 
     /* MASTER: for each node */
-    for (dest_node_index = AXIOM_MASTER_ID+1;
-         (dest_node_index < total_nodes) && AXIOM_RET_IS_OK(ret);
+    for (dest_node_index = master_id + 1;
+         (dest_node_index < last_node) && AXIOM_RET_IS_OK(ret);
          dest_node_index++)
     {
         /* send the routing table using raw messages */
-        for (rt_node_index = 0; rt_node_index < total_nodes;
+        for (rt_node_index = 0; rt_node_index < last_node;
                 rt_node_index++)
         {
             /* Decode the interfaces between dest_node_index and rt_node_index
@@ -239,8 +241,8 @@ axiom_delivery_routing_tables(axiom_dev_t *dev,
     }
 
     /* all routing table delivered; Master says: "end of delivery phase" */
-    for (dest_node_index = AXIOM_MASTER_ID+1;
-            (dest_node_index < total_nodes) && AXIOM_RET_IS_OK(ret);
+    for (dest_node_index = master_id + 1;
+            (dest_node_index < last_node) && AXIOM_RET_IS_OK(ret);
             dest_node_index++)
 	{
         /* end of sending routing tables */
@@ -257,7 +259,8 @@ axiom_delivery_routing_tables(axiom_dev_t *dev,
 }
 
 axiom_err_t
-axiom_wait_rt_received(axiom_dev_t *dev, axiom_node_id_t total_nodes)
+axiom_wait_rt_received(axiom_dev_t *dev, axiom_node_id_t master_id,
+        axiom_node_id_t last_node)
 {
     axiom_routing_cmd_t cmd = 0;
     axiom_node_id_t payload_node_id;
@@ -268,7 +271,7 @@ axiom_wait_rt_received(axiom_dev_t *dev, axiom_node_id_t total_nodes)
 
     memset(reply_received, 0, sizeof(reply_received));
 
-    while (reply_received_num != (total_nodes -1))
+    while (reply_received_num != (last_node - master_id - 1))
     {
         axiom_node_id_t src_node_id;
 
@@ -344,7 +347,7 @@ axiom_receive_routing_tables(axiom_dev_t *dev, axiom_node_id_t node_id,
             }
 
             /* reply to MASTER that I'have received local routing table */
-            ret = axiom_send_raw_delivery(dev, AXIOM_MASTER_ID,
+            ret = axiom_send_raw_delivery(dev, src_node_id,
                     AXIOM_RT_CMD_RT_REPLY, node_id, 0);
 
             if (!AXIOM_RET_IS_OK(ret)) {
@@ -376,7 +379,7 @@ axiom_write_routing_table(axiom_dev_t *dev,
 
 axiom_err_t
 axiom_set_routing_table(axiom_dev_t *dev,
-        axiom_if_id_t routing_table[AXIOM_NODES_MAX])
+        axiom_if_id_t routing_table[AXIOM_NODES_MAX], int master)
 {
     axiom_if_id_t if_index;
     uint8_t if_features = 0;
@@ -389,7 +392,7 @@ axiom_set_routing_table(axiom_dev_t *dev,
     /* The node reads its node id */
     axiom_node_id_t node_id = axiom_get_node_id(dev);
 
-    if (node_id == AXIOM_MASTER_ID)
+    if (master)
     {
         /* ********************** Master node ******************** */
 

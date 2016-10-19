@@ -249,18 +249,18 @@ discover_phase(axiom_dev_t *dev, axiom_node_id_t *next_id,
 int
 axiom_master_node_discovery(axiom_dev_t *dev,
         axiom_node_id_t topology[][AXIOM_INTERFACES_MAX],
-        axiom_node_id_t *number_of_total_nodes)
+        axiom_node_id_t master_id, axiom_node_id_t *last_node)
 {
-    axiom_node_id_t next_id = AXIOM_MASTER_ID;
+    axiom_node_id_t next_id = master_id;
     int ret;
 
     axiom_topology_init(topology);
 
-    /* sets its id to zero */
-    axiom_set_node_id(dev, AXIOM_MASTER_ID);
+    /* sets master id */
+    axiom_set_node_id(dev, master_id);
 
     ret = discover_phase(dev, &next_id, topology);
-    *number_of_total_nodes = next_id + 1;
+    *last_node = (next_id + 1);
 
     return ret;
 }
