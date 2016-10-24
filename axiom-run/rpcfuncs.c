@@ -93,11 +93,11 @@ int rpc_service(axiom_dev_t *dev, axiom_node_id_t src_node, size_t size, buffer_
                 rpc_postpone_reply(src_node, slave_port, inmsg->header);
             }
             break;
-        case AXRUN_RPC_GET_PRBLOCK:
-            reply = axiom_al2_get_prblock(dev, src_node, size - sizeof(inmsg->header), &inmsg->raw);
+        case AXRUN_RPC_GET_REGIONS:
+            reply = axiom_al2_get_regions(dev, src_node, size - sizeof(inmsg->header), &inmsg->raw);
             break;
-        case AXRUN_RPC_GET_SHBLOCK:
-            reply = axiom_al2_get_shblock(dev, src_node, size - sizeof(inmsg->header), &inmsg->raw);
+        case AXRUN_RPC_ALLOC_SHBLOCK:
+            reply = axiom_al2_alloc_shblock(dev, src_node, size - sizeof(inmsg->header), &inmsg->raw);
             break;
         default:
             zlogmsg(LOG_ERROR, LOGZ_MASTER, "MASTER: unknow CMD_RPC from node "

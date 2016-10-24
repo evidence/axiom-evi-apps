@@ -27,8 +27,8 @@ extern "C" {
 
 #define AXRUN_RPC_PING                  0
 #define AXRUN_RPC_ALLOC                 1
-#define AXRUN_RPC_GET_PRBLOCK           2
-#define AXRUN_RPC_GET_SHBLOCK           3
+#define AXRUN_RPC_GET_REGIONS           2
+#define AXRUN_RPC_ALLOC_SHBLOCK         3
 
     int axrun_rpc(int function, size_t send_size, void *send_payload,
             size_t *recv_size, void *recv_payload, int verbose);
