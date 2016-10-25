@@ -394,7 +394,7 @@ static axiom_err_t start(axiom_dev_t *dev, int master_port, uint64_t nodes, char
 #endif
 
 /** a bitwise for all active nodes nodes */
-#define ALL_NODES_MASK(x) (((x)>=MAX_NODES_SUPPORTED)?0xffffffffffffffff:(((uint64_t)1<<(x))-1))
+#define ALL_NODES_MASK(x) ((((x)>=MAX_NODES_SUPPORTED)?0xffffffffffffffff:(((uint64_t)1<<(x))-1)) << AXIOM_INIT_MASTER_NODE)
 
 /**
  * Build the bitwise node mask from a command line parameter.

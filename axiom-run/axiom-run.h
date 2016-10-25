@@ -23,6 +23,7 @@ extern "C" {
 #include "axiom_nic_api_user.h"
 #include "axiom_nic_regs.h"
 #include "axiom_nic_packets.h"
+#include "axiom_nic_init.h"
 #include "axiom_init_api.h"
 #include "axiom_common.h"
 #include "axiom_run_api.h"
