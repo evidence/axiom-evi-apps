@@ -36,9 +36,11 @@ CFLAGS += -I$(PWD)/$(AXIOM_ALLOC_INCLUDE)
 LDFLAGS += -L$(PWD)/$(AXIOM_NIC_UL) -L$(PWD)/$(AXIOM_ALLOC_LIB) -L$(AXIOM_COMMON_UL)
 LDLIBS += -laxiom_user_api -laxiom_allocator_l1 -laxiom_common
 
-.PHONY: all install clean
+.PHONY: all libs install clean
 
 all: $(APPS) $(LIBS)
+
+libs: $(LIBS)
 
 axiom-init: axiom-init.o \
 	$(AXIOM_DISC)/axiom_discovery_node.o $(AXIOM_DISC)/axiom_discovery_protocol.o $(AXIOM_DISC)/axiom_routing.o \

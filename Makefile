@@ -18,9 +18,13 @@ DFLAGS := -g -DPDEBUG
 CFLAGS += -Wall $(DFLAGS) -I$(PWD)/$(AXIOM_INCLUDE) -I$(PWD)/$(AXIOM_APPS_INCLUDE)
 CFLAGS += -I$(PWD)/$(AXIOM_ALLOC_INCLUDE)
 
-.PHONY: all clean install $(APPS_DIR) $(LIBS_DIR) $(CLEAN_DIR) $(INSTALL_DIR)
+.PHONY: all libs clean install $(APPS_DIR) $(LIBS_DIR) $(CLEAN_DIR) $(INSTALL_DIR)
 
 all: $(LIBS_DIR) $(APPS_DIR)
+
+libs: $(LIBS_DIR)
+	cd axiom-init && CFLAGS="$(CFLAGS)" make CCPREFIX=$(CCPREFIX) DFLAGS="$(DFLAGS)" libs
+	cd axiom-run && CFLAGS="$(CFLAGS)" make CCPREFIX=$(CCPREFIX) DFLAGS="$(DFLAGS)" libs
 
 $(APPS_DIR):: $(LIBS_DIR)
 

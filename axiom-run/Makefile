@@ -30,9 +30,11 @@ LDFLAGS += -L$(PWD)/$(AXIOM_ALLOC_LIB)
 LDLIBS += -laxiom_user_api -laxiom_init_api -laxiom_common -lpthread
 LDLIBS += -laxiom_allocator_l2
 
-.PHONY: all clean
+.PHONY: all libs clean
 
 all: $(APPS) $(LIBS) $(TAPPS)
+
+libs: $(LIBS)
 
 axiom-run: axiom-run.o master.o slave.o rpcfuncs.o
 

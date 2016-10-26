@@ -21,9 +21,11 @@ RANLIB := ${CCPREFIX}ranlib
 DFLAGS := -g -DPDEBUG
 CFLAGS += -Wall $(DFLAGS) -I$(AXIOM_INCLUDE) -I$(AXIOM_APPS_INCLUDE)
 
-.PHONY: all clean install
+.PHONY: all libs clean install
 
 all: $(LIBS)
+
+libs: $(LIBS)
 
 libaxiom_common.a: strlcat.o strlcpy.o strlist.o logmsg.o daemonize.o
 	$(AR) rcs $@ $?
