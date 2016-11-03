@@ -361,6 +361,7 @@ static void *master_receiver(void *data) {
                     
                 }
             }
+            if ((info->flags&EXIT_FLAG_MASK)==NOFAIL_EXIT_FLAG) exit_status=0;
             exit_counter--;
             zlogmsg(LOG_DEBUG, LOGZ_MASTER, "exit_counter now is %d", exit_counter);
             if (exit_counter == 0) {

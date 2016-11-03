@@ -160,8 +160,9 @@ extern "C" {
     /** the form of identification. if IDENT_FLAG is set two form of identification can be written. */
 #define ALTERNATE_IDENT_FLAG 0x02
 
-#define EXIT_FLAG_MASK 0x0c
+#define EXIT_FLAG_MASK 0x1c
 #define EXIT_FLAG_SHIFT 2
+#define NOFAIL_EXIT_FLAG 0x10
 #define FIRST_EXIT_FLAG 0x08
 #define LAST_EXIT_FLAG 0x0c
 #define LESSER_EXIT_FLAG 0x04

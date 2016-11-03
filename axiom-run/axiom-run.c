@@ -94,9 +94,10 @@ static void _usage(char *msg, ...) {
     fprintf(stderr, "-E, --exitmode [MODE]\n");
     fprintf(stderr, "    the exit code returned by axiom-run master when the exit service is enabled [default:0]\n");
     fprintf(stderr, "    MODE 0   normal or greather (i.e. the greather exit code of all spawn process)\n");
-    fprintf(stderr, "         1   lesser mode (i.e. the lesser exit code of all spawn process):\n");
-    fprintf(stderr, "         2   first mode (i.e. the first exit code of all spawn process):\n");
-    fprintf(stderr, "         3   last mode (i.e. the last exit code of all spawn process):\n");
+    fprintf(stderr, "         1   lesser mode (i.e. the lesser exit code of all spawn process)\n");
+    fprintf(stderr, "         2   first mode (i.e. the first exit code of all spawn process)\n");
+    fprintf(stderr, "         3   last mode (i.e. the last exit code of all spawn process)\n");
+    fprintf(stderr, "         4   no fail mode (i.e. return always zero)\n");
     fprintf(stderr, "    (if some spawned process died for a signal then the exit code is the first signal caught)\n");
     fprintf(stderr, "-b, --barrier\n");
     fprintf(stderr, "    barrier service\n");
@@ -591,8 +592,8 @@ int main(int argc, char **argv) {
                 break;
             case 'E':
                 _mode = atoi(optarg);
-                if (_mode<0||_mode>3) {
-                    _usage("error on -E|--exitmode: mode must be between 0 and 3");
+                if (_mode<0||_mode>4) {
+                    _usage("error on -E|--exitmode: mode must be between 0 and 4");
                     exit(-1);
                 }
                 flags&=~EXIT_FLAG_MASK;
