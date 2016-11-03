@@ -249,8 +249,6 @@ axnetperf_rdma(axnetperf_status_t *s)
 {
     axiom_netperf_payload_t payload;
     int payload_size = s->payload_size;
-    axiom_rdma_payload_size_t rdma_psize =
-        payload_size >> AXIOM_RDMA_PAYLOAD_SIZE_ORDER;
     axiom_err_t err;
 
     /* get time of the first sent netperf message */
@@ -259,12 +257,12 @@ axnetperf_rdma(axnetperf_status_t *s)
     for (s->sent_bytes = 0; s->sent_bytes < s->total_bytes;
             s->sent_bytes += payload_size) {
 
+#if 0
         if ((s->total_bytes - s->sent_bytes) < payload_size) {
             payload_size = s->total_bytes - s->sent_bytes;
             rdma_psize = payload_size >> AXIOM_RDMA_PAYLOAD_SIZE_ORDER;
         }
 
-#if 0
         /* write payload to remote node */
         err = axiom_rdma_write(s->dev, s->dest_node, AXIOM_RAW_PORT_INIT,
                 rdma_psize, s->sent_bytes, s->sent_bytes);
@@ -278,10 +276,10 @@ axnetperf_rdma(axnetperf_status_t *s)
     }
 
     if ((s->total_bytes - s->sent_bytes) > 0) {
+#if 0
         rdma_psize = (s->total_bytes - s->sent_bytes)
             >> AXIOM_RDMA_PAYLOAD_SIZE_ORDER;
 
-#if 0
         /* write payload to remote node */
         err = axiom_rdma_write(s->dev, s->dest_node, AXIOM_RAW_PORT_INIT,
                 rdma_psize, s->sent_bytes, s->sent_bytes);
