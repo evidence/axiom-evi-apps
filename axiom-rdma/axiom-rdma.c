@@ -21,10 +21,15 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 
+#include "axiom_allocator.h"
 #include "axiom_nic_types.h"
 #include "axiom_nic_api_user.h"
 #include "axiom_nic_packets.h"
+#include "axiom_run_api.h"
 #include "dprintf.h"
+
+#define MAX(a,b) ((a) > (b) ? (a) : (b))
+#define AXIOM_RDMA_SYNC_ID              12
 
 typedef enum {
     RDMA_READ = 'r',
@@ -42,8 +47,8 @@ typedef struct axrdma_status {
     uint32_t payload_size;
     axiom_addr_t local_offset;
     axiom_addr_t remote_offset;
-    void *rdma_zone;
-    uint64_t rdma_size;
+    uint8_t *rdma_start;
+    size_t rdma_size;
     uint8_t payload[AXIOM_RDMA_PAYLOAD_MAX_SIZE];
 } axrdma_status_t;
 
@@ -120,14 +125,14 @@ axrdma_read(axrdma_status_t *s)
         return;
     }
 
-    printf("[node %u] RDMA read - remote_id: %u size: %u local_offset: 0x%"
-            PRIx32 " remote_offset: 0x%" PRIx32 "\n",
+    printf("[node %u] RDMA read - remote_id: %u size: %u start: %p "
+            "local_offset: 0x%" PRIx32 " remote_offset: 0x%" PRIx32 "\n",
             s->local_id, s->remote_id,
             ((uint32_t)(rdma_psize)) << AXIOM_RDMA_PAYLOAD_SIZE_ORDER,
-            s->local_offset, s->remote_offset);
+            s->rdma_start, s->local_offset, s->remote_offset);
 
-    ret = axiom_rdma_read(s->dev, s->remote_id, s->port, rdma_psize,
-            s->remote_offset, s->local_offset);
+    ret = axiom_rdma_read(s->dev, s->remote_id, rdma_psize,
+            s->rdma_start + s->remote_offset, s->rdma_start + s->local_offset);
 
     if (!AXIOM_RET_IS_OK(ret)) {
         EPRINTF("axiom_rdma_read() failed - ret: 0x%x", ret);
@@ -138,9 +143,9 @@ axrdma_read(axrdma_status_t *s)
 void
 axrdma_write(axrdma_status_t *s)
 {
-    axiom_err_t ret;
     axiom_rdma_payload_size_t rdma_psize =
         s->payload_size >> AXIOM_RDMA_PAYLOAD_SIZE_ORDER;
+    axiom_err_t ret;
 
     if (s->remote_id == AXIOM_NULL_NODE) {
         EPRINTF("You must specify the remote node [-n]");
@@ -159,14 +164,14 @@ axrdma_write(axrdma_status_t *s)
         return;
     }
 
-    printf("[node %u] RDMA write - remote_id: %u size: %u local_offset: 0x%"
-            PRIx32 " remote_offset: 0x%" PRIx32 "\n",
+    printf("[node %u] RDMA write - remote_id: %u size: %u start: %p "
+            "local_offset: 0x%" PRIx32 " remote_offset: 0x%" PRIx32 "\n",
             s->local_id, s->remote_id,
             ((uint32_t)(rdma_psize)) << AXIOM_RDMA_PAYLOAD_SIZE_ORDER,
-            s->local_offset, s->remote_offset);
+            s->rdma_start, s->local_offset, s->remote_offset);
 
-    ret = axiom_rdma_write(s->dev, s->remote_id, s->port, rdma_psize,
-            s->local_offset, s->remote_offset);
+    ret = axiom_rdma_write(s->dev, s->remote_id, rdma_psize,
+            s->rdma_start + s->local_offset, s->rdma_start + s->remote_offset);
 
     if (!AXIOM_RET_IS_OK(ret)) {
         EPRINTF("axiom_rdma_write() failed - ret: 0x%x", ret);
@@ -177,6 +182,7 @@ axrdma_write(axrdma_status_t *s)
 void
 axrdma_dump(axrdma_status_t *s)
 {
+    uint32_t offset;
     uint8_t *dump;
     int i;
 
@@ -185,33 +191,47 @@ axrdma_dump(axrdma_status_t *s)
         return;
     }
 
-    dump = s->rdma_zone + s->local_offset;
+    if (s->local_id != s->remote_id) {
+        offset = s->local_offset;
+    } else {
+        offset = s->remote_offset;
+    }
+
+    dump = s->rdma_start + offset;
 
     printf("[node %u] RDMA local dump - start: %p end: %p size: %" PRIu32,
             s->local_id, dump, dump + s->payload_size - 1, s->payload_size);
 
     for (i = 0; i < s->payload_size; i++) {
         if (!(i % 16))
-            printf("\n%08x ", s->local_offset + i);
+            printf("\n%08x ", offset + i);
 
         printf("%02x ", dump[i]);
     }
 
     printf("\n");
+    fflush(stdout);
 }
 
 void
 axrdma_store(axrdma_status_t *s)
 {
-    void *start = s->rdma_zone + s->local_offset;
+    uint32_t offset;
+    void *start;
+
+    if (s->local_id != s->remote_id) {
+        offset = s->local_offset;
+    } else {
+        offset = s->remote_offset;
+    }
+
+    start = s->rdma_start + offset;
 
     printf("[node %u] RDMA local store - start: %p end: %p size: %u\n",
             s->local_id, start, start + s->payload_size - 1, s->payload_size);
 
     memcpy(start, &s->payload, s->payload_size);
 
-    if (verbose)
-        axrdma_dump(s);
 }
 
 int
@@ -227,8 +247,7 @@ main(int argc, char **argv)
         .remote_offset = 0
     };
     char rdma_mode_char;
-    int long_index =0;
-    int opt = 0;
+    int long_index = 0, opt = 0, ret;
     static struct option long_options[] = {
         {"mode", required_argument, 0, 'm'},
         {"node", required_argument, 0, 'n'},
@@ -314,7 +333,7 @@ main(int argc, char **argv)
     }
 
     /* read payload list */
-    if (s.mode == LOCAL_STORE) {
+    if (s.mode == LOCAL_STORE || s.mode == RDMA_READ || s.mode == RDMA_WRITE) {
         uint32_t payload_read = 0, orig_psize, i;
 
         if (s.payload_size == 0 || (s.payload_size > sizeof(s.payload))) {
@@ -342,6 +361,7 @@ main(int argc, char **argv)
             memcpy(&s.payload[payload_read], &s.payload[0], orig_psize);
             payload_read += orig_psize;
         }
+
         if ((s.payload_size - payload_read) > 0) {
             memcpy(&s.payload[payload_read], &s.payload[0],
                     s.payload_size - payload_read);
@@ -357,40 +377,97 @@ main(int argc, char **argv)
 
     s.local_id = axiom_get_node_id(s.dev);
 
-    /* bind the current process on port */
-#if 0
-    err = axiom_bind(dev, port);
-#endif
 
-    /* map rdma zone */
-    s.rdma_zone = axiom_rdma_mmap(s.dev, &s.rdma_size);
-    if (!s.rdma_zone) {
-        EPRINTF("rdma map failed");
-        goto err;
+    if (s.mode == RDMA_READ || s.mode == RDMA_WRITE) {
+        size_t shared_size = 0;
+        size_t max_size = s.payload_size + MAX(s.local_offset, s.remote_offset);
+
+        s.rdma_size = max_size;
+        ret = axiom_allocator_init(&s.rdma_size, &shared_size, AXAL_SW);
+        if (ret) {
+            EPRINTF("axiom_allocator_init error %d", ret);
+            goto err;
+        }
+        IPRINTF(verbose, "allocator_init - size: %zu", s.rdma_size);
+
+        s.rdma_start = axiom_private_malloc(max_size);
+        if (!s.rdma_start) {
+            EPRINTF("axiom_private_malloc error - addr: %p size: %zu",
+                    s.rdma_start, max_size);
+            goto err;
+        }
+
+        /* wait all nodes after the private malloc */
+        ret = axrun_sync(AXIOM_RDMA_SYNC_ID, verbose);
+        if (ret < 0) {
+            EPRINTF("axrun_sync error %d", ret);
+        }
+
+        IPRINTF(verbose, "RDMA region allocated - addr: %p size: %zu",
+                s.rdma_start, max_size);
+
+    } else {
+        /* map rdma zone */
+        s.rdma_start = axiom_rdma_mmap(s.dev, &s.rdma_size);
+        if (!s.rdma_start) {
+            EPRINTF("rdma map failed");
+            goto err;
+        }
+
+        IPRINTF(verbose, "rdma_mmap - addr: %p size: %" PRIu64,
+                s.rdma_start, s.rdma_size);
+
+        if (s.payload_size + s.local_offset > s.rdma_size) {
+            EPRINTF("Out of RDMA zone - rdma_size: %" PRIu64, s.rdma_size);
+            goto err;
+        }
+        s.remote_id = -1;
     }
 
-    IPRINTF(verbose, "rdma_mmap - addr: %p size: %" PRIu64,
-            s.rdma_zone, s.rdma_size);
-
-    if (s.payload_size + s.local_offset > s.rdma_size) {
-        EPRINTF("Out of RDMA zone - rdma_size: %" PRIu64, s.rdma_size);
-        goto err;
-    }
 
     IPRINTF(verbose, "start");
 
     switch (s.mode) {
         case RDMA_READ:
-            axrdma_read(&s);
+            if (s.local_id == s.remote_id) {
+                axrdma_store(&s);
+            }
+
+            /* wait all nodes before to do remote read */
+            ret = axrun_sync(AXIOM_RDMA_SYNC_ID, verbose);
+            if (ret < 0) {
+                EPRINTF("axrun_sync error %d", ret);
+            }
+
+            if (s.local_id != s.remote_id) {
+                axrdma_read(&s);
+            }
+
+            if (verbose)
+                axrdma_dump(&s);
             break;
         case RDMA_WRITE:
-            axrdma_write(&s);
+            if (s.local_id != s.remote_id) {
+                axrdma_store(&s);
+                axrdma_write(&s);
+            }
+
+            /* wait all nodes before to dump memory */
+            ret = axrun_sync(AXIOM_RDMA_SYNC_ID, verbose);
+            if (ret < 0) {
+                EPRINTF("axrun_sync error %d", ret);
+            }
+
+            if (verbose)
+                axrdma_dump(&s);
             break;
         case LOCAL_DUMP:
             axrdma_dump(&s);
             break;
         case LOCAL_STORE:
             axrdma_store(&s);
+            if (verbose)
+                axrdma_dump(&s);
             break;
         default:
             EPRINTF("You must specify the mode [-m]");

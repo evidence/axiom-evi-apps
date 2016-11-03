@@ -264,6 +264,7 @@ axnetperf_rdma(axnetperf_status_t *s)
             rdma_psize = payload_size >> AXIOM_RDMA_PAYLOAD_SIZE_ORDER;
         }
 
+#if 0
         /* write payload to remote node */
         err = axiom_rdma_write(s->dev, s->dest_node, AXIOM_RAW_PORT_INIT,
                 rdma_psize, s->sent_bytes, s->sent_bytes);
@@ -271,6 +272,7 @@ axnetperf_rdma(axnetperf_status_t *s)
             EPRINTF("send error");
             return err;
         }
+#endif
 
         s->total_packets++;
     }
@@ -279,6 +281,7 @@ axnetperf_rdma(axnetperf_status_t *s)
         rdma_psize = (s->total_bytes - s->sent_bytes)
             >> AXIOM_RDMA_PAYLOAD_SIZE_ORDER;
 
+#if 0
         /* write payload to remote node */
         err = axiom_rdma_write(s->dev, s->dest_node, AXIOM_RAW_PORT_INIT,
                 rdma_psize, s->sent_bytes, s->sent_bytes);
@@ -286,6 +289,7 @@ axnetperf_rdma(axnetperf_status_t *s)
             EPRINTF("send error");
             return err;
         }
+#endif
 
         s->total_packets++;
     }
