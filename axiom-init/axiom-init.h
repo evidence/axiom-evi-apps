@@ -3,7 +3,7 @@
 /*!
  * \file axiom-init.h
  *
- * \version     v0.8
+ * \version     v0.9
  * \date        2016-05-03
  *
  * This file contains the functions used in the axiom-init deamon to handle
