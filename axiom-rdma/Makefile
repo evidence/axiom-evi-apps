@@ -1,5 +1,6 @@
 AXIOM_INCLUDE := ../../axiom-evi-nic/include
 AXIOM_NIC_UL := ../../axiom-evi-nic/axiom_user_library
+AXIOM_RUN_LIB := ../axiom-run/lib
 
 AXIOM_OVERLAY := ../../scripts/buildroot/overlay
 AXIOM_ALLOC_LDS := $(AXIOM_OVERLAY)/usr/axiom-evi-allocator-lib/xs_map64.lds
@@ -20,13 +21,14 @@ CC := ${CCPREFIX}gcc
 DFLAGS := -g -DPDEBUG
 CFLAGS += -g -Wall $(DFLAGS) -I$(PWD)/$(AXIOM_INCLUDE)
 LDFLAGS += -L$(PWD)/$(AXIOM_OVERLAY)/usr/lib -Wl,-T$(AXIOM_ALLOC_LDS)
-LDLIBS += -laxiom_allocator -levi_lmm
+LDFLAGS += -L$(PWD)/$(AXIOM_NIC_UL) -L$(PWD)/$(AXIOM_RUN_LIB)
+LDLIBS += -laxiom_allocator -levi_lmm -laxiom_user_api -laxiom_run_api
 
 .PHONY: all clean
 
 all: $(APPS)
 
-axiom-rdma: axiom-rdma.o $(AXIOM_NIC_UL)/libaxiom_user_api.a
+axiom-rdma: axiom-rdma.o
 
 axiom-rdma.o: axiom-rdma.c $(HEADERS)
 

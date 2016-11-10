@@ -42,10 +42,11 @@ typedef struct axrdma_status {
     axrdma_mode_t mode;
     axiom_port_t port;
     axiom_node_id_t local_id;
-    axiom_node_id_t remote_id;
+    axiom_node_id_t master_id;
+    axiom_node_id_t slave_id;
     uint32_t payload_size;
-    axiom_addr_t local_offset;
-    axiom_addr_t remote_offset;
+    axiom_addr_t master_offset;
+    axiom_addr_t slave_offset;
     uint8_t *rdma_start;
     size_t rdma_size;
     uint8_t payload[AXIOM_RDMA_PAYLOAD_MAX_SIZE];
@@ -62,9 +63,10 @@ usage(void)
     printf("Arguments:\n");
     printf("-m, --mode      r,w,d,s        r = rdma read, w = rdma write, d = local dump,\n");
     printf("                               s = local store\n");
-    printf("-n, --node      node_id        remote node id \n");
-    printf("-o, --loffset   off[B|K|M|G]   local offset in the RDMA zone [default 0]\n");
-    printf("-O, --roffset   off[B|K|M|G]   remote offset in the RDMA zone [default 0]\n");
+    printf("-n, --sid       node_id        slave node id \n");
+    printf("-N, --mid       node_id        master node id \n");
+    printf("-o, --soff      off[B|K|M|G]   slave offset in the RDMA zone [default 0]\n");
+    printf("-O, --moff      off[B|K|M|G]   master offset in the RDMA zone [default 0]\n");
     printf("-s, --size      size[B|K|M|G]  size of payload in byte\n");
     printf("                               The suffix specifies the size unit\n");
     printf("-p, --port      port           port used for the RDMA transfer\n");
@@ -105,7 +107,7 @@ axrdma_read(axrdma_status_t *s)
 {
     axiom_err_t ret;
 
-    if (s->remote_id == AXIOM_NULL_NODE) {
+    if (s->slave_id == AXIOM_NULL_NODE) {
         EPRINTF("You must specify the remote node [-n]");
         return -1;
     }
@@ -117,13 +119,14 @@ axrdma_read(axrdma_status_t *s)
         return -1;
     }
 
-    printf("[node %u] RDMA read - remote_id: %u size: %" PRIu32" start: %p "
-            "local_offset: 0x%" PRIx32 " remote_offset: 0x%" PRIx32 "\n",
-            s->local_id, s->remote_id, s->payload_size, s->rdma_start,
-            s->local_offset, s->remote_offset);
+    printf("[node %u] RDMA read - slave_id: %u size: %" PRIu32" start: %p "
+            "master_offset: 0x%" PRIx32 " slave_offset: 0x%" PRIx32 "\n",
+            s->local_id, s->slave_id, s->payload_size, s->rdma_start,
+            s->master_offset, s->slave_offset);
 
-    ret = axiom_rdma_read(s->dev, s->remote_id, s->payload_size,
-            s->rdma_start + s->remote_offset, s->rdma_start + s->local_offset);
+    ret = axiom_rdma_read(s->dev, s->slave_id, s->payload_size,
+            s->rdma_start + s->slave_offset, s->rdma_start + s->master_offset,
+            NULL);
 
     if (!AXIOM_RET_IS_OK(ret)) {
         EPRINTF("axiom_rdma_read() failed - ret: 0x%x", ret);
@@ -138,7 +141,7 @@ axrdma_write(axrdma_status_t *s)
 {
     axiom_err_t ret;
 
-    if (s->remote_id == AXIOM_NULL_NODE) {
+    if (s->slave_id == AXIOM_NULL_NODE) {
         EPRINTF("You must specify the remote node [-n]");
         return -1;
     }
@@ -150,13 +153,14 @@ axrdma_write(axrdma_status_t *s)
         return -1;
     }
 
-    printf("[node %u] RDMA write - remote_id: %u size: %" PRIu32 " start: %p "
-            "local_offset: 0x%" PRIx32 " remote_offset: 0x%" PRIx32 "\n",
-            s->local_id, s->remote_id, s->payload_size, s->rdma_start,
-            s->local_offset, s->remote_offset);
+    printf("[node %u] RDMA write - slave_id: %u size: %" PRIu32 " start: %p "
+            "master_offset: 0x%" PRIx32 " slave_offset: 0x%" PRIx32 "\n",
+            s->local_id, s->slave_id, s->payload_size, s->rdma_start,
+            s->master_offset, s->slave_offset);
 
-    ret = axiom_rdma_write(s->dev, s->remote_id, s->payload_size,
-            s->rdma_start + s->local_offset, s->rdma_start + s->remote_offset);
+    ret = axiom_rdma_write(s->dev, s->slave_id, s->payload_size,
+            s->rdma_start + s->master_offset, s->rdma_start + s->slave_offset,
+            NULL);
 
     if (!AXIOM_RET_IS_OK(ret)) {
         EPRINTF("axiom_rdma_write() failed - ret: 0x%x", ret);
@@ -178,10 +182,10 @@ axrdma_dump(axrdma_status_t *s)
         return -1;
     }
 
-    if (s->local_id != s->remote_id) {
-        offset = s->local_offset;
+    if (s->local_id == s->master_id) {
+        offset = s->master_offset;
     } else {
-        offset = s->remote_offset;
+        offset = s->slave_offset;
     }
 
     dump = s->rdma_start + offset;
@@ -208,10 +212,10 @@ axrdma_store(axrdma_status_t *s)
     uint32_t offset;
     void *start;
 
-    if (s->local_id != s->remote_id) {
-        offset = s->local_offset;
+    if (s->local_id == s->master_id) {
+        offset = s->master_offset;
     } else {
-        offset = s->remote_offset;
+        offset = s->slave_offset;
     }
 
     start = s->rdma_start + offset;
@@ -231,27 +235,31 @@ main(int argc, char **argv)
         .dev = NULL,
         .mode = -1,
         .port = 1,
-        .remote_id = AXIOM_NULL_NODE,
+        .master_id = AXIOM_NULL_NODE,
+        .slave_id = AXIOM_NULL_NODE,
         .payload_size = 0,
-        .local_offset = 0,
-        .remote_offset = 0
+        .master_offset = 0,
+        .slave_offset = 0
     };
     char rdma_mode_char;
     int long_index = 0, opt = 0, ret;
     static struct option long_options[] = {
         {"mode", required_argument, 0, 'm'},
-        {"node", required_argument, 0, 'n'},
-        {"loffset", required_argument, 0, 'o'},
-        {"roffset", required_argument, 0, 'O'},
+        {"sid", required_argument, 0, 'n'},
+        {"mid", required_argument, 0, 'N'},
+        {"soff", required_argument, 0, 'o'},
+        {"moff", required_argument, 0, 'O'},
         {"size", required_argument, 0, 's'},
         {"port", required_argument, 0, 'p'},
         {"verbose", no_argument, 0, 'v'},
         {"help", no_argument, 0, 'h'},
         {0, 0, 0, 0}
     };
+    int num_nodes, node_l, node_t;
+    uint64_t mask_nodes;
 
 
-    while ((opt = getopt_long(argc, argv,"m:n:o:O:s:fp:vh",
+    while ((opt = getopt_long(argc, argv,"m:n:N:o:O:s:fp:vh",
                          long_options, &long_index )) != -1) {
         char char_scale = 'b';
         int data_scale = 0;
@@ -266,25 +274,32 @@ main(int argc, char **argv)
                 s.mode = rdma_mode_char;
                 break;
             case 'n':
-                if (sscanf(optarg, "%" SCNu8, &s.remote_id) != 1) {
-                    EPRINTF("wrong remote id [8bit]");
+                if (sscanf(optarg, "%" SCNu8, &s.slave_id) != 1) {
+                    EPRINTF("wrong slave id [8bit]");
+                    usage();
+                    exit(-1);
+                }
+                break;
+            case 'N':
+                if (sscanf(optarg, "%" SCNu8, &s.master_id) != 1) {
+                    EPRINTF("wrong master id [8bit]");
                     usage();
                     exit(-1);
                 }
                 break;
             case 'o':
-                if (sscanf(optarg, "%" SCNu32 "%c", &s.local_offset,
+                if (sscanf(optarg, "%" SCNu32 "%c", &s.slave_offset,
                             &char_scale) == 0) {
-                    EPRINTF("wrong local offset [32bit]");
+                    EPRINTF("wrong slave offset [32bit]");
                     usage();
                     exit(-1);
                 }
                 data_scale = get_scale(char_scale);
                 break;
             case 'O':
-                if (sscanf(optarg, "%" SCNu32 "%c", &s.remote_offset,
+                if (sscanf(optarg, "%" SCNu32 "%c", &s.master_offset,
                             &char_scale) == 0) {
-                    EPRINTF("wrong remote offset [32bit]");
+                    EPRINTF("wrong master offset [32bit]");
                     usage();
                     exit(-1);
                 }
@@ -367,10 +382,45 @@ main(int argc, char **argv)
 
     s.local_id = axiom_get_node_id(s.dev);
 
+    num_nodes = axrun_get_num_nodes();
+    mask_nodes = axrun_get_nodes();
+
+    if (num_nodes != 2) {
+        EPRINTF("You must run this application through axiom-run on 2 nodes - "
+                "nodes: %d", num_nodes);
+        exit(-1);
+    }
+
+    node_t = __builtin_ctzll(mask_nodes);
+    node_l = (sizeof(mask_nodes) * 8) - 1 - __builtin_clzll(mask_nodes);
+
+    if (s.master_id == AXIOM_NULL_NODE) {
+        if (s.slave_id == node_t)
+            s.master_id = node_l;
+        else
+            s.master_id = node_t;
+    }
+
+    if (s.slave_id == AXIOM_NULL_NODE) {
+        if (s.master_id == node_l)
+            s.slave_id = node_t;
+        else
+            s.slave_id = node_l;
+    }
+
+    if (mask_nodes != ((1ll << s.master_id) | (1ll << s.slave_id))) {
+        EPRINTF("You must run this application through axiom-run on the same "
+                "nodes specified in the arguments - "
+                "axiom-run nodes: %d, %d - app nodes: %d, %d",
+                node_t, node_l, s.master_id, s.slave_id);
+        exit(-1);
+    }
+
+    IPRINTF(1, "nodes: 0x%lx num_nodes: %d", mask_nodes, num_nodes);
 
     if (s.mode == RDMA_READ || s.mode == RDMA_WRITE) {
         size_t shared_size = 0;
-        size_t max_size = s.payload_size + MAX(s.local_offset, s.remote_offset);
+        size_t max_size = s.payload_size + MAX(s.master_offset, s.slave_offset);
 
         s.rdma_size = max_size;
         ret = axiom_allocator_init(&s.rdma_size, &shared_size, AXAL_SW);
@@ -408,11 +458,11 @@ main(int argc, char **argv)
         IPRINTF(verbose, "rdma_mmap - addr: %p size: %" PRIu64,
                 s.rdma_start, s.rdma_size);
 
-        if (s.payload_size + s.local_offset > s.rdma_size) {
+        if (s.payload_size + s.master_offset > s.rdma_size) {
             EPRINTF("Out of RDMA zone - rdma_size: %" PRIu64, s.rdma_size);
             goto err;
         }
-        s.remote_id = -1;
+        s.slave_id = -1;
     }
 
 
@@ -420,7 +470,7 @@ main(int argc, char **argv)
 
     switch (s.mode) {
         case RDMA_READ:
-            if (s.local_id == s.remote_id) {
+            if (s.local_id == s.slave_id) {
                 axrdma_store(&s);
             }
 
@@ -431,7 +481,7 @@ main(int argc, char **argv)
                 break;
             }
 
-            if (s.local_id != s.remote_id) {
+            if (s.local_id == s.master_id) {
                 ret = axrdma_read(&s);
                 if (ret)
                     break;
@@ -443,7 +493,7 @@ main(int argc, char **argv)
         case RDMA_WRITE: {
             int write_ret = 0;
 
-            if (s.local_id != s.remote_id) {
+            if (s.local_id == s.master_id) {
                 axrdma_store(&s);
                 write_ret = axrdma_write(&s);
             }
