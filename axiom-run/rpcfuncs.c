@@ -1,4 +1,5 @@
 #include <sys/uio.h>
+#include <stdint.h>
 
 #include "axiom_run_api.h"
 #include "axiom-run.h"

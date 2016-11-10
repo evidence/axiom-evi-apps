@@ -41,7 +41,7 @@ axiom-run: axiom-run.o master.o slave.o rpcfuncs.o
 lib/%.o: lib/%.c
 	$(CC) -c -fPIC $(CFLAGS) -o $@ $?
 
-lib/libaxiom_run_api.a: lib/sync.o lib/rpc.o
+lib/libaxiom_run_api.a: lib/sync.o lib/rpc.o lib/nodes.o
 	$(AR) rcs $@ $?
 
 test/myinfo: test/myinfo.o

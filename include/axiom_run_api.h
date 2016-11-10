@@ -33,6 +33,22 @@ extern "C" {
     int axrun_rpc(int function, size_t send_size, void *send_payload,
             size_t *recv_size, void *recv_payload, int verbose);
 
+    /**
+     *  @brief  This function returns the bitmask of nodes involved in the
+     *          execution of the application.
+     *
+     *  @return Returns 64-bit mask
+     */
+    uint64_t axrun_get_nodes(void);
+
+    /**
+     *  @brief  This function returns the number of nodes involved in the
+     *          execution of the application.
+     *
+     *  @return Returns a positive number on success, -1 on error.
+     */
+    int axrun_get_num_nodes(void);
+
 #ifdef __cplusplus
 }
 #endif
