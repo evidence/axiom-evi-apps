@@ -102,7 +102,10 @@ void axiom_session_req(axiom_dev_t *dev, axiom_node_id_t src, size_t payload_siz
         //
         // release
         //
-        if (used(payload->session_id)) release(payload->session_id);
+        if (used(payload->session_id)) {
+            release(payload->session_id);
+            IPRINTF(verbose, "SESSION - REQ message release - session: %u", payload->session_id);
+        }
     } else {
         //
         // alloc
@@ -114,5 +117,7 @@ void axiom_session_req(axiom_dev_t *dev, axiom_node_id_t src, size_t payload_siz
         if (!AXIOM_RET_IS_OK(ret)) {
             EPRINTF("ERROR - send small message to node %u error", src);
         }
+        IPRINTF(verbose, "SESSION - REQ message acquire - session: %u", payload2->session_id);
+        //IPRINTF(verbose, "SESSION - REQ message dump - size: %lu dump: 0x%02x 0x%02x 0x%02x 0x%02x", sizeof(*payload2),*(((uint8_t*)payload2)+0) ,*(((uint8_t*)payload2)+1), *(((uint8_t*)payload2)+2), *(((uint8_t*)payload2)+3));
     }
 }

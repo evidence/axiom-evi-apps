@@ -54,6 +54,8 @@ int axinit_execvpe(axiom_dev_t *dev, axiom_port_t port, axiom_node_id_t node, in
         if (!AXIOM_RET_IS_OK(_msg)) return _msg;
         session = payload_session_reply->session_id;
         if (session == AXIOM_SESSION_EMPTY) return AXIOM_RET_ERROR;
+        logmsg(LOG_DEBUG, "axinit_execvpe: session acquired %d",session);
+        logmsg(LOG_TRACE, "axinit_execvpe: session reply DUMP size_recv: %lu size_buf: %lu dump: 0x%02x 0x%02x 0x%02x 0x%02x", (unsigned long)_size, sizeof(*payload_session_reply),*(((uint8_t*)payload_session_reply)+0) ,*(((uint8_t*)payload_session_reply)+1), *(((uint8_t*)payload_session_reply)+2), *(((uint8_t*)payload_session_reply)+3));
 
         payload_spawn_request->command = AXIOM_CMD_SPAWN_REQ;
         payload_spawn_request->flags = AXIOM_SPAWN_FLAG_RESET;
