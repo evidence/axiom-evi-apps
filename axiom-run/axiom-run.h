@@ -67,6 +67,8 @@ extern "C" {
 #define CMD_BARRIER         0x85
     /** command rpc (master<->slave) */
 #define CMD_RPC             0x86
+    /** command START (master->slave) */
+#define CMD_START           0x87
 
     extern char *cmd_to_name[];
 #define CMD_TO_NAME(cmd) ((cmd)>=CMD_EXIT&&(cmd)<=CMD_RPC?cmd_to_name[(cmd)-CMD_EXIT]:"unknown")
@@ -95,6 +97,8 @@ extern "C" {
                 uint16_t function;
                 uint16_t size;
             } rpc;
+            /** magic. used for the CMD_START initial synchronization */
+            uint64_t magic;
         } __attribute__((__packed__));
         
     } __attribute__((__packed__)) header_t;
