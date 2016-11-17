@@ -138,7 +138,6 @@ main(int argc, char **argv)
                 break;
 
             case AXIOM_CMD_SESSION_REQ:
-            case AXIOM_CMD_SESSION_RELEASE:
                 axiom_session(dev, src, payload_size, &payload, verbose);
                 break;
 

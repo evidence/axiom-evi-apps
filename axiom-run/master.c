@@ -337,8 +337,23 @@ static void *master_receiver(void *data) {
                 if (WIFEXITED(buffer.header.status)) {
                     if (WIFEXITED(exit_status)) {
                         // PREV normal RECV normal
-                        if (WEXITSTATUS(buffer.header.status)>WEXITSTATUS(exit_status)) {
-                            exit_status=buffer.header.status;
+                        switch (info->flags&EXIT_FLAG_MASK) {
+                            case FIRST_EXIT_FLAG:
+                                // nothing
+                                break;
+                            case LAST_EXIT_FLAG:
+                                exit_status=buffer.header.status;
+                                break;
+                            case GREATHER_EXIT_FLAG:
+                                if (WEXITSTATUS(buffer.header.status)>WEXITSTATUS(exit_status)) {
+                                    exit_status=buffer.header.status;
+                                }
+                                break;
+                            case LESSER_EXIT_FLAG:
+                                if (WEXITSTATUS(buffer.header.status)<WEXITSTATUS(exit_status)) {
+                                    exit_status=buffer.header.status;
+                                }
+                                break;
                         }
                     } else {
                         // PREV singnaled RECV normal
@@ -355,6 +370,7 @@ static void *master_receiver(void *data) {
                     
                 }
             }
+            if ((info->flags&EXIT_FLAG_MASK)==NOFAIL_EXIT_FLAG) exit_status=0;
             exit_counter--;
             zlogmsg(LOG_DEBUG, LOGZ_MASTER, "exit_counter now is %d", exit_counter);
             if (exit_counter == 0) {

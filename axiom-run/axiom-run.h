@@ -70,6 +70,8 @@ extern "C" {
 #define CMD_BARRIER         0x85
     /** command rpc (master<->slave) */
 #define CMD_RPC             0x86
+    /** command START (master->slave) */
+#define CMD_START           0x87
 
     extern char *cmd_to_name[];
 #define CMD_TO_NAME(cmd) ((cmd)>=CMD_EXIT&&(cmd)<=CMD_RPC?cmd_to_name[(cmd)-CMD_EXIT]:"unknown")
@@ -98,6 +100,8 @@ extern "C" {
                 uint32_t function;
                 uint32_t size;
             } rpc;
+            /** magic. used for the CMD_START initial synchronization */
+            uint64_t magic;
         } __attribute__((__packed__));
 
     } __attribute__((__packed__)) header_t;
@@ -164,6 +168,15 @@ extern "C" {
 #define IDENT_FLAG 0x01
     /** the form of identification. if IDENT_FLAG is set two form of identification can be written. */
 #define ALTERNATE_IDENT_FLAG 0x02
+
+#define EXIT_FLAG_MASK 0x1c
+#define EXIT_FLAG_SHIFT 2
+#define NOFAIL_EXIT_FLAG 0x10
+#define FIRST_EXIT_FLAG 0x08
+#define LAST_EXIT_FLAG 0x0c
+#define LESSER_EXIT_FLAG 0x04
+#define GREATHER_EXIT_FLAG 0x00
+#define NORMAL_EXIT_FLAG GREATHER_EXIT_FLAG
 
     /** template name for the master unix domani socket port */
 #define SLAVE_TEMPLATE_NAME "/tmp/ax%d"

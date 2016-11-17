@@ -85,8 +85,7 @@ int axiom_session_is_used(uint8_t ses) {
  * @param _payload the payload.
  * @param verbose Emit verbose messages.
  */
-void axiom_session(axiom_dev_t *dev, axiom_node_id_t src, size_t payload_size,
-        void *_payload, int verbose) {
+void axiom_session(axiom_dev_t *dev, axiom_node_id_t src, size_t payload_size, void *_payload, int verbose) {
     axiom_session_req_payload_t *payload =
         ((axiom_session_req_payload_t *) _payload);
     axiom_session_reply_payload_t *payload2 =
@@ -94,31 +93,33 @@ void axiom_session(axiom_dev_t *dev, axiom_node_id_t src, size_t payload_size,
     axiom_port_t port;
     axiom_err_t ret;
 
+    if (payload->command != AXIOM_CMD_SESSION_REQ) {
+        EPRINTF("SESSION - received not AXIOM_SESSION_REQ message");
+        return;
+    }
     port = payload->reply_port;
-    IPRINTF(verbose,
-            "SESSION - REQ message received - src_node: %u reply_port: %u",
-            src, port);
+    IPRINTF(verbose, "SESSION - REQ message received - src_node: %u reply_port: %u", src, port);
 
-    if ((payload->command == AXIOM_CMD_SESSION_RELEASE) &&
-            payload->session_id != AXIOM_SESSION_EMPTY) {
+    if (payload->session_id != AXIOM_SESSION_EMPTY) {
         //
         // release
         //
-        if (used(payload->session_id))
+        if (used(payload->session_id)) {
             release(payload->session_id);
-    } else if (payload->command == AXIOM_CMD_SESSION_REQ) {
+            IPRINTF(verbose, "SESSION - REQ message - release - session: %u", payload->session_id);
+        }
+    } else {
         //
         // alloc
         //
         payload2->command = AXIOM_CMD_SESSION_REPLY;
         payload2->session_id = next();
 
-        ret = axiom_send_raw(dev, src, port, AXIOM_TYPE_RAW_DATA,
-                sizeof(*payload2), payload2);
+        ret = axiom_send_raw(dev, src, port, AXIOM_TYPE_RAW_DATA, sizeof(*payload2), payload2);
         if (!AXIOM_RET_IS_OK(ret)) {
             EPRINTF("ERROR - send small message to node %u error", src);
         }
-    } else {
-        EPRINTF("SESSION - received not AXIOM_SESSION_REQ message");
-    }
+        IPRINTF(verbose, "SESSION - REQ message - acquire - session: %u", payload2->session_id);
+        //IPRINTF(verbose, "SESSION - REQ message dump - size: %lu dump: 0x%02x 0x%02x 0x%02x 0x%02x", sizeof(*payload2),*(((uint8_t*)payload2)+0) ,*(((uint8_t*)payload2)+1), *(((uint8_t*)payload2)+2), *(((uint8_t*)payload2)+3));
+    } 
 }

@@ -18,7 +18,7 @@
 #include "axiom-run.h"
 
 /** Table to convert command code to command name. */
-char *cmd_to_name[] = {"CMD_EXIT", "CMD_KILL", "CMD_SEND_TO_STDOUT", "CMD_SEND_TO_STDERR", "CMD_RECV_FROM_STDIN", "CMD_BARRIER", "CMD_RPC"};
+char *cmd_to_name[] = {"CMD_EXIT", "CMD_KILL", "CMD_SEND_TO_STDOUT", "CMD_SEND_TO_STDERR", "CMD_RECV_FROM_STDIN", "CMD_BARRIER", "CMD_RPC", "CMD_START"};
 char *rpcfunc_to_name[] = {"RPC_PING"};
 
 /*
@@ -58,6 +58,7 @@ static void _usage(char *msg, ...) {
         vfprintf(stderr, msg, list);
         va_end(list);
         fputc('\n', stderr);
+        fputc('\n', stderr);
     }
     fprintf(stderr, "usage: axiom-run [ARG]* APPLICATION [APP_ARG]*\n");
     fprintf(stderr, "Spawn application on multiple nodes\n");
@@ -73,6 +74,9 @@ static void _usage(char *msg, ...) {
     fprintf(stderr, "-n, --nodes NODELIST\n");
     fprintf(stderr, "    nodes where spawn application \n");
     fprintf(stderr, "    [default: all nodes] ex: 0-3,7\n");
+    fprintf(stderr, "-N, --numnodes NODECOUNT\n");
+    fprintf(stderr, "    nodes where spawn application\n");
+    fprintf(stderr, "    equivalent to '-n 0-$((NODECOUNT-1))'\n");
     fprintf(stderr, "-g, --gdb NODELIST:PORT\n");
     fprintf(stderr, "    run application using gdb server on port PORT on selected nodes\n");
     fprintf(stderr, "    [default: no run gdb server]\n");
@@ -87,14 +91,32 @@ static void _usage(char *msg, ...) {
     fprintf(stderr, "         1   NODE:\n");
     fprintf(stderr, "-e, --exit\n");
     fprintf(stderr, "    exit service\n");
+    fprintf(stderr, "-E, --exitmode [MODE]\n");
+    fprintf(stderr, "    the exit code returned by axiom-run master when the exit service is enabled [default:0]\n");
+    fprintf(stderr, "    MODE 0   normal or greather (i.e. the greather exit code of all spawn process)\n");
+    fprintf(stderr, "         1   lesser mode (i.e. the lesser exit code of all spawn process)\n");
+    fprintf(stderr, "         2   first mode (i.e. the first exit code of all spawn process)\n");
+    fprintf(stderr, "         3   last mode (i.e. the last exit code of all spawn process)\n");
+    fprintf(stderr, "         4   no fail mode (i.e. return always zero)\n");
+    fprintf(stderr, "    (if some spawned process died for a signal then the exit code is the first signal caught)\n");
     fprintf(stderr, "-b, --barrier\n");
     fprintf(stderr, "    barrier service\n");
     fprintf(stderr, "-c, --rpc\n");
     fprintf(stderr, "    rpc service\n");
     fprintf(stderr, "-a, --allocator\n");
     fprintf(stderr, "    allocator service: handle axiom allocator and assign an unique application ID exported in the env of all process (AXIOM_ALLOC_APPID)\n");
+    fprintf(stderr, "-P, --profile PROFILE_NAME\n");
+    fprintf(stderr, "    set the options for a profile:\n");
+    fprintf(stderr, "    gasnet = -r -i -e -b -c -u 'PATH|SHELL|AXIOM_.*|GASNET_.*'\n");
+    fprintf(stderr, "             (flags required by axiom gasnet conduit)\n");
+    fprintf(stderr, "    ompss  = -r -i -e -b -c -u 'PATH|SHELL|AXIOM_.*|GASNET_.*|NX_.*|LD_LIBRARY_PATH|LD_PRELOAD'\n");
+    fprintf(stderr, "             (flags required by ompss@cluster with axiom gasnet conduit)\n");
+    fprintf(stderr, "    all    = -r -i -b -c\n");
+    fprintf(stderr, "             (all services but NOT exit service)\n");
     fprintf(stderr, "-h, --help\n");
     fprintf(stderr, "    print this help\n");
+    fprintf(stderr, "-x, --magic MAGICNUMBER\n");
+    fprintf(stderr, "    set a 'magic' number to sync the start of axiom-run master/slave [default: time()]\n");
     fprintf(stderr, "note:\n");
     fprintf(stderr, "-m is used to inform an axiom-run slave where is the master so is useless if no -s option is used\n");
 }
@@ -111,15 +133,19 @@ static struct option long_options[] = {
     {"redirect", no_argument, 0, 'r'},
     {"ident", optional_argument, 0, 'i'},
     {"exit", no_argument, 0, 'e'},
+    {"exitmode", required_argument, 0, 'E'},
     {"barrier", no_argument, 0, 'b'},
     {"rpc", no_argument, 0, 'c'},
     {"slave", no_argument, 0, 's'},
     {"master", required_argument, 0, 'm'},
     {"nodes", required_argument, 0, 'n'},
+    {"numnodes", required_argument, 0, 'N'},
     {"port", required_argument, 0, 'p'},
     {"env", required_argument, 0, 'u'},
     {"gdb", required_argument, 0, 'g'},
     {"appid", no_argument, 0, 'a'},
+    {"profile", required_argument, 0, 'P'},
+    {"magic", required_argument, 0, 'x'},
     {"help", no_argument, 0, 'h'},
     {0, 0, 0, 0}
 };
@@ -320,22 +346,75 @@ static void prepare_env(strlist_t *env, regex_t *re, int slave, int noclose, uin
 }
 
 /**
+ * Wait the CMD_START.
+ * Using to separate the setup phase from the run phase.
+ * @param dev Axiom device.
+ */
+static void wait_on_barrier(axiom_dev_t *dev, long magic) {
+    buffer_t payload;
+    axiom_raw_payload_size_t size;
+    axiom_msg_id_t msg;
+    axiom_node_id_t node;
+    axiom_port_t port;
+    axiom_type_t type;
+    for (;;) {
+        size=sizeof(payload);
+        zlogmsg(LOG_DEBUG, LOGZ_MAIN, "waiting notify_barrier...");
+        msg = axiom_recv_raw(dev, &node, &port, &type, &size, &payload);
+        if (!AXIOM_RET_IS_OK(msg)) {
+            zlogmsg(LOG_WARN, LOGZ_MAIN, "wait_on_barrier: axiom_recv_raw() error res=%d", msg);
+            continue;
+        }
+        if (payload.header.command!=CMD_START) {
+            zlogmsg(LOG_WARN, LOGZ_MAIN, "wait_on_barrier: received unwanted message 0x%0x2", payload.header.command);
+            continue;
+        }
+        if (payload.header.magic!=magic) {
+            zlogmsg(LOG_WARN, LOGZ_MAIN, "wait_on_barrier: received unwanted message 0x%0x2 (with bad magic)", payload.header.command);
+            continue;
+        }
+        break;
+    }
+    zlogmsg(LOG_DEBUG, LOGZ_MAIN, "notified!");
+}
+
+/**
+ * Send the CMD_START.
+ * To inform a slave that it can fork the child.
+ * @param dev Axiom device.
+ * @param node The node where to send the message.
+ * @param port The port of the slave.
+ * @param magic The 'magic' number to identify the message.
+ * @return The exit status of axiom_send_raw.
+ */
+static axiom_err_t notify_barrier(axiom_dev_t *dev, axiom_node_id_t node, axiom_port_t port, long magic) {
+    buffer_t payload;
+    payload.header.command=CMD_START;
+    payload.header.magic=magic;
+    return axiom_send_raw(dev, node, port, AXIOM_TYPE_RAW_DATA, sizeof(payload.header), (axiom_raw_payload_t*)&payload);
+}
+
+/**
  * Start the application on slave nodes using axiom_init service.
  *
  * @param dev the axiom device to use
  * @param master_port the port of the master
+ * @param slave_port the port of the slave
  * @param nodes the nodes bitwise (where to start application)
  * @param filename the exec filename
  * @param argv the args of the application
  * @param envp the environemnt of the application
  * @param gdb_nodes nodes bitwise where to run gdbserver. if zero gdb server in never run.
  * @param gdb_port gdb server port. unused if gdb_nodes is zero
+ * @param magic a number to "distingue" the command start (ensure that is sent by the proper axiom-run)
  * @return AXIOM_RET_OK if "all" applications are started AXIOM_RET_ERROR otherwise
  */
-static axiom_err_t start(axiom_dev_t *dev, int master_port, uint64_t nodes, char * filename, char * const argv[], char * const envp[], uint64_t gdb_nodes, int gdb_port) {
+static axiom_err_t start(axiom_dev_t *dev, int master_port, int slave_port, uint64_t nodes, char * filename, char * const argv[], char * const envp[], uint64_t gdb_nodes, int gdb_port, long magic) {
     axiom_err_t err = AXIOM_RET_OK;
+    axiom_err_t errb = AXIOM_RET_OK;
     axiom_node_id_t node = 0;
     int counter = 0;
+    uint64_t nodesbak=nodes;
     char **gdb_argv;
     if (gdb_nodes != 0) {
         // TODO: check malloc!
@@ -363,6 +442,20 @@ static axiom_err_t start(axiom_dev_t *dev, int master_port, uint64_t nodes, char
         }
         nodes >>= 1;
         gdb_nodes >>= 1;
+        node++;
+    }
+    nodes=nodesbak;
+    node=0;
+    while (nodes != 0) {
+        if (nodes & 0x1) {
+            errb = notify_barrier(dev,node,slave_port,magic);
+            if (!AXIOM_RET_IS_OK(errb)) {
+                zlogmsg(LOG_WARN, LOGZ_MAIN, "notify_barrier() error res=%d", err);
+            } else {
+                zlogmsg(LOG_DEBUG, LOGZ_MAIN, "started application on node %d", node);
+            }
+        }
+        nodes >>= 1;
         node++;
     }
     zlogmsg(LOG_DEBUG, LOGZ_MAIN, "spawned application on %d nodes", counter);
@@ -415,7 +508,7 @@ static uint64_t decode_node_arg(char *arg) {
     if (strncmp(arg, "0x", 2) == 0) {
         n = sscanf(arg, "%lx", &r);
         if (n != 1) {
-            usage();
+            _usage("bad option for -n|--nodes: can't decode 0x number");
             exit(EXIT_FAILURE);
         }
     } else {
@@ -423,8 +516,8 @@ static uint64_t decode_node_arg(char *arg) {
         while (s != NULL) {
             if (strchr(s, '-') != NULL) {
                 n = sscanf(s, "%d-%d", &a, &b);
-                if (n != 2 || a < 0 || a >= b || b >= MAX_NUM_NODES) {
-                    usage();
+                if (n != 2 || a < 0 || a > b || b >= MAX_NUM_NODES) {
+                    _usage("bad option for -n|--nodes: can't decode or bad range");
                     exit(EXIT_FAILURE);
                 }
                 if (b - a + 1 == MAX_NUM_NODES)
@@ -434,7 +527,7 @@ static uint64_t decode_node_arg(char *arg) {
             } else {
                 n = sscanf(s, "%d", &a);
                 if (n != 1 || a < 0 || a >= MAX_NUM_NODES) {
-                    usage();
+                    _usage("bad option for -n|--nodes: can't decode or bad node number");
                     exit(EXIT_FAILURE);
                 }
                 r |= ((uint64_t) 1 << a);
@@ -503,13 +596,15 @@ int main(int argc, char **argv) {
     int flags = 0;
     int gdb_port = 0;
     int envreg = 0;
+    long magic=0;
     regex_t _envreg;
     int num_nodes;
     axiom_err_t err;
     strlist_t env;
     int exitval=0,myexit;
     int res;
-
+    int _mode;
+    
     logmsg_init();
     zlogmsg(LOG_INFO, LOGZ_MAIN, "axiom-run started");
 
@@ -517,8 +612,27 @@ int main(int argc, char **argv) {
     // command line parsing
     //
 
-    while ((opt = getopt_long(argc, argv, "+rebcasp:m:hn:u:g:i::", long_options, &long_index)) != -1) {
+    while ((opt = getopt_long(argc, argv, "+rebcasp:E:P:m:x:hn:N:u:g:i::", long_options, &long_index)) != -1) {
         switch (opt) {
+            case 'P':
+                if (strcmp(optarg,"gasnet")==0) {
+                    services |= REDIRECT_SERVICE|EXIT_SERVICE|RPC_SERVICE|BARRIER_SERVICE;
+                    flags |= IDENT_FLAG;
+                    envreg = 1;
+                    regcomp(&_envreg, "PATH|SHELL|AXIOM_.*|GASNET_.*", REG_EXTENDED);
+                } else if (strcmp(optarg,"ompss")==0) {
+                    services |= REDIRECT_SERVICE|EXIT_SERVICE|RPC_SERVICE|BARRIER_SERVICE;
+                    flags |= IDENT_FLAG;
+                    envreg = 1;
+                    regcomp(&_envreg, "PATH|SHELL|AXIOM_.*|GASNET_.*|NX_.*|LD_LIBRARY_PATH|LD_PRELOAD", REG_EXTENDED);
+                } else if (strcmp(optarg,"all")==0) {
+                    services |= REDIRECT_SERVICE|RPC_SERVICE|BARRIER_SERVICE;
+                    flags |= IDENT_FLAG;
+                } else {
+                    _usage("error on -P and/or --profile argument");
+                    exit(-1);
+                }
+                break;
             case 'u':
                 envreg = 1;
                 res = regcomp(&_envreg, optarg, REG_EXTENDED);
@@ -554,10 +668,27 @@ int main(int argc, char **argv) {
                 break;
             case 'a':
                 services |= ALLOCATOR_SERVICE;
+            case 'E':
+                _mode = atoi(optarg);
+                if (_mode<0||_mode>4) {
+                    _usage("error on -E|--exitmode: mode must be between 0 and 4");
+                    exit(-1);
+                }
+                flags&=~EXIT_FLAG_MASK;
+                flags|=(_mode<<EXIT_FLAG_SHIFT);
                 break;
             case 'n':
                 nodes = decode_node_arg(optarg);
                 break;
+            case 'N': {
+                int numnodes=atoi(optarg);
+                if (numnodes<=0) {
+                    _usage("error on -N|--numnodes: number of nodes must be greather than zero\n");
+                    exit(-1);
+                }
+                nodes=(1<<numnodes)-1;
+                break;
+            }
             case 'g':
                 decode_gdb_arg(optarg, &gdb_nodes, &gdb_port);
                 break;
@@ -573,6 +704,9 @@ int main(int argc, char **argv) {
                 } else {
                     master_node = atoi(optarg);
                 }
+                break;
+            case 'x':
+                magic = atol(optarg);
                 break;
             case 'h':
                 usage();
@@ -648,6 +782,10 @@ int main(int argc, char **argv) {
             zlogmsg(LOG_WARN, LOGZ_MAIN, "I am a slave, slave node port not set! using default");
         slave_port = MY_DEFAULT_SLAVE_PORT;
     }
+    if (slave&&magic==0) {
+        perror("magic number not spcified for a slave! see 'axiom-run --help'");
+        exit(EXIT_FAILURE);
+    }
 
     //
     // open/bind axiom device
@@ -678,6 +816,14 @@ int main(int argc, char **argv) {
                 if (node != master_node) {
                     zlogmsg(LOG_WARN, LOGZ_MAIN, "I am a master, my node is %d BUT parameter for master node is %d", node, master_node);
                 }
+            }
+        }
+
+        if (slave) {
+            // because the barrier start message can be already arrived!
+            err=axiom_set_flags(dev, AXIOM_FLAG_NOFLUSH);
+            if (!AXIOM_RET_IS_OK(err)) {
+                perror("axiom_set_flags()");
             }
         }
 
@@ -811,6 +957,9 @@ int main(int argc, char **argv) {
             memcpy(myargv + 3, argv + optind + 1, sizeof (char*)*sz);
         }
 
+        // wait initiali barrier synchronization prior to run child....
+        wait_on_barrier(dev, magic);
+        
         // fork/exec the child...
         pid = daemonize(NULL, myexec, myargv, sl_get(&env), (services & REDIRECT_SERVICE) ? fd : NULL, 0, 1);
         
@@ -850,6 +999,8 @@ int main(int argc, char **argv) {
             strlist_t list;
             char **args = argv + optind;
             char buf[64];
+            if (magic==0)
+                magic=time(NULL);
 
             zlogmsg(LOG_DEBUG, LOGZ_MAIN, "master SERVICE mode enabled");
             sl_init(&list);
@@ -866,6 +1017,9 @@ int main(int argc, char **argv) {
             sl_append(&list, buf);
             sl_append(&list, "-u");
             sl_append(&list, ".*");
+            sl_append(&list, "-x");
+            snprintf(buf, sizeof (buf), "%ld", magic);
+            sl_append(&list, buf);
             if (services) {
                 if (services & REDIRECT_SERVICE)
                     sl_append(&list, "-r");
@@ -892,7 +1046,7 @@ int main(int argc, char **argv) {
         }
 
         // start remote nodes process...
-        err = start(dev, master_port, nodes, myfilename, myargs, myenv, (!services) ? gdb_nodes : 0, gdb_port);
+        err = start(dev, master_port, slave_port, nodes, myfilename, myargs, myenv, (!services) ? gdb_nodes : 0, gdb_port, magic);
         if (!AXIOM_RET_IS_OK(err)) {
             elogmsg("axinit_execve()");
             exit(EXIT_FAILURE);
