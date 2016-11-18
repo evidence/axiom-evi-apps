@@ -93,7 +93,8 @@ axiom_discovery_master(axiom_dev_t *dev,
     }
     IPRINTF(verbose, "MASTER: end discovery protocol");
 
-    IPRINTF(verbose, "MASTER: compute routing tables");
+    IPRINTF(verbose, "MASTER: compute routing tables - first_node: %u"
+    		    " last_node: %u", master_id, last_node);
     /* compute each node routing table */
     axiom_compute_routing_tables(topology, routing_tables,
             master_id, last_node);

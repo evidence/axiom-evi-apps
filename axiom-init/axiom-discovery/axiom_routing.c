@@ -186,7 +186,7 @@ axiom_compute_routing_tables(axiom_node_id_t topology[][AXIOM_INTERFACES_MAX],
                    AXIOM_NODES_MAX*sizeof(axiom_node_id_t));
        /* exit from cycle when 'actual_node_id' routing table has
         * been completed with all the AXIOM_NODES_MAX - 1 nodes info */
-       } while (neighbours_counter < last_node - 1);
+       } while (neighbours_counter < last_node - master_id - 1);
     }
 }
 
