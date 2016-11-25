@@ -24,6 +24,8 @@
 #include <signal.h>
 #include <pthread.h>
 
+#define DEBUG
+
 static struct option long_options[] = {
     {"help", no_argument, 0, 'h'},
     {0, 0, 0, 0}
@@ -40,6 +42,10 @@ void  *sender(void *data) {
     axiom_msg_id_t id;
     uint16_t buf[2];
     int i;
+
+#ifdef DEBUG
+    fprintf(stderr,"sender: start\n");
+#endif
     
     usleep(250000);
     for (i=0;i<NUM;i++) {
@@ -50,6 +56,10 @@ void  *sender(void *data) {
             perror("axiom_send_long");
         }        
     }
+
+#ifdef DEBUG
+    fprintf(stderr,"sender: end\n");
+#endif
     
     return NULL;    
 }
@@ -61,6 +71,10 @@ void  *receiver(void *data) {
     axiom_node_id_t src_id;
     uint16_t buf[2];
     int i,c;
+
+#ifdef DEBUG
+    fprintf(stderr,"receiver: start\n");
+#endif
     
     for (c=0, i=0;i<NUM;i++, c++) {
         size=sizeof(buf);
@@ -70,7 +84,7 @@ void  *receiver(void *data) {
             perror("axiom_recv_long");
             continue;
         }
-        fprintf(stderr,"src_node=0x%02x msgid=%3d seq=%d %s %s\n",buf[0],id,buf[1],buf[1]!=c?"OUT OF SEQ":"",buf[1]<c?"DUP":"");
+        fprintf(stderr,"src_node=0x%02x msgid=%03d seq=%04d %s %s\n",buf[0],id,buf[1],buf[1]!=c?"OUT OF SEQ":"",buf[1]<c?"DUP":"");
         c=buf[1];
         if (src_id!=yournode) {
             fprintf(stderr,"source id mismatch!\n");
@@ -79,6 +93,11 @@ void  *receiver(void *data) {
             fprintf(stderr,"buffer source byte mismatch!\n");
         }
     }
+
+#ifdef DEBUG
+    fprintf(stderr,"receiver: end\n");
+#endif
+
     return NULL;
 }
 
@@ -87,7 +106,7 @@ int main(int argc, char**argv) {
     axiom_err_t err;
     pthread_t threcv, thsend;
     int res;
-    
+
     opterr = 0;
     while ((opt = getopt_long(argc, argv, "h", long_options, &long_index)) != -1) {
         switch (opt) {
@@ -113,7 +132,7 @@ int main(int argc, char**argv) {
     }
     
     mynode=(int) axiom_get_node_id(dev);
-    yournode=mynode^0x01;
+    yournode=((mynode-1)^0x01)+1; // now the node number start from ONE!
     
     res = pthread_create(&threcv, NULL, receiver, NULL);
     if (res != 0) {
@@ -126,6 +145,10 @@ int main(int argc, char**argv) {
         perror("pthread_create()");
         exit(EXIT_FAILURE);
     }
+
+#ifdef DEBUG
+    fprintf(stderr, "waiting...\n");
+#endif
 
     res = pthread_join(thsend, NULL);
     if (res != 0) {

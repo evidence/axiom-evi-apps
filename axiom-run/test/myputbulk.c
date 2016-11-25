@@ -125,7 +125,7 @@ int main(int argc, char**argv) {
     }
     
     mynode=(int) axiom_get_node_id(dev);
-    yournode=mynode^0x01;
+    yournode=((mynode-1)^0x01)+1; // now the node id start fromONE!
     
     if ((mynode&1)==0) {
         printf("STARTING SENDER\n");
