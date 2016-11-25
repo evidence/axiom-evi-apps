@@ -107,9 +107,9 @@ static void _usage(char *msg, ...) {
     fprintf(stderr, "    allocator service: handle axiom allocator and assign an unique application ID exported in the env of all process (AXIOM_ALLOC_APPID)\n");
     fprintf(stderr, "-P, --profile PROFILE_NAME\n");
     fprintf(stderr, "    set the options for a profile:\n");
-    fprintf(stderr, "    gasnet = -r -i -e -b -c -u 'PATH|SHELL|AXIOM_.*|GASNET_.*'\n");
+    fprintf(stderr, "    gasnet = -r -i -e -b -c -a -u 'PATH|SHELL|AXIOM_.*|GASNET_.*'\n");
     fprintf(stderr, "             (flags required by axiom gasnet conduit)\n");
-    fprintf(stderr, "    ompss  = -r -i -e -b -c -u 'PATH|SHELL|AXIOM_.*|GASNET_.*|NX_.*|LD_LIBRARY_PATH|LD_PRELOAD'\n");
+    fprintf(stderr, "    ompss  = -r -i -e -b -c -a -u 'PATH|SHELL|AXIOM_.*|GASNET_.*|NX_.*|LD_LIBRARY_PATH|LD_PRELOAD'\n");
     fprintf(stderr, "             (flags required by ompss@cluster with axiom gasnet conduit)\n");
     fprintf(stderr, "    all    = -r -i -b -c\n");
     fprintf(stderr, "             (all services but NOT exit service)\n");
@@ -143,7 +143,7 @@ static struct option long_options[] = {
     {"port", required_argument, 0, 'p'},
     {"env", required_argument, 0, 'u'},
     {"gdb", required_argument, 0, 'g'},
-    {"appid", no_argument, 0, 'a'},
+    {"allocator", no_argument, 0, 'a'},
     {"profile", required_argument, 0, 'P'},
     {"magic", required_argument, 0, 'x'},
     {"help", no_argument, 0, 'h'},
@@ -616,17 +616,17 @@ int main(int argc, char **argv) {
         switch (opt) {
             case 'P':
                 if (strcmp(optarg,"gasnet")==0) {
-                    services |= REDIRECT_SERVICE|EXIT_SERVICE|RPC_SERVICE|BARRIER_SERVICE;
+                    services |= REDIRECT_SERVICE|EXIT_SERVICE|RPC_SERVICE|BARRIER_SERVICE|ALLOCATOR_SERVICE;
                     flags |= IDENT_FLAG;
                     envreg = 1;
                     regcomp(&_envreg, "PATH|SHELL|AXIOM_.*|GASNET_.*", REG_EXTENDED);
                 } else if (strcmp(optarg,"ompss")==0) {
-                    services |= REDIRECT_SERVICE|EXIT_SERVICE|RPC_SERVICE|BARRIER_SERVICE;
+                    services |= REDIRECT_SERVICE|EXIT_SERVICE|RPC_SERVICE|BARRIER_SERVICE|ALLOCATOR_SERVICE;
                     flags |= IDENT_FLAG;
                     envreg = 1;
                     regcomp(&_envreg, "PATH|SHELL|AXIOM_.*|GASNET_.*|NX_.*|LD_LIBRARY_PATH|LD_PRELOAD", REG_EXTENDED);
                 } else if (strcmp(optarg,"all")==0) {
-                    services |= REDIRECT_SERVICE|RPC_SERVICE|BARRIER_SERVICE;
+                    services |= REDIRECT_SERVICE|RPC_SERVICE|BARRIER_SERVICE|ALLOCATOR_SERVICE;
                     flags |= IDENT_FLAG;
                 } else {
                     _usage("error on -P and/or --profile argument");
@@ -668,6 +668,7 @@ int main(int argc, char **argv) {
                 break;
             case 'a':
                 services |= ALLOCATOR_SERVICE;
+                break;
             case 'E':
                 _mode = atoi(optarg);
                 if (_mode<0||_mode>4) {
