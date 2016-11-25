@@ -19,6 +19,7 @@ axiom-run/test/mybar
 axiom-run/test/myexch
 axiom-run/test/myrpc
 axiom-run/test/mylong
+axiom-run/test/myrdma
 lib/tests/axiom-test-galloc
 axiom-run/test/myputbulk
 axiom-utility/axiom-utility

@@ -5,9 +5,11 @@ AXIOM_ALLOC_LIB := ../../axiom-allocator/src/.libs
 AXIOM_NIC_UL := ../../axiom-evi-nic/axiom_user_library
 AXIOM_APPS_UL := ../axiom-init/lib
 AXIOM_COMMON_UL := ../axiom_common_library
+AXIOM_OVERLAY := ../../scripts/buildroot/overlay
+AXIOM_ALLOC_LDS := $(AXIOM_OVERLAY)/usr/axiom-evi-allocator-lib/xs_map64.lds
 
 APPS := axiom-run 
-TAPPS := test/myinfo test/mybar test/myexch test/myrpc test/myputbulk
+TAPPS := test/myinfo test/mybar test/myexch test/myrpc test/myputbulk test/myrdma
 LIBS := lib/libaxiom_run_api.a
 
 CLEANFILES = $(APPS) $(TAPPS) $(LIBS) *.o test/*.o lib/*.o
@@ -49,6 +51,9 @@ test/myinfo: test/myinfo.o
 
 test/myexch: test/myexch.o
 	$(CC) -L$(PWD)/../../axiom-evi-nic/axiom_user_library -o test/myexch test/myexch.o -laxiom_user_api -lpthread
+
+test/myrdma: test/myrdma.o
+	$(CC) -L$(PWD)/../../axiom-evi-nic/axiom_user_library -L$(PWD)/$(AXIOM_OVERLAY)/usr/lib -Wl,-T$(AXIOM_ALLOC_LDS) -o test/myrdma test/myrdma.o -laxiom_allocator -levi_lmm -laxiom_user_api -lpthread
 
 test/mybar: test/mybar.o lib/libaxiom_run_api.a
 	$(CC) -L$(PWD)/lib -o test/mybar test/mybar.o -laxiom_run_api
