@@ -84,13 +84,17 @@ static void _usage(char *msg, ...) {
     fprintf(stderr, "    environmet to run application\n");
     fprintf(stderr, "    [default: PATH|SHELL|AXIOM_.*]\n");
     fprintf(stderr, "-r, --redirect\n");
-    fprintf(stderr, "    redirect service\n");
+    fprintf(stderr, "    enable redirect service\n");
+    fprintf(stderr, "--no-redirect\n");
+    fprintf(stderr, "    disable redirect service\n");
     fprintf(stderr, "-i, --ident [MODE]\n");
     fprintf(stderr, "    the redirect service emit a node identification [default: 0]\n");
     fprintf(stderr, "    MODE 0   {NODE}\n");
     fprintf(stderr, "         1   NODE:\n");
     fprintf(stderr, "-e, --exit\n");
-    fprintf(stderr, "    exit service\n");
+    fprintf(stderr, "    enable exit service\n");
+    fprintf(stderr, "--no-exit\n");
+    fprintf(stderr, "    disable exit service\n");
     fprintf(stderr, "-E, --exitmode [MODE]\n");
     fprintf(stderr, "    the exit code returned by axiom-run master when the exit service is enabled [default:0]\n");
     fprintf(stderr, "    MODE 0   normal or greather (i.e. the greather exit code of all spawn process)\n");
@@ -100,11 +104,17 @@ static void _usage(char *msg, ...) {
     fprintf(stderr, "         4   no fail mode (i.e. return always zero)\n");
     fprintf(stderr, "    (if some spawned process died for a signal then the exit code is the first signal caught)\n");
     fprintf(stderr, "-b, --barrier\n");
-    fprintf(stderr, "    barrier service\n");
+    fprintf(stderr, "    enable barrier service\n");
+    fprintf(stderr, "--no-barrier\n");
+    fprintf(stderr, "    disable barrier service\n");
     fprintf(stderr, "-c, --rpc\n");
-    fprintf(stderr, "    rpc service\n");
+    fprintf(stderr, "    enable rpc service\n");
+    fprintf(stderr, "--no-rpc\n");
+    fprintf(stderr, "    disable rpc service\n");
     fprintf(stderr, "-a, --allocator\n");
-    fprintf(stderr, "    allocator service: handle axiom allocator and assign an unique application ID exported in the env of all process (AXIOM_ALLOC_APPID)\n");
+    fprintf(stderr, "    enable allocator service: handle axiom allocator and assign an unique application ID exported in the env of all process (AXIOM_ALLOC_APPID)\n");
+    fprintf(stderr, "--no-allocator\n");
+    fprintf(stderr, "    disable allocator service\n");
     fprintf(stderr, "-P, --profile PROFILE_NAME\n");
     fprintf(stderr, "    set the options for a profile:\n");
     fprintf(stderr, "    gasnet = -r -i -e -b -c -a -u 'PATH|SHELL|AXIOM_.*|GASNET_.*'\n");
@@ -129,13 +139,22 @@ static void _usage(char *msg, ...) {
 /**
  * Long options for command line.
  */
+#define NO_REDIRECT 1024
+#define NO_EXIT 1025
+#define NO_BARRIER 1026
+#define NO_RPC 1027
+#define NO_ALLOCATOR 1028
 static struct option long_options[] = {
     {"redirect", no_argument, 0, 'r'},
+    {"no-redirect", no_argument, 0, NO_REDIRECT},
     {"ident", optional_argument, 0, 'i'},
     {"exit", no_argument, 0, 'e'},
+    {"no-exit", no_argument, 0, NO_EXIT},
     {"exitmode", required_argument, 0, 'E'},
     {"barrier", no_argument, 0, 'b'},
+    {"no-barrier", no_argument, 0, NO_BARRIER},
     {"rpc", no_argument, 0, 'c'},
+    {"no-rpc", no_argument, 0, NO_RPC},
     {"slave", no_argument, 0, 's'},
     {"master", required_argument, 0, 'm'},
     {"nodes", required_argument, 0, 'n'},
@@ -144,6 +163,7 @@ static struct option long_options[] = {
     {"env", required_argument, 0, 'u'},
     {"gdb", required_argument, 0, 'g'},
     {"allocator", no_argument, 0, 'a'},
+    {"no-allocator", no_argument, 0, NO_ALLOCATOR},
     {"profile", required_argument, 0, 'P'},
     {"magic", required_argument, 0, 'x'},
     {"help", no_argument, 0, 'h'},
@@ -644,6 +664,9 @@ int main(int argc, char **argv) {
             case 'r':
                 services |= REDIRECT_SERVICE;
                 break;
+            case NO_REDIRECT:
+                services &= (~REDIRECT_SERVICE);
+                break;
             case 'i':
                 flags |= IDENT_FLAG;
                 if (optind < argc && **(argv + optind) >= '0' && **(argv + optind) <= '9') {
@@ -660,14 +683,26 @@ int main(int argc, char **argv) {
             case 'b':
                 services |= BARRIER_SERVICE;
                 break;
+            case NO_BARRIER:
+                services &= (~BARRIER_SERVICE);
+                break;
             case 'c':
                 services |= RPC_SERVICE;
+                break;
+            case NO_RPC:
+                services &= (~RPC_SERVICE);
                 break;
             case 'e':
                 services |= EXIT_SERVICE;
                 break;
+            case NO_EXIT:
+                services &= (~EXIT_SERVICE);
+                break;
             case 'a':
                 services |= ALLOCATOR_SERVICE;
+                break;
+            case NO_ALLOCATOR:
+                services &= (~ALLOCATOR_SERVICE);
                 break;
             case 'E':
                 _mode = atoi(optarg);
