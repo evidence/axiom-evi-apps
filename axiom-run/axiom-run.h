@@ -30,6 +30,8 @@ extern "C" {
 #include "axiom_allocator_protocol.h"
 #include "axiom_allocator_l2.h"
 
+#include "common.h"
+    
     /* message log zones */
 
     /** main zone */
@@ -55,56 +57,11 @@ extern "C" {
     /** default master node used */
 #define MY_DEFAULT_MASTER_NODE 0
 
-    /* master/slave commands */
-    /** command exit (slave->master) */
-#define CMD_EXIT            0x80
-    /** command kill (master->slave) */
-#define CMD_KILL            0x81
-    /** command to redirect stdout (slave->master) */
-#define CMD_SEND_TO_STDOUT  0x82
-    /** command to redirect stderr (slave->master) */
-#define CMD_SEND_TO_STDERR  0x83
-    /** command to redirect stdin (master->slave) */
-#define CMD_RECV_FROM_STDIN 0x84
-    /** command barrier (master<->slave) */
-#define CMD_BARRIER         0x85
-    /** command rpc (master<->slave) */
-#define CMD_RPC             0x86
-    /** command START (master->slave) */
-#define CMD_START           0x87
-
     extern char *cmd_to_name[];
 #define CMD_TO_NAME(cmd) ((cmd)>=CMD_EXIT&&(cmd)<=CMD_RPC?cmd_to_name[(cmd)-CMD_EXIT]:"unknown")
     extern char *rpcfunc_to_name[];
 #define RPCFUNC_TO_NAME(func) ((func)>=AXRUN_RPC_PING&&(func)<=AXRUN_RPC_PING?rpcfunc_to_name[(func)-AXRUN_RPC_PING]:"unknown")
 
-    /**
-     * header of all raws message between master and slave
-     */
-    typedef struct {
-        /** command. see CMD_??? defines */
-        uint8_t command;
-        /** dont't care */
-        uint8_t pad[3];
-
-        union {
-            /** exit status. used only by CMD_EXIT messages */
-            int status;
-            /** barried id. used only by CMD_BARRIER messages */
-            struct {
-               unsigned barrier_id;
-            } barrier;
-            /** rpc data. used only for CMD_RPC message */
-            struct {
-                uint64_t id;
-                uint32_t function;
-                uint32_t size;
-            } rpc;
-            /** magic. used for the CMD_START initial synchronization */
-            uint64_t magic;
-        } __attribute__((__packed__));
-
-    } __attribute__((__packed__)) header_t;
 
     /**
      * message between master and slave structure
@@ -177,13 +134,6 @@ extern "C" {
 #define LESSER_EXIT_FLAG 0x04
 #define GREATHER_EXIT_FLAG 0x00
 #define NORMAL_EXIT_FLAG GREATHER_EXIT_FLAG
-
-    /** template name for the master unix domani socket port */
-#define SLAVE_TEMPLATE_NAME "/tmp/ax%d"
-    /** template name for the slave unix domain socket port */
-#define BARRIER_CHILD_TEMPLATE_NAME "/tmp/axbar%d.%d"
-    /** template name for the slave unix domain socket port */
-#define RPC_CHILD_TEMPLATE_NAME "/tmp/axrpc%d.%ld"
 
     /*
      * Run and manage services for master process.

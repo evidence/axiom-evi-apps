@@ -5,10 +5,10 @@
 #include <sys/un.h>
 #include <errno.h>
 #include <stdio.h>
-#include <stdint.h>
+#include <stdlib.h>
 #include <unistd.h>
 
-#include "../axiom-run.h"
+#include "../common.h"
 #include "axiom_run_api.h"
 #include "lib.h"
 
