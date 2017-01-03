@@ -38,22 +38,29 @@ static struct option long_options[] = {
 static axiom_dev_t *dev;
 static int mynode,yournode;
 
-#define STARTCOUNTER 0
+#define STARTCOUNTER 7
 #define BREAKCOUNTER 9421
 
 #define BTYPE uint16_t
-#define MASK 0xffff
+//#define MASK 0xffff
+
+static inline unsigned long next_c(unsigned long c) {
+    while (c>BREAKCOUNTER) c=c-BREAKCOUNTER+STARTCOUNTER;
+    return c;
+}
 
 // number of transfert
-#define NUM 4096
-// size of evry transfer
-#define RDMASIZE (512*sizeof(BTYPE))
+#define NUM 40
+// size of every transfer
+#define RDMASIZE (98000*sizeof(BTYPE))
 // rdma memory required
-#define SIZENEED (NUM*RDMASIZE*2)
+#define SIZENEED (NUM*RDMASIZE*2*2)
 
 #define PORT 3
 
 BTYPE *source;
+
+BTYPE *end;
 
 void  *sender(void *data) {
     unsigned long c;
@@ -63,17 +70,25 @@ void  *sender(void *data) {
 #ifdef DEBUG
     fprintf(stderr,"sender: start\n");
 #endif
-    
+   
     usleep(250000);
     c=STARTCOUNTER;
-    for (i=0;i<NUM;i++) {
+    for (i=0;i<NUM-1;i++) {
         source_addr=source;
         for (j=0;j<RDMASIZE/sizeof(BTYPE);j++) {
-            *source=c&MASK;
+
+            if (source>=end) {
+                fprintf(stderr,"ERROR ERROR ERROR TRANS %p >= %p\n",source,end);
+                sleep(1);
+                exit(0);
+            }
+
+            *source=(BTYPE)c;
             source++;
             c++;
             if (c>BREAKCOUNTER) c=STARTCOUNTER;
         }
+        fprintf(stderr,"s=%p\n",source_addr);
         ret=axiom_rdma_write(dev, yournode, RDMASIZE, source_addr, source_addr, NULL);
         if (!AXIOM_RET_IS_OK(ret)) {
             perror("axiom_rdma_write()");
@@ -111,14 +126,21 @@ void  *receiver(void *data) {
         size=sizeof(addr);
         port=PORT;
         id= axiom_recv_raw(dev, &src_id, &port, &type, &size, (void*)&addr);
-        fprintf(stderr,"received seq=%d %p expected %lu..%lu\n",cm++,addr,c&MASK,(c+RDMASIZE/sizeof(BTYPE)-1)&MASK);
+        fprintf(stderr,"received seq=%d %p expected %lu..%lu\n",cm++,addr,c,next_c(c+RDMASIZE/sizeof(BTYPE)-1));
         if (!AXIOM_RET_IS_OK(id)) {
             perror("axiom_recv_raw");
             continue;
         }
         for (j=0;j<RDMASIZE/sizeof(BTYPE);j++) {
-            if (*addr!=(c&MASK)) {
-                fprintf(stderr,"ERROR expected %lu found %lu\n",c&MASK,(unsigned long)*addr);
+
+            if (addr>=end) {
+                fprintf(stderr,"ERROR ERROR ERROR RRECV %p >= %p\n",addr,end);
+                sleep(1);
+                exit(0);
+            }
+
+            if (*addr!=(BTYPE)c) {
+                fprintf(stderr,"ERROR expected %lu found %lu\n",c,(unsigned long)*addr);
                 err++;
             }
             addr++;
@@ -183,6 +205,8 @@ int main(int argc, char**argv) {
         perror("axiom_private_malloc()");
         exit(EXIT_FAILURE);
     }
+    fprintf(stderr,"allocated %lu bytes (%lu MiB) from %p to %p\n",(unsigned long)SIZENEED,(unsigned long)SIZENEED/1024/1024,base,base+SIZENEED/sizeof(BTYPE));
+    end=(BTYPE*)(((uint8_t*)base)+SIZENEED);
 
     memset(base,0,SIZENEED);
     ret=axrun_sync(7, 0);
@@ -192,7 +216,7 @@ int main(int argc, char**argv) {
     }
 
     source=base;
-    if (mynode&0x1) source+=SIZENEED/2;
+    if (mynode&0x1) source+=SIZENEED/2/sizeof(BTYPE);
     
     res = pthread_create(&threcv, NULL, receiver, NULL);
     if (res != 0) {
