@@ -1,73 +1,79 @@
-AXIOM_INCLUDE := ../../axiom-evi-nic/include
-AXIOM_APPS_INCLUDE := ../include
-AXIOM_ALLOC_INCLUDE := ../../axiom-allocator/include
-AXIOM_ALLOC_LIB := ../../axiom-allocator/src/.libs
-AXIOM_DISC := ./axiom-discovery
-AXIOM_PONG := ./axiom-pong
-AXIOM_SPAWN := ./axiom-spawn
-AXIOM_SESSION := ./axiom-session
-AXIOM_TR_REPLY := ./axiom-traceroute-reply
-AXIOM_NETPERF_REPLY := ./axiom-netperf-reply
-AXIOM_ALLOCATOR := ./axiom-allocator-l1
-AXIOM_NIC_UL := ../../axiom-evi-nic/axiom_user_library
-AXIOM_COMMON_UL := ../axiom_common_library
+
+include ../common.mk
+
+SUBDIRS := axiom-discovery axiom-pong axiom-spawn axiom-traceroute-reply
+SUBDIRS += axiom-netperf-reply axiom-allocator-l1
 
 APPS := axiom-init
-LIBS := lib/libaxiom_init_api.a
+SRCS := $(wildcard *.c) $(foreach dir,$(SUBDIRS),$(wildcard $(dir)/*.c))
+OBJS := $(SRCS:.c=.o)
+DEPS := $(SRCS:.c=.d)
 
-HEADERS := $(AXIOM_INCLUDE)/*.h $(AXIOM_APPS_INCLUDE)/*.h $(AXIOM_ALLOC_INCLUDE)/*.h
-CLEANFILES = $(APPS) $(LIBS) *.o lib/*.o $(AXIOM_PONG)/*.o $(AXIOM_TR_REPLY)/*.o
-CLEANFILES += $(AXIOM_NETPERF_REPLY)/*.o $(AXIOM_SESSION)/*.o $(AXIOM_SPAWN)/*.o
-CLEANFILES += $(AXIOM_ALLOCATOR)/*.o
+LIBS := lib/libaxiom_init_api.so
+LIBS_SRCS := $(wildcard lib/*.c)
+LIBS_OBJS := $(LIBS_SRCS:.c=.o)
+LIBS_DEPS := $(LIBS_SRCS:.c=.d)
 
-PWD := $(shell pwd)
-#MKFILE_DIR := $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
-#CCARCH := arm
-CCARCH := aarch64
-BUILDROOT := ${PWD}/../../axiom-evi-buildroot
-DESTDIR := ${BUILDROOT}/output/target
-CCPREFIX := ${BUILDROOT}/output/host/usr/bin/$(CCARCH)-linux-
-CC := ${CCPREFIX}gcc
-AR := ${CCPREFIX}ar
+CLEANFILES := $(APPS) $(OBJS) $(DEPS) $(LIBS) $(LIBS_OBJS) $(LIBS_DEPS)
 
-DFLAGS := -g -DPDEBUG
-CFLAGS += -Wall $(DFLAGS) -I$(PWD)/$(AXIOM_INCLUDE) -I$(PWD)/$(AXIOM_APPS_INCLUDE)
-CFLAGS += -I$(PWD)/$(AXIOM_ALLOC_INCLUDE)
-LDFLAGS += -L$(PWD)/$(AXIOM_NIC_UL) -L$(PWD)/$(AXIOM_ALLOC_LIB) -L$(AXIOM_COMMON_UL)
-LDLIBS += -laxiom_user_api -laxiom_allocator_l1 -laxiom_common
+CFLAGS_LIBS := $(CFLAGS) -fPIC -Wall $(DFLAGS) \
+	$(call PKG-CFLAGS, axiom_user_api) \
+	$(AXIOM_COMMON_CFLAGS)
+
+CFLAGS += -Wall $(DFLAGS) \
+	$(call PKG-CFLAGS, axiom_user_api axiom_allocator) \
+	$(AXIOM_COMMON_CFLAGS)
+LDFLAGS += $(call PKG-LDFLAGS, axiom_user_api axiom_allocator) \
+	$(AXIOM_COMMON_LDFLAGS)
+LDLIBS +=  $(call PKG-LDLIBS, axiom_user_api axiom_allocator) \
+	$(AXIOM_COMMON_LDLIBS)
+
+$(LIBS_OBJS): %.o: %.c %.d
+	$(CC) $(CFLAGS_LIBS) $(DEPFLAGS) -c -o $@ $<
+	mv -f $*.Td $*.d
 
 .PHONY: all libs install clean
 
-all: $(APPS) $(LIBS)
+all: libs $(APPS)
 
-libs: $(LIBS)
+-include $(DEPS) $(LIBS_DEPS)
 
-axiom-init: axiom-init.o \
-	$(AXIOM_DISC)/axiom_discovery_node.o $(AXIOM_DISC)/axiom_discovery_protocol.o $(AXIOM_DISC)/axiom_routing.o \
-	$(AXIOM_PONG)/axiom_pong.o $(AXIOM_TR_REPLY)/axiom_traceroute_reply.o $(AXIOM_NETPERF_REPLY)/axiom_netperf_reply.o \
-	$(AXIOM_ALLOCATOR)/axiom_allocator_l1.o \
-	$(AXIOM_SPAWN)/axiom_spawn.o $(AXIOM_SESSION)/axiom_session.o
+axiom-init: $(OBJS)
 
-axiom-init.o: axiom-init.c axiom-init.h $(HEADERS)
+lib/libaxiom_init_api.so.$(VERSION): $(LIBS_OBJS)
+	$(CC) -shared -Wl,--soname,libaxiom_init_api.so.$(MAJOR) \
+		$(call PKG-LDFLAGS, axiom_user_api) $(AXIOM_COMMON_LDFLAGS) \
+		-o $@ $? \
+		$(call PKG-LDLIBS, axiom_user_api) $(AXIOM_COMMON_LDLIBS)
 
-lib/libaxiom_init_api.a: lib/execvpe.o
-	$(AR) rcs $@ $?
+libs: $(foreach lib,$(LIBS),$(lib).$(VERSION))
+	for DESTDIR in $(SYSROOT_DIR); do \
+		mkdir -p $${DESTDIR}/usr/lib/pkgconfig ;\
+		for LIB in $(LIBS); do \
+			LIBNAME=$$(basename $$LIB) ;\
+			cp $${LIB}.$(VERSION) $${DESTDIR}/usr/lib/$${LIBNAME} ;\
+			NAME=$$(basename $$LIB .so | sed -e 's/^lib//') ;\
+			D=$$(dirname $$LIB) ;\
+			sed -e 's,@PREFIX@,/usr,' $${D}/$${NAME}.pc.in > $${DESTDIR}/usr/lib/pkgconfig/$${NAME}.pc ;\
+			cp $(AXIOM_APPS_INCLUDE)/$${NAME}.h $${DESTDIR}/usr/include/axiom ;\
+		done ;\
+	done
+	for DESTDIR in $(TARGET_DIR); do \
+		mkdir -p $${DESTDIR}/usr/lib ;\
+		for LIB in $(LIBS); do \
+			cp $${LIB}.$(VERSION) $${DESTDIR}/usr/lib/ ;\
+			LIBNAME=$$(basename $$LIB) ;\
+			ln -sf $${LIBNAME}.$(VERSION) $${DESTDIR}/usr/lib/$${LIBNAME}.$(MAJOR).$(MINOR) ;\
+			ln -sf $${LIBNAME}.0.0 $${DESTDIR}/usr/lib/$${LIBNAME}.$(MAJOR) ;\
+			ln -sf $${LIBNAME}.0 $${DESTDIR}/usr/lib/$${LIBNAME} ;\
+		done ;\
+	done
 
-$(AXIOM_NIC_UL)/%:
-	cd $(AXIOM_NIC_UL) && make CCPREFIX=$(CCPREFIX) DFLAGS="$(DFLAGS)" CFLAGS="$(CFLAGS)"
-
-$(AXIOM_COMMON_UL)/%:
-	cd $(AXIOM_COMMON_UL) && make CCPREFIX=$(CCPREFIX) DFLAGS="$(DFLAGS)" CFLAGS="$(CFLAGS)"
-
-$(AXIOM_DISC)/%.o:
-	cd $(AXIOM_DISC) && make CCPREFIX=$(CCPREFIX) DFLAGS="$(DFLAGS)" CFLAGS="$(CFLAGS)"
-
-install: all
-	cp $(APPS) $(DESTDIR)/usr/bin/
+install: all libs
+	for DESTDIR in $(TARGET_DIR); do \
+		mkdir -p $${DESTDIR}/usr/bin ;\
+		cp $(APPS) $${DESTDIR}/usr/bin/ ;\
+	done
 
 clean:
-	cd $(AXIOM_DISC) && make clean
 	rm -rf $(CLEANFILES)
-
-
-

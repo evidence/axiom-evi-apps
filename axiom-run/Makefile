@@ -1,81 +1,96 @@
-AXIOM_INCLUDE := ../../axiom-evi-nic/include
-AXIOM_APPS_INCLUDE := ..//include
-AXIOM_ALLOC_INCLUDE := ../../axiom-allocator/include
-AXIOM_ALLOC_LIB := ../../axiom-allocator/src/.libs
-AXIOM_NIC_UL := ../../axiom-evi-nic/axiom_user_library
-AXIOM_APPS_UL := ../axiom-init/lib
-AXIOM_COMMON_UL := ../axiom_common_library
-AXIOM_OVERLAY := ../../scripts/buildroot/overlay
-AXIOM_ALLOC_LDS := $(AXIOM_OVERLAY)/usr/axiom-evi-allocator-lib/xs_map64.lds
+
+include ../common.mk
 
 APPS := axiom-run 
-TAPPS := test/myinfo test/mybar test/myexch test/myrpc test/myputbulk test/myrdma
-LIBS := lib/libaxiom_run_api.a
+SRCS := $(wildcard *.c)
+OBJS := $(SRCS:.c=.o)
+DEPS := $(SRCS:.c=.d)
 
-CLEANFILES = $(APPS) $(TAPPS) $(LIBS) *.o test/*.o lib/*.o
+LIBS := lib/libaxiom_run_api.so
+LIBS_SRCS := $(wildcard lib/*.c)
+LIBS_OBJS := $(LIBS_SRCS:.c=.o)
+LIBS_DEPS := $(LIBS_SRCS:.c=.d)
 
-PWD := $(shell pwd)
+CLEANFILES = $(APPS) $(OBJS) $(DEPS) $(LIBS) $(LIBS_OBJS) $(LIBS_DEPS)
 
-#CCARCH := arm
-CCARCH := aarch64
-BUILDROOT := ${PWD}/../../axiom-evi-buildroot
-DESTDIR := ${BUILDROOT}/output/target
-CCPREFIX := ${BUILDROOT}/output/host/usr/bin/$(CCARCH)-linux-
-CC := ${CCPREFIX}gcc
-AR := ${CCPREFIX}ar
+CFLAGS_LIBS := $(CFLAGS) -fPIC -Wall -D_GNU_SOURCE $(DFLAGS) \
+	$(AXIOM_COMMON_CFLAGS) \
+	$(call PKG-CFLAGS, axiom_user_api)
 
-DFLAGS := -g -DPDEBUG
-CFLAGS += -Wall -D_GNU_SOURCE $(DFLAGS) -I$(PWD)/$(AXIOM_INCLUDE) -I$(PWD)/$(AXIOM_APPS_INCLUDE)
-CFLAGS += -I$(PWD)/$(AXIOM_ALLOC_INCLUDE)
-LDFLAGS += -L $(AXIOM_COMMON_UL) -L $(AXIOM_NIC_UL) -L $(AXIOM_APPS_UL)
-LDFLAGS += -L$(PWD)/$(AXIOM_ALLOC_LIB)
-LDLIBS += -laxiom_user_api -laxiom_init_api -laxiom_common -lpthread
-LDLIBS += -laxiom_allocator_l2
+CFLAGS += -Wall -D_GNU_SOURCE $(DFLAGS) \
+	$(call PKG-CFLAGS, axiom_user_api axiom_allocator) \
+	$(AXIOM_COMMON_CFLAGS)
+LDFLAGS += $(call PKG-LDFLAGS, axiom_user_api axiom_allocator) \
+	$(AXIOM_COMMON_LDFLAGS)
+LDLIBS += -lpthread \
+	$(call PKG-LDLIBS, axiom_user_api axiom_allocator) \
+	$(AXIOM_COMMON_LDLIBS)
 
-.PHONY: all libs clean
+$(LIBS_OBJS): %.o: %.c %.d
+	$(CC) $(CFLAGS_LIBS) $(DEPFLAGS) -c -o $@ $<
+	mv -f $*.Td $*.d
 
-all: $(APPS) $(LIBS) $(TAPPS)
+.PHONY: all libs clean install clean
 
-libs: $(LIBS)
+all: libs $(APPS)
 
-axiom-run: axiom-run.o master.o slave.o rpcfuncs.o
+-include $(DEPS) $(LIBS_DEPS)
 
-lib/%.o: lib/%.c
-	$(CC) -c -fPIC $(CFLAGS) -o $@ $?
+axiom-run: $(OBJS)
 
-lib/libaxiom_run_api.a: lib/sync.o lib/rpc.o lib/nodes.o
-	$(AR) rcs $@ $?
+lib/libaxiom_run_api.so.$(VERSION): $(LIBS_OBJS)
+	$(CC) -shared -Wl,--soname,libaxiom_run_api.so.$(MAJOR) \
+		$(call PKG-LDFLAGS, axiom_user_api) $(AXIOM_COMMON_LDFLAGS) \
+		-o $@ $? \
+		$(call PKG-LDLIBS, axiom_user_api) $(AXIOM_COMMON_LDLIBS)
 
-test/myinfo: test/myinfo.o
-	$(CC) -L$(PWD)/lib -o test/myinfo test/myinfo.o -laxiom_run_api
+libs: $(foreach lib,$(LIBS),$(lib).$(VERSION))
+	for DESTDIR in $(SYSROOT_DIR); do \
+		mkdir -p $${DESTDIR}/usr/lib/pkgconfig ;\
+		for LIB in $(LIBS); do \
+			LIBNAME=$$(basename $$LIB) ;\
+			cp $${LIB}.$(VERSION) $${DESTDIR}/usr/lib/$${LIBNAME} ;\
+			NAME=$$(basename $$LIB .so | sed -e 's/^lib//') ;\
+			D=$$(dirname $$LIB) ;\
+			sed -e 's,@PREFIX@,/usr,' $${D}/$${NAME}.pc.in > $${DESTDIR}/usr/lib/pkgconfig/$${NAME}.pc ;\
+			cp $(AXIOM_APPS_INCLUDE)/$${NAME}.h $${DESTDIR}/usr/include/axiom ;\
+		done ;\
+	done
+	for DESTDIR in $(TARGET_DIR); do \
+		mkdir -p $${DESTDIR}/usr/lib ;\
+		for LIB in $(LIBS); do \
+			cp $${LIB}.$(VERSION) $${DESTDIR}/usr/lib/ ;\
+			LIBNAME=$$(basename $$LIB) ;\
+			ln -sf $${LIBNAME}.$(VERSION) $${DESTDIR}/usr/lib/$${LIBNAME}.$(MAJOR).$(MINOR) ;\
+			ln -sf $${LIBNAME}.0.0 $${DESTDIR}/usr/lib/$${LIBNAME}.$(MAJOR) ;\
+			ln -sf $${LIBNAME}.0 $${DESTDIR}/usr/lib/$${LIBNAME} ;\
+		done ;\
+	done
 
-test/myexch: test/myexch.o
-	$(CC) -L$(PWD)/../../axiom-evi-nic/axiom_user_library -o test/myexch test/myexch.o -laxiom_user_api -lpthread
+#test/myinfo: test/myinfo.o
+#	$(CC) -L$(PWD)/lib -o test/myinfo test/myinfo.o -laxiom_run_api
+#
+#test/myexch: test/myexch.o
+#	$(CC) -L$(PWD)/../../axiom-evi-nic/axiom_user_library -o test/myexch test/myexch.o -laxiom_user_api -lpthread
+#
+#test/myrdma: test/myrdma.o
+#	$(CC) -L$(PWD)/../../axiom-evi-nic/axiom_user_library -L$(PWD)/$(AXIOM_OVERLAY)/usr/lib -Wl,-T$(AXIOM_ALLOC_LDS) -o test/myrdma test/myrdma.o -laxiom_allocator -levi_lmm -laxiom_user_api -lpthread
+#
+#test/mybar: test/mybar.o lib/libaxiom_run_api.a
+#	$(CC) -L$(PWD)/lib -o test/mybar test/mybar.o -laxiom_run_api
+#
+#test/myrpc: test/myrpc.o lib/libaxiom_run_api.a
+#	$(CC) -L$(PWD)/lib -o test/myrpc test/myrpc.o -laxiom_run_api
+#
+#test/myputbulk: test/myputbulk.o
+#	$(CC) -L$(PWD)/../../axiom-evi-nic/axiom_user_library -o test/myputbulk test/myputbulk.o -laxiom_user_api
+#
 
-test/myrdma: test/myrdma.o
-	$(CC) -L$(PWD)/../../axiom-evi-nic/axiom_user_library -L$(PWD)/$(AXIOM_OVERLAY)/usr/lib -Wl,-T$(AXIOM_ALLOC_LDS) -o test/myrdma test/myrdma.o -laxiom_allocator -levi_lmm -laxiom_user_api -lpthread
-
-test/mybar: test/mybar.o lib/libaxiom_run_api.a
-	$(CC) -L$(PWD)/lib -o test/mybar test/mybar.o -laxiom_run_api
-
-test/myrpc: test/myrpc.o lib/libaxiom_run_api.a
-	$(CC) -L$(PWD)/lib -o test/myrpc test/myrpc.o -laxiom_run_api
-
-test/myputbulk: test/myputbulk.o
-	$(CC) -L$(PWD)/../../axiom-evi-nic/axiom_user_library -o test/myputbulk test/myputbulk.o -laxiom_user_api
-
-$(AXIOM_NIC_UL)/%:
-	cd $(AXIOM_NIC_UL) && make CCPREFIX=$(CCPREFIX) DFLAGS="$(DFLAGS)"
-
-$(AXIOM_APPS_UL)/%:
-	cd $(AXIOM_APPS_UL)/.. && make CCPREFIX=$(CCPREFIX) DFLAGS="$(DFLAGS)"
-
-$(AXIOM_COMMON_UL)/%:
-	cd $(AXIOM_COMMON_UL) && make CCPREFIX=$(CCPREFIX) DFLAGS="$(DFLAGS)"
-
-install: all
-	cp $(APPS) $(DESTDIR)/usr/bin/
+install: all libs
+	for DESTDIR in $(TARGET_DIR); do \
+		mkdir -p $${DESTDIR}/usr/bin ;\
+		cp $(APPS) $${DESTDIR}/usr/bin/ ;\
+	done
 
 clean:
 	rm -rf $(CLEANFILES)
-

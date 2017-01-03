@@ -1,0 +1,14 @@
+
+prefix=@PREFIX@
+exec_prefix=${prefix}
+bindir=${exec_prefix}/bin
+libdir=${exec_prefix}/lib
+includedir=${prefix}/include
+
+Name: axiom_init_api
+Description: axiom init api description
+Version: 0.9
+
+Cflags: -I${includedir}/axiom
+Libs: -L${libdir} -laxiom_init_api 
+

@@ -1,37 +1,30 @@
-AXIOM_INCLUDE := ../../axiom-evi-nic/include
-AXIOM_NIC_UL := ../../axiom-evi-nic/axiom_user_library
+
+include ../common.mk
 
 APPS := axiom-info
-CLEANFILES = $(APPS) *.o
 
-PWD := $(shell pwd)
-#MKFILE_DIR := $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
-#CCARCH := arm
-CCARCH := aarch64
-BUILDROOT := ${PWD}/../../axiom-evi-buildroot
-DESTDIR := ${BUILDROOT}/output/target
-CCPREFIX := ${BUILDROOT}/output/host/usr/bin/$(CCARCH)-linux-
-CC := ${CCPREFIX}gcc
+SRCS := $(wildcard *.c)
+OBJS := $(SRCS:.c=.o)
+DEPS := $(SRCS:.c=.d)
+CLEANFILES = $(APPS) $(OBJS) $(DEPS)
 
-DFLAGS := -g -DPDEBUG
-CFLAGS += -Wall $(DFLAGS) -I$(PWD)/$(AXIOM_INCLUDE)
-LDFLAGS += -L $(AXIOM_NIC_UL)
-LDLIBS += -laxiom_user_api
+CFLAGS += -Wall $(DFLAGS) $(call PKG-CFLAGS, axiom_user_api)
+LDFLAGS += $(call PKG-LDFLAGS, axiom_user_api) 
+LDLIBS += $(call PKG-LDLIBS, axiom_user_api)
 
-.PHONY: all clean
+.PHONY: all clean install
 
 all: $(APPS)
 
-axiom-info: axiom-info.o
+-include $(DEPS)
 
-axiom-info.o: axiom-info.c
-
-$(AXIOM_NIC_UL)/%:
-	cd $(AXIOM_NIC_UL) && make CCPREFIX=$(CCPREFIX) DFLAGS="$(DFLAGS)"
+axiom-info: $(OBJS)
 
 install: all
-	cp $(APPS) $(DESTDIR)/usr/bin/
+	for DESTDIR in $(TARGET_DIR); do \
+		mkdir -p $${DESTDIR}/usr/bin ;\
+		cp $(APPS) $${DESTDIR}/usr/bin/ ;\
+	done
 
 clean:
 	rm -rf $(CLEANFILES)
-

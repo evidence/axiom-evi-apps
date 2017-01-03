@@ -1,37 +1,28 @@
-AXIOM_INCLUDE := ../../axiom-evi-nic/include
-AXIOM_APPS_INCLUDE := ../include
 
-HEADERS := $(AXIOM_INCLUDE)/*.h $(AXIOM_APPS_INCLUDE)/*.h
+include ../common.mk
+
 LIBS := libaxiom_common.a
-CLEANFILES = $(LIBS) *.o
+SRCS=$(wildcard *.c)
+OBJS=$(SRCS:.c=.o)
+DEPS=$(SRCS:.c=.d)
 
-PWD := $(shell pwd)
-#CCARCH := arm
-CCARCH := aarch64
-ifdef CCARCH
-    BUILDROOT := ${PWD}/../../axiom-evi-buildroot
-    DESTDIR := ${BUILDROOT}/output/target
-    CCPREFIX := ${BUILDROOT}/output/host/usr/bin/$(CCARCH)-linux-
-endif
+CLEANFILES = $(LIBS) $(OBJS) $(DEPS)
 
-CC := ${CCPREFIX}gcc
-AR := ${CCPREFIX}ar
-RANLIB := ${CCPREFIX}ranlib
-
-DFLAGS := -g -DPDEBUG
-CFLAGS += -Wall $(DFLAGS) -I$(AXIOM_INCLUDE) -I$(AXIOM_APPS_INCLUDE)
+CFLAGS += -fPIC -Wall $(DFLAGS) -I$(AXIOM_APPS_INCLUDE)
 
 .PHONY: all libs clean install
 
-all: $(LIBS)
+all: libs
+
+-include $(DEPS)
 
 libs: $(LIBS)
 
-libaxiom_common.a: strlcat.o strlcpy.o strlist.o logmsg.o daemonize.o
+libaxiom_common.a: $(OBJS)
 	$(AR) rcs $@ $?
 	$(RANLIB) $@
 
-install: all
+install: libs
 
-clean:
+clean distclean:
 	rm -rf $(CLEANFILES)

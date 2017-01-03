@@ -1,42 +1,30 @@
-AXIOM_INCLUDE := ../../axiom-evi-nic/include
-AXIOM_NIC_UL := ../../axiom-evi-nic/axiom_user_library
-AXIOM_RUN_LIB := ../axiom-run/lib
 
-AXIOM_OVERLAY := ../../scripts/buildroot/overlay
-AXIOM_ALLOC_LDS := $(AXIOM_OVERLAY)/usr/axiom-evi-allocator-lib/xs_map64.lds
+include ../common.mk
 
 APPS := axiom-rdma
-HEADERS := $(AXIOM_INCLUDE)/*.h
-CLEANFILES = $(APPS) *.o
 
-PWD := $(shell pwd)
-#MKFILE_DIR := $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
-#CCARCH := arm
-CCARCH := aarch64
-BUILDROOT := ${PWD}/../../axiom-evi-buildroot
-DESTDIR := ${BUILDROOT}/output/target
-CCPREFIX := ${BUILDROOT}/output/host/usr/bin/$(CCARCH)-linux-
-CC := ${CCPREFIX}gcc
+SRCS := $(wildcard *.c)
+OBJS := $(SRCS:.c=.o)
+DEPS := $(SRCS:.c=.d)
+CLEANFILES = $(APPS) $(OBJS) $(DEPS)
 
-DFLAGS := -g -DPDEBUG
-CFLAGS += -g -Wall $(DFLAGS) -I$(PWD)/$(AXIOM_INCLUDE)
-LDFLAGS += -L$(PWD)/$(AXIOM_OVERLAY)/usr/lib -Wl,-T$(AXIOM_ALLOC_LDS)
-LDFLAGS += -L$(PWD)/$(AXIOM_NIC_UL) -L$(PWD)/$(AXIOM_RUN_LIB)
-LDLIBS += -laxiom_allocator -levi_lmm -laxiom_user_api -laxiom_run_api
+CFLAGS += -Wall $(DFLAGS) $(call PKG-CFLAGS, axiom_user_api axiom_allocator axiom_run_api)
+LDFLAGS += $(call PKG-LDFLAGS, axiom_user_api axiom_allocator evi_lmm axiom_run_api) 
+LDLIBS += $(call PKG-LDLIBS, axiom_user_api axiom_allocator evi_lmm axiom_run_api)
 
-.PHONY: all clean
+.PHONY: all clean install
 
 all: $(APPS)
 
-axiom-rdma: axiom-rdma.o
+-include $(DEPS)
 
-axiom-rdma.o: axiom-rdma.c $(HEADERS)
-
-$(AXIOM_NIC_UL)/%:
-	cd $(AXIOM_NIC_UL) && make CCPREFIX=$(CCPREFIX) DFLAGS="$(DFLAGS)"
+axiom-rdma: $(OBJS)
 
 install: all
-	cp $(APPS) $(DESTDIR)/usr/bin/
+	for DESTDIR in $(TARGET_DIR); do \
+		mkdir -p $${DESTDIR}/usr/bin ;\
+		cp $(APPS) $${DESTDIR}/usr/bin/ ;\
+	done
 
 clean:
 	rm -rf $(CLEANFILES)
