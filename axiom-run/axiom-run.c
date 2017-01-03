@@ -125,6 +125,8 @@ static void _usage(char *msg, ...) {
     fprintf(stderr, "             (all services but NOT exit service)\n");
     fprintf(stderr, "-h, --help\n");
     fprintf(stderr, "    print this help\n");
+    fprintf(stderr, "-H, --deephelp\n");
+    fprintf(stderr, "    print some deep explanation about axiom-run services\n");
     fprintf(stderr, "-x, --magic MAGICNUMBER\n");
     fprintf(stderr, "    set a 'magic' number to sync the start of axiom-run master/slave [default: time()]\n");
     fprintf(stderr, "note:\n");
@@ -135,6 +137,23 @@ static void _usage(char *msg, ...) {
  * _usage with no message.
  */
 #define usage() _usage(NULL)
+
+static void deep_help() {
+    fprintf(stderr, "\n");
+    fprintf(stderr, "[axiom-run EXIT service]\n");
+    fprintf(stderr, "\n");
+    fprintf(stderr, "activated with -e||--exit and deactivated with --no-exit\n");
+    fprintf(stderr, "\n");
+    fprintf(stderr, "when activated the termination of an instance of the application, an axiom-run slave or a axiom-run muste\n");
+    fprintf(stderr, "  cause the termination of all the process of the application in every node\n");
+    fprintf(stderr, "  (every cause of termination! note that the KILL signal can not be caught)\n");
+    fprintf(stderr, "\n");
+    fprintf(stderr, "when NOT activated\n");
+    fprintf(stderr, "  if no other service are activated no additinal beaviour\n");
+    fprintf(stderr, "  if other service are activated then the axiom-run master wait the normal termination ov every instance\n");
+    fprintf(stderr, "    (no forced termination!)\n");
+    fprintf(stderr, "\n");
+}
 
 /**
  * Long options for command line.
@@ -167,6 +186,7 @@ static struct option long_options[] = {
     {"profile", required_argument, 0, 'P'},
     {"magic", required_argument, 0, 'x'},
     {"help", no_argument, 0, 'h'},
+    {"deephelp", no_argument, 0, 'H'},
     {0, 0, 0, 0}
 };
 
@@ -632,7 +652,7 @@ int main(int argc, char **argv) {
     // command line parsing
     //
 
-    while ((opt = getopt_long(argc, argv, "+rebcasp:E:P:m:x:hn:N:u:g:i::", long_options, &long_index)) != -1) {
+    while ((opt = getopt_long(argc, argv, "+rebcasp:E:P:m:x:hHn:N:u:g:i::", long_options, &long_index)) != -1) {
         switch (opt) {
             case 'P':
                 if (strcmp(optarg,"gasnet")==0) {
@@ -746,6 +766,9 @@ int main(int argc, char **argv) {
                 break;
             case 'h':
                 usage();
+                exit(-1);
+            case 'H':
+                deep_help();
                 exit(-1);
             case '?':
             case ':':
