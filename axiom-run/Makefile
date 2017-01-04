@@ -11,7 +11,7 @@ LIBS_SRCS := $(wildcard lib/*.c)
 LIBS_OBJS := $(LIBS_SRCS:.c=.o)
 LIBS_DEPS := $(LIBS_SRCS:.c=.d)
 
-CLEANFILES = $(APPS) $(OBJS) $(DEPS) $(LIBS) $(LIBS_OBJS) $(LIBS_DEPS)
+CLEANFILES = $(APPS) $(OBJS) $(DEPS) $(foreach LIB,$(LIBS),$(LIB).*) $(LIBS_OBJS) $(LIBS_DEPS)
 
 CFLAGS_LIBS := $(CFLAGS) -fPIC -Wall -D_GNU_SOURCE $(DFLAGS) \
 	$(AXIOM_COMMON_CFLAGS) \
@@ -26,13 +26,13 @@ LDLIBS += -lpthread \
 	$(call PKG-LDLIBS, axiom_user_api axiom_allocator) \
 	$(AXIOM_COMMON_LDLIBS)
 
-$(LIBS_OBJS): %.o: %.c %.d
-	$(CC) $(CFLAGS_LIBS) $(DEPFLAGS) -c -o $@ $<
-	mv -f $*.Td $*.d
-
 .PHONY: all libs clean install clean
 
 all: libs $(APPS)
+
+$(LIBS_OBJS): %.o: %.c %.d
+	$(CC) $(CFLAGS_LIBS) $(DEPFLAGS) -c -o $@ $<
+	mv -f $*.Td $*.d
 
 -include $(DEPS) $(LIBS_DEPS)
 
@@ -62,8 +62,8 @@ libs: $(foreach lib,$(LIBS),$(lib).$(VERSION))
 			cp $${LIB}.$(VERSION) $${DESTDIR}/usr/lib/ ;\
 			LIBNAME=$$(basename $$LIB) ;\
 			ln -sf $${LIBNAME}.$(VERSION) $${DESTDIR}/usr/lib/$${LIBNAME}.$(MAJOR).$(MINOR) ;\
-			ln -sf $${LIBNAME}.0.0 $${DESTDIR}/usr/lib/$${LIBNAME}.$(MAJOR) ;\
-			ln -sf $${LIBNAME}.0 $${DESTDIR}/usr/lib/$${LIBNAME} ;\
+			ln -sf $${LIBNAME}.$(MAJOR).$(MINOR) $${DESTDIR}/usr/lib/$${LIBNAME}.$(MAJOR) ;\
+			ln -sf $${LIBNAME}.$(MAJOR) $${DESTDIR}/usr/lib/$${LIBNAME} ;\
 		done ;\
 	done
 
@@ -92,5 +92,5 @@ install: all libs
 		cp $(APPS) $${DESTDIR}/usr/bin/ ;\
 	done
 
-clean:
+clean distclean:
 	rm -rf $(CLEANFILES)

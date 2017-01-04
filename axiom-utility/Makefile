@@ -26,6 +26,6 @@ install: all
 		cp $(APPS) $${DESTDIR}/usr/bin/ ;\
 	done
 
-clean:
+clean distclean:
 	rm -rf $(CLEANFILES)
 

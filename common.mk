@@ -52,7 +52,7 @@ PKG-LDLIBS = $(shell $(PKG-CONFIG) --libs-only-l ${1})
 
 AXIOM_APPS_INCLUDE := $(COMMKFILE_DIR)/include
 
-AXIOM_COMMON_CFLAGS := -I$(COMMKFILE_DIR)/axiom_common_library
+AXIOM_COMMON_CFLAGS := -I$(COMMKFILE_DIR)/axiom_common_library -I$(AXIOM_APPS_INCLUDE)
 AXIOM_COMMON_LDFLAGS := -L$(COMMKFILE_DIR)/axiom_common_library
 AXIOM_COMMON_LDLIBS := -laxiom_common
 
