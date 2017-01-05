@@ -33,7 +33,6 @@ LDLIBS +=  $(call PKG-LDLIBS, axiom_user_api axiom_allocator) \
 all: libs $(APPS)
 
 $(LIBS_OBJS): %.o: %.c %.d
-	echo XXX $(AXIOM_COMMON_CFLAGS)
 	$(CC) $(CFLAGS_LIBS) $(DEPFLAGS) -c -o $@ $<
 	mv -f $*.Td $*.d
 
@@ -44,7 +43,7 @@ axiom-init: $(OBJS)
 lib/libaxiom_init_api.so.$(VERSION): $(LIBS_OBJS)
 	$(CC) -shared -Wl,--soname,libaxiom_init_api.so.$(MAJOR) \
 		$(call PKG-LDFLAGS, axiom_user_api) $(AXIOM_COMMON_LDFLAGS) \
-		-o $@ $? \
+		-o $@ $^ \
 		$(call PKG-LDLIBS, axiom_user_api) $(AXIOM_COMMON_LDLIBS)
 
 libs: $(foreach lib,$(LIBS),$(lib).$(VERSION))
