@@ -2,7 +2,7 @@
 include ../common.mk
 
 SUBDIRS := axiom-discovery axiom-pong axiom-spawn axiom-traceroute-reply
-SUBDIRS += axiom-netperf-reply axiom-allocator-l1
+SUBDIRS += axiom-netperf-reply axiom-allocator-l1 axiom-session
 
 APPS := axiom-init
 SRCS := $(wildcard *.c) $(foreach dir,$(SUBDIRS),$(wildcard $(dir)/*.c))
@@ -21,11 +21,11 @@ CFLAGS_LIBS := $(CFLAGS) -fPIC -Wall $(DFLAGS) \
 	$(AXIOM_COMMON_CFLAGS)
 
 CFLAGS += -Wall $(DFLAGS) \
-	$(call PKG-CFLAGS, axiom_user_api axiom_allocator) \
+	$(call PKG-CFLAGS, axiom_user_api axiom_init_api axiom_run_api axiom_allocator evi_lmm) \
 	$(AXIOM_COMMON_CFLAGS)
-LDFLAGS += $(call PKG-LDFLAGS, axiom_user_api axiom_allocator) \
+LDFLAGS += $(call PKG-LDFLAGS, axiom_user_api axiom_init_api axiom_run_api axiom_allocator evi_lmm) \
 	$(AXIOM_COMMON_LDFLAGS)
-LDLIBS +=  $(call PKG-LDLIBS, axiom_user_api axiom_allocator) \
+LDLIBS +=  $(call PKG-LDLIBS, axiom_user_api axiom_init_api axiom_run_api axiom_allocator evi_lmm) \
 	$(AXIOM_COMMON_LDLIBS)
 
 .PHONY: all libs install clean

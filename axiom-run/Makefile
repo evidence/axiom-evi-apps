@@ -18,12 +18,12 @@ CFLAGS_LIBS := $(CFLAGS) -fPIC -Wall -D_GNU_SOURCE $(DFLAGS) \
 	$(call PKG-CFLAGS, axiom_user_api)
 
 CFLAGS += -Wall -D_GNU_SOURCE $(DFLAGS) \
-	$(call PKG-CFLAGS, axiom_user_api axiom_allocator) \
+	$(call PKG-CFLAGS, axiom_user_api axiom_init_api axiom_run_api axiom_allocator evi_lmm) \
 	$(AXIOM_COMMON_CFLAGS)
-LDFLAGS += $(call PKG-LDFLAGS, axiom_user_api axiom_allocator) \
+LDFLAGS += $(call PKG-LDFLAGS, axiom_user_api axiom_init_api axiom_run_api axiom_allocator evi_lmm) \
 	$(AXIOM_COMMON_LDFLAGS)
 LDLIBS += -lpthread \
-	$(call PKG-LDLIBS, axiom_user_api axiom_allocator) \
+	$(call PKG-LDLIBS, axiom_user_api axiom_init_api axiom_run_api axiom_allocator evi_lmm) \
 	$(AXIOM_COMMON_LDLIBS)
 
 .PHONY: all libs clean install clean
