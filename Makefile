@@ -10,13 +10,13 @@ COMS_DIR := axiom_common_library
 export DFLAGS
 
 all: libs
-	for DIR in $(APPS_DIR); do $(MAKE) -C $$DIR; done
+	for DIR in $(APPS_DIR); do { $(MAKE) -C $$DIR || exit 1; }; done
 
 libs: com_libs
-	for DIR in $(LIBS_DIR); do $(MAKE) -C $$DIR libs; done
+	for DIR in $(LIBS_DIR); do { $(MAKE) -C $$DIR libs || exit 1; }; done
 
 com_libs: 
-	for DIR in $(COMS_DIR); do $(MAKE) -C $$DIR; done
+	for DIR in $(COMS_DIR); do { $(MAKE) -C $$DIR || exit 1; }; done
 
 install clean distclean:
-	for DIR in $(APPS_DIR) $(COMS_DIR); do $(MAKE) -C $$DIR $@; done
+	for DIR in $(APPS_DIR) $(COMS_DIR); do { $(MAKE) -C $$DIR $@ || exit 1; }; done
