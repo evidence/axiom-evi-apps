@@ -420,7 +420,6 @@ static void *master_receiver(void *data) {
     zlogmsg(LOG_INFO, LOGZ_MASTER, "MASTER: exiting receiver thread");
 
     // release resources
-    rpc_release(info->dev);
     free(barrier);
     for (i = 0; i < MAX_NUM_NODES; i++) {
         free(infoout[i].buffer);
@@ -444,7 +443,7 @@ static void *master_sender(void *data) {
     size_t sz;
     fd_set set;
     int res;
-    
+
     //
     // read stdin and send this data to all slaves...
     //

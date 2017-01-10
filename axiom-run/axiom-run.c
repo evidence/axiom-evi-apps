@@ -617,6 +617,17 @@ static inline int __clz(register uint64_t n) {
     return c;
 }
 
+static axiom_dev_t *dev = NULL;
+
+static void axiom_memory_cleanup() {
+    if (dev != NULL) {
+        rpc_release(dev);
+        axiom_close(dev);
+    } else {
+        zlogmsg(LOG_WARN, LOGZ_MAIN, "device is closed... I can't release axiom-init memory!");
+    }
+}
+
 /**
  * Main axiom-run entry point.
  * @param argc number of argment
@@ -624,7 +635,6 @@ static inline int __clz(register uint64_t n) {
  * @return exit status
  */
 int main(int argc, char **argv) {
-    axiom_dev_t *dev = NULL;
     axiom_app_id_t app_id = AXIOM_NULL_APP_ID;
     int long_index = 0;
     int opt = 0;
@@ -864,6 +874,11 @@ int main(int argc, char **argv) {
         if (dev == NULL) {
             perror("axiom_open()");
             exit(EXIT_FAILURE);
+        }
+
+        /* axiom-init memory cleanup */
+        if (!slave) {
+            atexit(axiom_memory_cleanup);
         }
 
         // command line parameters check...
@@ -1116,9 +1131,6 @@ int main(int argc, char **argv) {
             exitval=manage_master_services(dev, services, nodes, flags, app_id);
         }
     }
-
-    if (dev != NULL)
-        axiom_close(dev);
 
     zlogmsg(LOG_INFO, LOGZ_MAIN, "axiom-run finished");
 
