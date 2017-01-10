@@ -22,6 +22,6 @@ clean:
 
 install: build
 	for DESTDIR in $(TARGET_DIR); do \
-	    mkdir -p $${DESTDIR}/root/tests; \
-	    cp $(EXECS) $${DESTDIR}/root/tests; \
+	    mkdir -p $${DESTDIR}/root/tests_axiom; \
+	    cp $(EXECS) $${DESTDIR}/root/tests_axiom; \
 	done

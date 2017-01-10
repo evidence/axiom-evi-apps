@@ -4,8 +4,9 @@ APPS_DIR += axiom-ping axiom-traceroute axiom-netperf axiom-rdma axiom-info
 APPS_DIR += axiom-utility
 LIBS_DIR := axiom-init axiom-run
 COMS_DIR := axiom_common_library
+TESTS_DIR := tests
 
-.PHONY: all libs com_libs clean install clean distclean 
+.PHONY: all libs com_libs clean install clean distclean tests
 
 export DFLAGS
 
@@ -14,6 +15,9 @@ all: libs
 
 libs: com_libs
 	for DIR in $(LIBS_DIR); do { $(MAKE) -C $$DIR libs || exit 1; }; done
+
+tests: all
+	for DIR in $(TESTS_DIR); do { $(MAKE) -C $$DIR install || exit 1; }; done
 
 com_libs: 
 	for DIR in $(COMS_DIR); do { $(MAKE) -C $$DIR || exit 1; }; done
