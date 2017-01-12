@@ -14,7 +14,7 @@ build: $(OBJS) libtest.a
 libtest.a: $(OBJS)
 	$(AR) rcs libtest.a $(OBJS)
 
-install:
+install: build
 
 clean:
 	rm -f $(OBJS) $(DEPS) libtest.a
