@@ -15,6 +15,10 @@ libtest.a: $(OBJS)
 	$(AR) rcs libtest.a $(OBJS)
 
 install: build
+	for DESTDIR in $(TARGET_DIR); do \
+	    mkdir -p $${DESTDIR}/root/tests_axiom; \
+	    cp ../scripts/* $${DESTDIR}/root/tests_axiom; \
+	done
 
 clean:
 	rm -f $(OBJS) $(DEPS) libtest.a

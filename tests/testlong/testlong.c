@@ -193,7 +193,7 @@ static inline int i_am_the_first(int mynode) {
 */
 
 static void help() {
-    fprintf(stderr, "usage: myrdma [options]\n");
+    fprintf(stderr, "usage: testlong [options]\n");
     fprintf(stderr, "  -d|--debug     debug (every -d increase verbosiness, max 3)\n");
     fprintf(stderr, "  -s|--seed SEED seed for srand [default: %d]\n",SEED);
     fprintf(stderr, "  -p|--port PORT axiom port [default: %d]\n",PORT);
