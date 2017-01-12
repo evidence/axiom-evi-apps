@@ -51,7 +51,10 @@ libs: $(foreach lib,$(LIBS),$(lib).$(VERSION))
 		mkdir -p $${DESTDIR}/usr/lib/pkgconfig ;\
 		for LIB in $(LIBS); do \
 			LIBNAME=$$(basename $$LIB) ;\
-			cp $${LIB}.$(VERSION) $${DESTDIR}/usr/lib/$${LIBNAME} ;\
+			cp $${LIB}.$(VERSION) $${DESTDIR}/usr/lib/ ;\
+			ln -sf $${LIBNAME}.$(VERSION) $${DESTDIR}/usr/lib/$${LIBNAME}.$(MAJOR).$(MINOR) ;\
+			ln -sf $${LIBNAME}.$(MAJOR).$(MINOR) $${DESTDIR}/usr/lib/$${LIBNAME}.$(MAJOR) ;\
+			ln -sf $${LIBNAME}.$(MAJOR) $${DESTDIR}/usr/lib/$${LIBNAME} ;\
 			NAME=$$(basename $$LIB .so | sed -e 's/^lib//') ;\
 			D=$$(dirname $$LIB) ;\
 			sed -e 's,@PREFIX@,/usr,' $${D}/$${NAME}.pc.in > $${DESTDIR}/usr/lib/pkgconfig/$${NAME}.pc ;\
