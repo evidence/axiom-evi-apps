@@ -15,11 +15,11 @@ use these commands from axiom-evi/scripts/
   make tests-axiom
   make target
 ```
-To run these tests use the run_test_AXIOM.sh shell script from the /root/tests_axiom from the VMS; for example:
-
+To run these tests use the run_tests_AXIOM.sh shell script in the VMS.
+To run in the guests, choose one guest and do the following:
 ```
-  cd /root/test_axiom
-  ./run_test_AXIOM.sh ./test??? [parameters]
+  cd /root/tests_axiom
+  ./run_tests_AXIOM.sh ./test??? [parameters]
 ```
 
 ## 1. testlong
