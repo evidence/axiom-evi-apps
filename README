@@ -52,8 +52,8 @@ This repository contains the following user space application:
 ```
 ```
         # Estimate the throughput with targat node 3, sending 2 MBytes of data.
-        # using RDMA messages.
-        axiom-netperf -d 3 -l 2M -t rdma
+        # using LONG messages.
+        axiom-netperf -d 3 -l 2M -t long
 ```
  * axiom-traceroute
     + print the hops needed to reach a specified target node
