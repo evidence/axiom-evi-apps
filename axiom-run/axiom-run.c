@@ -108,6 +108,14 @@ static void _usage(char *msg, ...) {
     fprintf(stderr, "         4   no fail mode (i.e. return always zero)\n");
     fprintf(stderr, "         5   first mode including signals (i.e. return the first exit code signals included)\n");
     fprintf(stderr, "    for mode 0 to 4 if some spawned process died for a signal then the exit code is the first signal caught\n");
+    fprintf(stderr, "-T, --termmode [MODE]\n");
+    fprintf(stderr, "    the signal used to eventually terminate a child applicationprocess [default: TERM]\n");
+    fprintf(stderr, "    MODE TERM || %d   use SIGTERM\n", SIGTERM);
+    fprintf(stderr, "         QUIT || %d   use SIGQUIT\n", SIGQUIT);
+    fprintf(stderr, "         INT  || %d   use SIGINT\n", SIGINT);
+    fprintf(stderr, "         ABRT || %d   use SIGABRT\n", SIGABRT);
+    fprintf(stderr, "         KILL || %d   use SIGKILL\n", SIGKILL);
+    fprintf(stderr, "    (note that SIGKILL can not be caught by the running application)\n");
     fprintf(stderr, "-b, --barrier\n");
     fprintf(stderr, "    enable barrier service\n");
     fprintf(stderr, "--no-barrier\n");
@@ -190,6 +198,7 @@ static struct option long_options[] = {
     {"kill", no_argument, 0, 'k'},
     {"no-kill", no_argument, 0, NO_KILL},
     {"exitmode", required_argument, 0, 'E'},
+    {"termmode", required_argument, 0, 'T'},
     {"barrier", no_argument, 0, 'b'},
     {"no-barrier", no_argument, 0, NO_BARRIER},
     {"rpc", no_argument, 0, 'c'},
@@ -664,6 +673,7 @@ int main(int argc, char **argv) {
     uint64_t nodes = 0;
     uint64_t gdb_nodes = 0;
     int flags = 0;
+    int termmode = SIGTERM;
     int gdb_port = 0;
     int envreg = 0;
     long magic=0;
@@ -682,7 +692,7 @@ int main(int argc, char **argv) {
     // command line parsing
     //
 
-    while ((opt = getopt_long(argc, argv, "+rekbcasp:E:P:m:x:hHn:N:u:g:i::", long_options, &long_index)) != -1) {
+    while ((opt = getopt_long(argc, argv, "+rekbcasp:E:T:P:m:x:hHn:N:u:g:i::", long_options, &long_index)) != -1) {
         switch (opt) {
             case 'P':
                 if (strcmp(optarg,"gasnet")==0) {
@@ -768,6 +778,27 @@ int main(int argc, char **argv) {
                 }
                 flags&=~EXIT_FLAG_MASK;
                 flags|=(_mode<<EXIT_FLAG_SHIFT);
+                break;
+            case 'T':
+                _mode = atoi(optarg);
+                if (_mode == 0) {
+                    if (strcasecmp(optarg, "TERM") == 0) {
+                        _mode = SIGTERM;
+                    } else if (strcasecmp(optarg, "QUIT") == 0) {
+                        _mode = SIGQUIT;
+                    } else if (strcasecmp(optarg, "INT") == 0) {
+                        _mode = SIGINT;
+                    } else if (strcasecmp(optarg, "ABRT") == 0) {
+                        _mode = SIGABRT;
+                    } else if (strcasecmp(optarg, "KILL") == 0) {
+                        _mode = SIGKILL;
+                    }
+                }
+                if (_mode != SIGTERM && _mode != SIGINT && _mode != SIGABRT && _mode != SIGQUIT && _mode != SIGKILL) {
+                    _usage("error on -T|--termmode: bad argument\n");
+                    exit(-1);
+                }
+                termmode = _mode;
                 break;
             case 'n':
                 nodes = decode_node_arg(optarg);
@@ -1071,7 +1102,7 @@ int main(int argc, char **argv) {
 
         // manage services....
         if (services) {
-            exitval=manage_slave_services(dev, services, fd, pid);
+            exitval = manage_slave_services(dev, services, fd, pid, termmode);
         }
 
     } else {
@@ -1133,6 +1164,12 @@ int main(int argc, char **argv) {
                     sl_append(&list, "-c");
             }
 
+            if (termmode != SIGTERM) {
+                sl_append(&list, "-T");
+                snprintf(buf, sizeof (buf), "%d", termmode);
+                sl_append(&list, buf);
+            }
+            
             if (gdb_nodes != 0) {
                 sl_append(&list, "-g");
                 snprintf(buf, sizeof (buf), "0x%lx:%d", gdb_nodes, gdb_port);

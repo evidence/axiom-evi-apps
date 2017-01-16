@@ -154,9 +154,10 @@ extern "C" {
      * @param services services bitwise
      * @param fd array of 3 file descriptor for redirect service (if enabled)
      * @param pid process id of child process (application controlled)
+     * @param termmode signal usde to kill child process
      * @return exit status (see 'man 2 waitpid')
      */
-    int manage_slave_services(axiom_dev_t *dev, int services, int *fd, pid_t pid);
+    int manage_slave_services(axiom_dev_t *dev, int services, int *fd, pid_t pid, int termode);
 
     /** node number of the master  */
     extern int master_node;
