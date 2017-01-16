@@ -106,7 +106,8 @@ static void _usage(char *msg, ...) {
     fprintf(stderr, "         2   first mode (i.e. the first exit code of all spawn process)\n");
     fprintf(stderr, "         3   last mode (i.e. the last exit code of all spawn process)\n");
     fprintf(stderr, "         4   no fail mode (i.e. return always zero)\n");
-    fprintf(stderr, "    (if some spawned process died for a signal then the exit code is the first signal caught)\n");
+    fprintf(stderr, "         5   first mode including signals (i.e. return the first exit code signals included)\n");
+    fprintf(stderr, "    for mode 0 to 4 if some spawned process died for a signal then the exit code is the first signal caught\n");
     fprintf(stderr, "-b, --barrier\n");
     fprintf(stderr, "    enable barrier service\n");
     fprintf(stderr, "--no-barrier\n");
@@ -749,7 +750,7 @@ int main(int argc, char **argv) {
                 break;
             case 'E':
                 _mode = atoi(optarg);
-                if (_mode<0||_mode>4) {
+                if (_mode<0||_mode>5) {
                     _usage("error on -E|--exitmode: mode must be between 0 and 4");
                     exit(-1);
                 }

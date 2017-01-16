@@ -339,6 +339,7 @@ static void *master_receiver(void *data) {
                         // PREV normal RECV normal
                         switch (info->flags&EXIT_FLAG_MASK) {
                             case FIRST_EXIT_FLAG:
+                            case FIRST_ABS_EXIT_FLAG:
                                 // nothing
                                 break;
                             case LAST_EXIT_FLAG:
@@ -362,7 +363,14 @@ static void *master_receiver(void *data) {
                 } else {
                     if (WIFEXITED(exit_status)) {
                         // PREV normal RECV signaled
-                        exit_status=buffer.header.status;                        
+                        switch (info->flags&EXIT_FLAG_MASK) {
+                            case FIRST_ABS_EXIT_FLAG:
+                                // nothing
+                                break;
+                            default:
+                                exit_status=buffer.header.status;
+                            break;
+                        }
                     } else {
                         // PREV singnaled RECV signaled
                         // nothing
