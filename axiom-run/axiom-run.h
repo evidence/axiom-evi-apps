@@ -118,6 +118,8 @@ extern "C" {
 #define RPC_SERVICE 0x08
     /* allocator service */
 #define ALLOCATOR_SERVICE 0x10
+    /** kill service */
+#define KILL_SERVICE 0x20
 
     /* flags */
 

@@ -95,6 +95,10 @@ static void _usage(char *msg, ...) {
     fprintf(stderr, "    enable exit service\n");
     fprintf(stderr, "--no-exit\n");
     fprintf(stderr, "    disable exit service\n");
+    fprintf(stderr, "-k, --kill\n");
+    fprintf(stderr, "    enable kill service\n");
+    fprintf(stderr, "--no-kill\n");
+    fprintf(stderr, "    disable kill service\n");
     fprintf(stderr, "-E, --exitmode [MODE]\n");
     fprintf(stderr, "    the exit code returned by axiom-run master when the exit service is enabled [default:0]\n");
     fprintf(stderr, "    MODE 0   normal or greather (i.e. the greather exit code of all spawn process)\n");
@@ -117,11 +121,11 @@ static void _usage(char *msg, ...) {
     fprintf(stderr, "    disable allocator service\n");
     fprintf(stderr, "-P, --profile PROFILE_NAME\n");
     fprintf(stderr, "    set the options for a profile:\n");
-    fprintf(stderr, "    gasnet = -r -i -e -b -c -a -u 'PATH|SHELL|AXIOM_.*|GASNET_.*'\n");
+    fprintf(stderr, "    gasnet = -r -i -e -k -b -c -a -u 'PATH|SHELL|AXIOM_.*|GASNET_.*'\n");
     fprintf(stderr, "             (flags required by axiom gasnet conduit)\n");
-    fprintf(stderr, "    ompss  = -r -i -e -b -c -a -u 'PATH|SHELL|AXIOM_.*|GASNET_.*|NX_.*|LD_LIBRARY_PATH|LD_PRELOAD'\n");
+    fprintf(stderr, "    ompss  = -r -i -e -k -b -c -a -u 'PATH|SHELL|AXIOM_.*|GASNET_.*|NX_.*|LD_LIBRARY_PATH|LD_PRELOAD'\n");
     fprintf(stderr, "             (flags required by ompss@cluster with axiom gasnet conduit)\n");
-    fprintf(stderr, "    all    = -r -i -b -c\n");
+    fprintf(stderr, "    all    = -r -i -b -c -k\n");
     fprintf(stderr, "             (all services but NOT exit service)\n");
     fprintf(stderr, "-h, --help\n");
     fprintf(stderr, "    print this help\n");
@@ -163,12 +167,15 @@ static void deep_help() {
 #define NO_BARRIER 1026
 #define NO_RPC 1027
 #define NO_ALLOCATOR 1028
+#define NO_KILL 1029
 static struct option long_options[] = {
     {"redirect", no_argument, 0, 'r'},
     {"no-redirect", no_argument, 0, NO_REDIRECT},
     {"ident", optional_argument, 0, 'i'},
     {"exit", no_argument, 0, 'e'},
     {"no-exit", no_argument, 0, NO_EXIT},
+    {"kill", no_argument, 0, 'k'},
+    {"no-kill", no_argument, 0, NO_KILL},
     {"exitmode", required_argument, 0, 'E'},
     {"barrier", no_argument, 0, 'b'},
     {"no-barrier", no_argument, 0, NO_BARRIER},
@@ -662,21 +669,21 @@ int main(int argc, char **argv) {
     // command line parsing
     //
 
-    while ((opt = getopt_long(argc, argv, "+rebcasp:E:P:m:x:hHn:N:u:g:i::", long_options, &long_index)) != -1) {
+    while ((opt = getopt_long(argc, argv, "+rekbcasp:E:P:m:x:hHn:N:u:g:i::", long_options, &long_index)) != -1) {
         switch (opt) {
             case 'P':
                 if (strcmp(optarg,"gasnet")==0) {
-                    services |= REDIRECT_SERVICE|EXIT_SERVICE|RPC_SERVICE|BARRIER_SERVICE|ALLOCATOR_SERVICE;
+                    services |= REDIRECT_SERVICE|EXIT_SERVICE|KILL_SERVICE|RPC_SERVICE|BARRIER_SERVICE|ALLOCATOR_SERVICE;
                     flags |= IDENT_FLAG;
                     envreg = 1;
                     regcomp(&_envreg, "PATH|SHELL|AXIOM_.*|GASNET_.*", REG_EXTENDED);
                 } else if (strcmp(optarg,"ompss")==0) {
-                    services |= REDIRECT_SERVICE|EXIT_SERVICE|RPC_SERVICE|BARRIER_SERVICE|ALLOCATOR_SERVICE;
+                    services |= REDIRECT_SERVICE|EXIT_SERVICE|RPC_SERVICE|KILL_SERVICE|BARRIER_SERVICE|ALLOCATOR_SERVICE;
                     flags |= IDENT_FLAG;
                     envreg = 1;
                     regcomp(&_envreg, "PATH|SHELL|AXIOM_.*|GASNET_.*|NX_.*|LD_LIBRARY_PATH|LD_PRELOAD", REG_EXTENDED);
                 } else if (strcmp(optarg,"all")==0) {
-                    services |= REDIRECT_SERVICE|RPC_SERVICE|BARRIER_SERVICE|ALLOCATOR_SERVICE;
+                    services |= REDIRECT_SERVICE|RPC_SERVICE|BARRIER_SERVICE|ALLOCATOR_SERVICE|KILL_SERVICE;
                     flags |= IDENT_FLAG;
                 } else {
                     _usage("error on -P and/or --profile argument");
@@ -727,6 +734,12 @@ int main(int argc, char **argv) {
                 break;
             case NO_EXIT:
                 services &= (~EXIT_SERVICE);
+                break;
+            case 'k':
+                services |= KILL_SERVICE;
+                break;
+            case NO_KILL:
+                services &= (~KILL_SERVICE);
                 break;
             case 'a':
                 services |= ALLOCATOR_SERVICE;
@@ -1101,6 +1114,8 @@ int main(int argc, char **argv) {
                     sl_append(&list, "-b");
                 if (services & EXIT_SERVICE)
                     sl_append(&list, "-e");
+                if (services & KILL_SERVICE)
+                    sl_append(&list, "-k");
                 if (services & RPC_SERVICE)
                     sl_append(&list, "-c");
             }

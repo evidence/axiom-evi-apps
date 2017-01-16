@@ -487,6 +487,8 @@ static void *master_sender(void *data) {
 static axiom_dev_t *mydev;
 static uint64_t mynodes;
 
+static int send_kill_on_exit_signal=0;
+
 /**
  * Exit signal handler.
  * Send messgae to alla slave to terminate application.
@@ -496,10 +498,14 @@ static void myexit(int sig) {
     buffer_t buffer;
     szlogmsg(LOG_INFO, LOGZ_MASTER, "MASTER: caught exit signal... exiting...");
     if (mydev != NULL) {
-        buffer.header.command = CMD_KILL;
-        buffer.header.status = sig & 0x7f; // HACK: works... for now.... see <bits/waitstatus.h>
-        s_my_axiom_send_raw(mydev, mynodes, slave_port, sizeof (header_t), (axiom_raw_payload_t *) & buffer);
-        szlogmsg(LOG_INFO, LOGZ_MASTER, "MASTER: sent KILL command to slaves...");
+        if (send_kill_on_exit_signal) {
+            buffer.header.command = CMD_KILL;
+            buffer.header.status = sig & 0x7f; // HACK: works... for now.... see <bits/waitstatus.h>
+            s_my_axiom_send_raw(mydev, mynodes, slave_port, sizeof (header_t), (axiom_raw_payload_t *) & buffer);
+            szlogmsg(LOG_INFO, LOGZ_MASTER, "MASTER: sent KILL command to slaves...");
+        } else {
+            szlogmsg(LOG_INFO, LOGZ_MASTER, "MASTER: exiting... NOT sent KILL command to slaves...");
+        }
     } else {
         szlogmsg(LOG_WARN, LOGZ_MASTER, "MASTER: mydev is NULL!!!!");
     }
@@ -555,7 +561,8 @@ int manage_master_services(axiom_dev_t *_dev, int _services, uint64_t _nodes, in
             exit(EXIT_FAILURE);
         }
     }
-
+    send_kill_on_exit_signal=(_services&KILL_SERVICE);
+    
     mydev = _dev;
     mynodes = _nodes;
     restore_signals_and_set_quit_handler(&oldset, myexit);

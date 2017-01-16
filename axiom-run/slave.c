@@ -219,7 +219,7 @@ static void *recv_thread(void *data) {
             //
             // manage exit service
             //
-            if (info->services & EXIT_SERVICE) {
+            if (info->services & (EXIT_SERVICE|KILL_SERVICE)) {
                 zlogmsg(LOG_INFO, LOGZ_SLAVE, "SLAVE: received CMD_KILL");
                 my_sigterm=1;
                 res = kill(info->pid, SIGTERM);
@@ -449,7 +449,7 @@ int manage_slave_services(axiom_dev_t *_dev, int _services, int *_fd, pid_t _pid
                 exit(EXIT_FAILURE);
             }
         }
-        if ((_services & REDIRECT_SERVICE) || (_services && EXIT_SERVICE)) {
+        if ((_services & (REDIRECT_SERVICE|EXIT_SERVICE|KILL_SERVICE))) {
             forin.cmd = 0;
             forin.fd = ((_services & REDIRECT_SERVICE) ? _fd[0] : -1);
             forin.endfd=eventfd(0,EFD_SEMAPHORE);
@@ -520,7 +520,7 @@ int manage_slave_services(axiom_dev_t *_dev, int _services, int *_fd, pid_t _pid
             terminate_thread_slave(therr,forerr.endfd);
             close(forerr.endfd);
         }
-        if ((_services & REDIRECT_SERVICE) || (_services && EXIT_SERVICE)) {
+        if (_services & (REDIRECT_SERVICE|EXIT_SERVICE|KILL_SERVICE)) {
             terminate_thread_slave(thin,forin.endfd);
             close(forin.endfd);
         }
