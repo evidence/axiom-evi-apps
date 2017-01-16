@@ -110,11 +110,11 @@ static void _usage(char *msg, ...) {
     fprintf(stderr, "    for mode 0 to 4 if some spawned process died for a signal then the exit code is the first signal caught\n");
     fprintf(stderr, "-T, --termmode [MODE]\n");
     fprintf(stderr, "    the signal used to eventually terminate a child applicationprocess [default: TERM]\n");
-    fprintf(stderr, "    MODE TERM || %d   use SIGTERM\n", SIGTERM);
-    fprintf(stderr, "         QUIT || %d   use SIGQUIT\n", SIGQUIT);
-    fprintf(stderr, "         INT  || %d   use SIGINT\n", SIGINT);
-    fprintf(stderr, "         ABRT || %d   use SIGABRT\n", SIGABRT);
-    fprintf(stderr, "         KILL || %d   use SIGKILL\n", SIGKILL);
+    fprintf(stderr, "    MODE TERM || %2d   use SIGTERM\n", SIGTERM);
+    fprintf(stderr, "         QUIT || %2d   use SIGQUIT\n", SIGQUIT);
+    fprintf(stderr, "         INT  || %2d   use SIGINT\n", SIGINT);
+    fprintf(stderr, "         ABRT || %2d   use SIGABRT\n", SIGABRT);
+    fprintf(stderr, "         KILL || %2d   use SIGKILL\n", SIGKILL);
     fprintf(stderr, "    (note that SIGKILL can not be caught by the running application)\n");
     fprintf(stderr, "-b, --barrier\n");
     fprintf(stderr, "    enable barrier service\n");
@@ -130,7 +130,7 @@ static void _usage(char *msg, ...) {
     fprintf(stderr, "    disable allocator service\n");
     fprintf(stderr, "-P, --profile PROFILE_NAME\n");
     fprintf(stderr, "    set the options for a profile:\n");
-    fprintf(stderr, "    gasnet = -r -i -e -k -b -c -a -u 'PATH|SHELL|AXIOM_.*|GASNET_.*'\n");
+    fprintf(stderr, "    gasnet = -r -i -e -k -b -c -a -u 'PATH|SHELL|AXIOM_.*|GASNET_.*' -T QUIT -E 5\n");
     fprintf(stderr, "             (flags required by axiom gasnet conduit)\n");
     fprintf(stderr, "    ompss  = -r -i -e -k -b -c -a -u 'PATH|SHELL|AXIOM_.*|GASNET_.*|NX_.*|LD_LIBRARY_PATH|LD_PRELOAD'\n");
     fprintf(stderr, "             (flags required by ompss@cluster with axiom gasnet conduit)\n");
@@ -698,6 +698,8 @@ int main(int argc, char **argv) {
                 if (strcmp(optarg,"gasnet")==0) {
                     services |= REDIRECT_SERVICE|EXIT_SERVICE|KILL_SERVICE|RPC_SERVICE|BARRIER_SERVICE|ALLOCATOR_SERVICE;
                     flags |= IDENT_FLAG;
+                    flags |= FIRST_ABS_EXIT_FLAG;
+                    termmode = SIGQUIT;
                     envreg = 1;
                     regcomp(&_envreg, "PATH|SHELL|AXIOM_.*|GASNET_.*", REG_EXTENDED);
                 } else if (strcmp(optarg,"ompss")==0) {
