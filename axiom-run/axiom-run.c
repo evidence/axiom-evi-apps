@@ -149,14 +149,26 @@ static void deep_help() {
     fprintf(stderr, "\n");
     fprintf(stderr, "activated with -e||--exit and deactivated with --no-exit\n");
     fprintf(stderr, "\n");
-    fprintf(stderr, "when activated the termination of an instance of the application, an axiom-run slave or a axiom-run muste\n");
+    fprintf(stderr, "when activated the termination of an instance of the application or an axiom-run slave must\n");
     fprintf(stderr, "  cause the termination of all the process of the application in every node\n");
     fprintf(stderr, "  (every cause of termination! note that the KILL signal can not be caught)\n");
     fprintf(stderr, "\n");
     fprintf(stderr, "when NOT activated\n");
     fprintf(stderr, "  if no other service are activated no additinal beaviour\n");
-    fprintf(stderr, "  if other service are activated then the axiom-run master wait the normal termination ov every instance\n");
+    fprintf(stderr, "  if other service are activated then the axiom-run master wait the termination (normal or exceptional) ov every instance\n");
     fprintf(stderr, "    (no forced termination!)\n");
+    fprintf(stderr, "\n");
+    fprintf(stderr, "[axiom-run KILL service]\n");
+    fprintf(stderr, "\n");
+    fprintf(stderr, "\n");
+    fprintf(stderr, "activated with -k||--kill and deactivated with --no-kill\n");
+    fprintf(stderr, "\n");
+    fprintf(stderr, "when activated the termination of axiom-run master must\n");
+    fprintf(stderr, "  cause the termination of all the process of the application in every node\n");
+    fprintf(stderr, "  (every cause of termination! note that the KILL signal can not be caught)\n");
+    fprintf(stderr, "\n");
+    fprintf(stderr, "when NOT activated\n");
+    fprintf(stderr, "  no additinal beaviour\n");
     fprintf(stderr, "\n");
 }
 
