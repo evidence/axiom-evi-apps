@@ -22,5 +22,8 @@ tests: all
 com_libs: 
 	for DIR in $(COMS_DIR); do { $(MAKE) -C $$DIR || exit 1; }; done
 
-install clean distclean:
+install:
 	for DIR in $(APPS_DIR) $(COMS_DIR); do { $(MAKE) -C $$DIR $@ || exit 1; }; done
+
+clean distclean:
+	for DIR in $(APPS_DIR) $(COMS_DIR) $(TESTS_DIR); do { $(MAKE) -C $$DIR $@ || exit 1; }; done

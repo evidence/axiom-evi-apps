@@ -1,5 +1,5 @@
 
-.PHONY: clean build install
+.PHONY: clean build install distclean
 
 include ../../common.mk
 
@@ -17,7 +17,7 @@ LDLIBS += $(call PKG-LDLIBS, axiom_user_api axiom_run_api) ../common/libtest.a
 
 build: $(OBJS) $(EXECS)
 
-clean:
+clean distclean:
 	rm -f $(OBJS) $(DEPS) $(EXECS)
 
 install: build

@@ -1,5 +1,5 @@
 
-.PHONY: clean build install
+.PHONY: clean build install distclean
 
 include ../../common.mk
 
@@ -15,10 +15,6 @@ libtest.a: $(OBJS)
 	$(AR) rcs libtest.a $(OBJS)
 
 install: build
-	for DESTDIR in $(TARGET_DIR); do \
-	    mkdir -p $${DESTDIR}/root/tests_axiom; \
-	    cp ../scripts/* $${DESTDIR}/root/tests_axiom; \
-	done
 
-clean:
+clean distclean:
 	rm -f $(OBJS) $(DEPS) libtest.a

@@ -1,8 +1,10 @@
 
-.PHONY: clean build install
+include ../common.mk
+
+.PHONY: clean distclean build install
 
 SUBDIRS=$(wildcard test*)
 
-build clean install:
+install build clean distclean:
 	make -C common $@
 	for dir in $(SUBDIRS); do make -C $$dir $@; done
