@@ -1,13 +1,20 @@
 ﻿                            AXIOM tests
 ===============================================================================
 
+# Tests
+
 This directory contains the following tests:
 
- * testlong
+ * testraw
+   Test raw message exchange
+
+* testlong
    Test long message exchange
    
  * testrdma
    Test axiom remote DMA
+
+## How to compile
 
 To cross-compile these tests and install into the target file-system
 use these commands from axiom-evi/scripts/
@@ -15,14 +22,41 @@ use these commands from axiom-evi/scripts/
   make tests-axiom
   make target
 ```
-To run these tests use the run_tests_AXIOM.sh shell script in the VMS.
+## How to run
+
+To run these tests use the run_test_axiom.sh shell script in the VMS.
 To run in the guests, choose one guest and do the following:
 ```
   cd /root/tests_axiom
-  ./run_tests_AXIOM.sh ./test??? [parameters]
+  ./run_test_axiom.sh ./test??? [parameters]
+```
+## Test description
+
+### 1. testraw
+
+This test send a burst of axiom raw message between nodes; can be run in 3 modes:
+
+ * Full mode
+   Every node send and receive messages only from another node
+
+ * Half mode
+   Every node send or receive messages (but not both) from another node
+
+ * Multi mode
+   Every node send and receive message from ALL the other nodes
+
+Can be specified the axiom port to use, the size of every block and the number of block to transfer.
+
+Use
+```
+testraw --help
+```
+for all the command line options. Run example:
+```
+./run_test_axiom.sh ./testraw -F -d -n 256 -b 128
 ```
 
-## 1. testlong
+### 2. testlong
 
 This test send a burst of axiom long message between nodes; can be run in 3 modes:
 
@@ -43,10 +77,10 @@ testlong --help
 ```
 for all the command line options. Run example:
 ```
-./run_test_AXIOM.sh ./testlong -F -d -n 64 -b 4096
+./run_test_axiom.sh ./testlong -F -d -n 64 -b 4096
 ```
 
-## 2. testrdma
+### 3. testrdma
 
 This test use the remote DMA to transfer block of memory between two nodes.
 The first node allocates the needed memory then split the memory in block (to transfer) and guard block (to test for memory corruption); fill the transfer block with random data and send these block to the other node. The other node test the block random pattern and the guard block to search for errors (bad transfer block or guard block corruption).
@@ -57,5 +91,5 @@ Use
 ```
 for all command line options. To run, for example:
 ```
-./run_test_AXIOM.sh ./testrdma -d -n 64 -b 32768 -g 128
+./run_test_axiom.sh ./testrdma -d -n 64 -b 32768 -g 128
 ```
