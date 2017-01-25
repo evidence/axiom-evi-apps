@@ -82,7 +82,7 @@ static void _usage(char *msg, ...) {
     fprintf(stderr, "    [default: no run gdb server]\n");
     fprintf(stderr, "-u, --env REGEXP\n");
     fprintf(stderr, "    environmet to run application\n");
-    fprintf(stderr, "    [default: PATH|SHELL|AXIOM_.*]\n");
+    fprintf(stderr, "    [default: PATH|SHELL|AXIOM_.*|EXTRAE_.*]\n");
     fprintf(stderr, "-r, --redirect\n");
     fprintf(stderr, "    enable redirect service\n");
     fprintf(stderr, "--no-redirect\n");
@@ -130,9 +130,9 @@ static void _usage(char *msg, ...) {
     fprintf(stderr, "    disable allocator service\n");
     fprintf(stderr, "-P, --profile PROFILE_NAME\n");
     fprintf(stderr, "    set the options for a profile:\n");
-    fprintf(stderr, "    gasnet = -r -i -e -k -b -c -a -u 'PATH|SHELL|AXIOM_.*|GASNET_.*' -T QUIT -E 5\n");
+    fprintf(stderr, "    gasnet = -r -i -e -k -b -c -a -u 'PATH|SHELL|AXIOM_.*|GASNET_.*|EXTRAE_.*' -T QUIT -E 5\n");
     fprintf(stderr, "             (flags required by axiom gasnet conduit)\n");
-    fprintf(stderr, "    ompss  = -r -i -e -k -b -c -a -u 'PATH|SHELL|AXIOM_.*|GASNET_.*|NX_.*|LD_LIBRARY_PATH|LD_PRELOAD'\n");
+    fprintf(stderr, "    ompss  = -r -i -e -k -b -c -a -u 'PATH|SHELL|AXIOM_.*|GASNET_.*|NX_.*|EXTRAE_.*|LD_LIBRARY_PATH|LD_PRELOAD'\n");
     fprintf(stderr, "             (flags required by ompss@cluster with axiom gasnet conduit)\n");
     fprintf(stderr, "    all    = -r -i -b -c -k\n");
     fprintf(stderr, "             (all services but NOT exit service)\n");
@@ -362,7 +362,7 @@ static void prepare_env(strlist_t *env, regex_t *re, int slave, int noclose, uin
     int res;
     int sz;
     if (re == NULL) {
-        regcomp(&myre, "PATH|SHELL|AXIOM_.*", REG_EXTENDED);
+        regcomp(&myre, "PATH|SHELL|AXIOM_.*|EXTRAE_.*", REG_EXTENDED);
         re = &myre;
     }
     while (*ptr != NULL) {
@@ -701,12 +701,12 @@ int main(int argc, char **argv) {
                     flags |= FIRST_ABS_EXIT_FLAG;
                     termmode = SIGQUIT;
                     envreg = 1;
-                    regcomp(&_envreg, "PATH|SHELL|AXIOM_.*|GASNET_.*", REG_EXTENDED);
+                    regcomp(&_envreg, "PATH|SHELL|AXIOM_.*|GASNET_.*|EXTRAE_.*", REG_EXTENDED);
                 } else if (strcmp(optarg,"ompss")==0) {
                     services |= REDIRECT_SERVICE|EXIT_SERVICE|RPC_SERVICE|KILL_SERVICE|BARRIER_SERVICE|ALLOCATOR_SERVICE;
                     flags |= IDENT_FLAG;
                     envreg = 1;
-                    regcomp(&_envreg, "PATH|SHELL|AXIOM_.*|GASNET_.*|NX_.*|LD_LIBRARY_PATH|LD_PRELOAD", REG_EXTENDED);
+                    regcomp(&_envreg, "PATH|SHELL|AXIOM_.*|GASNET_.*|NX_.*|EXTRAE_.*|LD_LIBRARY_PATH|LD_PRELOAD", REG_EXTENDED);
                 } else if (strcmp(optarg,"all")==0) {
                     services |= REDIRECT_SERVICE|RPC_SERVICE|BARRIER_SERVICE|ALLOCATOR_SERVICE|KILL_SERVICE;
                     flags |= IDENT_FLAG;
