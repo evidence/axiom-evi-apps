@@ -15,15 +15,15 @@
 #include "axiom_init_api.h"
 
 int axinit_execvpe(axiom_dev_t *dev, axiom_port_t port, axiom_node_id_t node, int flags, const char *filename, char *const argv[], char *const envp[]) {
-    axiom_init_payload_t packet_buffer;
+    uint8_t packet_buffer[AXIOM_SPAWN_MAX_SIZE];
     axiom_msg_id_t _msg;
     axiom_node_id_t _node;
     axiom_port_t _port;
     axiom_type_t _type;
     axiom_raw_payload_size_t _size;
-    axiom_session_req_payload_t *payload_session_req = (axiom_session_req_payload_t*) & packet_buffer;
-    axiom_session_reply_payload_t *payload_session_reply = (axiom_session_reply_payload_t*) & packet_buffer;
-    axiom_spawn_req_payload_t *payload_spawn_request = (axiom_spawn_req_payload_t*) & packet_buffer;
+    axiom_session_req_payload_t *payload_session_req = (axiom_session_req_payload_t*) packet_buffer;
+    axiom_session_reply_payload_t *payload_session_reply = (axiom_session_reply_payload_t*)packet_buffer;
+    axiom_spawn_req_payload_t *payload_spawn_request = (axiom_spawn_req_payload_t*) packet_buffer;
     uint8_t session = AXIOM_SESSION_EMPTY;
     int len;
     char *s;
@@ -73,7 +73,10 @@ int axinit_execvpe(axiom_dev_t *dev, axiom_port_t port, axiom_node_id_t node, in
             payload_spawn_request->type = AXIOM_SPAWN_TYPE_ARG;
             while (*pargs != NULL) {
                 len = strlcpy((char*) payload_spawn_request->data, *pargs, sizeof (payload_spawn_request->data));
-                logmsg(LOG_DEBUG, "axinit_execvpe: send ARG spawn message '%s'", (char*) payload_spawn_request->data);
+                logmsg(LOG_DEBUG, "axinit_execvpe: send ARG spawn message len=%d '%s'", len, (char*) payload_spawn_request->data);
+                if (len+1>=AXIOM_SPAWN_MAX_DATA_SIZE) {
+                    logmsg(LOG_WARN, "axinit_execvpe: send ARG spawn message TRUNCATED! size>%d",AXIOM_SPAWN_MAX_DATA_SIZE);
+                }
                 _msg = axiom_send(dev, node, AXIOM_RAW_PORT_INIT, AXIOM_SPAWN_HEADER_SIZE + len + 1, payload_spawn_request);
                 if (!AXIOM_RET_IS_OK(_msg)) goto release;
                 pargs++;
@@ -86,7 +89,10 @@ int axinit_execvpe(axiom_dev_t *dev, axiom_port_t port, axiom_node_id_t node, in
             payload_spawn_request->type = AXIOM_SPAWN_TYPE_ENV;
             while (*pargs != NULL) {
                 len = strlcpy((char*) payload_spawn_request->data, *pargs, sizeof (payload_spawn_request->data));
-                logmsg(LOG_DEBUG, "axinit_execvpe: send ENV spawn message '%s'", (char*) payload_spawn_request->data);
+                logmsg(LOG_DEBUG, "axinit_execvpe: send ENV spawn message len=%d '%s'", len, (char*) payload_spawn_request->data);
+                if (len+1>=AXIOM_SPAWN_MAX_DATA_SIZE) {
+                    logmsg(LOG_WARN, "axinit_execvpe: send ARG spawn message TRUNCATED! size>%d",AXIOM_SPAWN_MAX_DATA_SIZE);
+                }
                 _msg = axiom_send(dev, node, AXIOM_RAW_PORT_INIT, AXIOM_SPAWN_HEADER_SIZE + len + 1, payload_spawn_request);
                 if (!AXIOM_RET_IS_OK(_msg)) goto release;
                 pargs++;
