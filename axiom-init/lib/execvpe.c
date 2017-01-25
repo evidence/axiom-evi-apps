@@ -74,7 +74,7 @@ int axinit_execvpe(axiom_dev_t *dev, axiom_port_t port, axiom_node_id_t node, in
             while (*pargs != NULL) {
                 len = strlcpy((char*) payload_spawn_request->data, *pargs, sizeof (payload_spawn_request->data));
                 logmsg(LOG_DEBUG, "axinit_execvpe: send ARG spawn message '%s'", (char*) payload_spawn_request->data);
-                _msg = axiom_send_raw(dev, node, AXIOM_RAW_PORT_INIT, AXIOM_TYPE_RAW_DATA, AXIOM_SPAWN_HEADER_SIZE + len + 1, payload_spawn_request);
+                _msg = axiom_send(dev, node, AXIOM_RAW_PORT_INIT, AXIOM_SPAWN_HEADER_SIZE + len + 1, payload_spawn_request);
                 if (!AXIOM_RET_IS_OK(_msg)) goto release;
                 pargs++;
             }
@@ -87,7 +87,7 @@ int axinit_execvpe(axiom_dev_t *dev, axiom_port_t port, axiom_node_id_t node, in
             while (*pargs != NULL) {
                 len = strlcpy((char*) payload_spawn_request->data, *pargs, sizeof (payload_spawn_request->data));
                 logmsg(LOG_DEBUG, "axinit_execvpe: send ENV spawn message '%s'", (char*) payload_spawn_request->data);
-                _msg = axiom_send_raw(dev, node, AXIOM_RAW_PORT_INIT, AXIOM_TYPE_RAW_DATA, AXIOM_SPAWN_HEADER_SIZE + len + 1, payload_spawn_request);
+                _msg = axiom_send(dev, node, AXIOM_RAW_PORT_INIT, AXIOM_SPAWN_HEADER_SIZE + len + 1, payload_spawn_request);
                 if (!AXIOM_RET_IS_OK(_msg)) goto release;
                 pargs++;
             }
