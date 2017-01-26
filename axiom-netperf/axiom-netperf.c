@@ -35,7 +35,7 @@
 #define AXIOM_NETPERF_DEF_RDMA_PSIZE    AXIOM_RDMA_PAYLOAD_MAX_SIZE
 #define AXIOM_NETPERF_DEF_RAW_PSIZE     AXIOM_RAW_PAYLOAD_MAX_SIZE
 #define AXIOM_NETPERF_DEF_LONG_PSIZE    AXIOM_LONG_PAYLOAD_MAX_SIZE
-#define AXIOM_NETPERF_DEF_TYPE          AXNP_RDMA
+#define AXIOM_NETPERF_DEF_TYPE          AXNP_LONG
 
 typedef struct axnetperf_status {
     axiom_dev_t *dev;
@@ -63,7 +63,7 @@ usage(void)
     printf("AXIOM netperf: estimate the throughput between this node and the\n");
     printf("               specified dest_node\n\n");
     printf("Arguments:\n");
-    printf("-t, --type      raw|rdma|long  message type to use [default: RDMA]\n");
+    printf("-t, --type      raw|rdma|long  message type to use [default: LONG]\n");
     printf("-d, --dest      dest_node      destination node id of axiom-netperf\n");
     printf("-l, --length    x[B|K|M|G]     bytes to send to the destination node\n");
     printf("                               The suffix specifies the length unit\n");
