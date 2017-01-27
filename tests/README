@@ -8,9 +8,9 @@ This directory contains the following tests:
  * testraw
    Test raw message exchange
 
-* testlong
+ * testlong
    Test long message exchange
-   
+
  * testrdma
    Test axiom remote DMA
 
