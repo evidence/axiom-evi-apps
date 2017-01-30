@@ -1,7 +1,7 @@
 /*!
  * \file myexch.c
  *
- * \version     v0.10
+ * \version     v0.11
  *
  * A simple program to test axiom long message exchange
  *

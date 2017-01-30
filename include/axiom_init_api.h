@@ -1,7 +1,7 @@
 /*!
  * \file axiom_init_api.h
  *
- * \version     v0.10
+ * \version     v0.11
  *
  * axiom-init API services.
  * API for applications using service provided by axiom-init application.
