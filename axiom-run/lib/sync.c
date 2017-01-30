@@ -1,4 +1,11 @@
-
+/*!
+ * \file sync.c
+ *
+ * \version     v0.10
+ *
+ * Copyright (C) 2016, Evidence Srl.
+ * Terms of use are as specified in COPYING
+ */
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/un.h>

@@ -7,6 +7,9 @@
  * This file contains the implementation of axiom-netperf application.
  *
  * axiom-netperf estimates the throughput between two axiom nodes.
+ *
+ * Copyright (C) 2016, Evidence Srl.
+ * Terms of use are as specified in COPYING
  */
 #include <ctype.h>
 #include <stdio.h>

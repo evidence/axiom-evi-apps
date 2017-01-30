@@ -7,6 +7,9 @@
  * This file contains the implementation of axiom-info application.
  *
  * axiom-info prints information about the AXIOM NIC
+ *
+ * Copyright (C) 2016, Evidence Srl.
+ * Terms of use are as specified in COPYING
  */
 #include <getopt.h>
 #include <stdio.h>

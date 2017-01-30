@@ -1,8 +1,12 @@
-/**
+/*!
+ * \file common.h
+ *
+ * \version     v0.10
+ *
  * Used internally by axiom-run.
  *
- * @file   common.h
- * @version v0.8
+ * Copyright (C) 2016, Evidence Srl.
+ * Terms of use are as specified in COPYING
  */
 
 #ifndef COMMON_H

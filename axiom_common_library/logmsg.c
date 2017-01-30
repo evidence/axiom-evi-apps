@@ -1,4 +1,11 @@
-
+/*!
+ * \file logmsg.c
+ *
+ * \version     v0.10
+ *
+ * Copyright (C) 2016, Evidence Srl.
+ * Terms of use are as specified in COPYING
+ */
 #include <stdio.h>
 #include <stdarg.h>
 #include <stdlib.h>

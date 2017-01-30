@@ -6,6 +6,9 @@
  *
  * This file contains the functions used in the axiom-init deamon to handle
  * the AXIOM allocator L1 messages.
+ *
+ * Copyright (C) 2016, Evidence Srl.
+ * Terms of use are as specified in COPYING
  */
 #include <stdio.h>
 #include <stdint.h>

@@ -1,8 +1,11 @@
-
-/* 
- * File:   test.h
+/*!
+ * \file test.h
+ *
+ * \version     v0.10
+ *
+ * Copyright (C) 2016, Evidence Srl.
+ * Terms of use are as specified in COPYING
  */
-
 #ifndef TEST_H
 #define TEST_H
 

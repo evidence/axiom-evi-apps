@@ -1,3 +1,13 @@
+/*!
+ * \file axiom_net.h
+ *
+ * \version     v0.3
+ *
+ * This file contains the defines and prototypes of axiom discovery phase.
+ *
+ * Copyright (C) 2016, Evidence Srl.
+ * Terms of use are as specified in COPYING
+ */
 #ifndef AXIOM_NET_h
 #define AXIOM_NET_h
 

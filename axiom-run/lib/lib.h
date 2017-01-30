@@ -1,4 +1,11 @@
-
+/*!
+ * \file lib.h
+ *
+ * \version     v0.10
+ *
+ * Copyright (C) 2016, Evidence Srl.
+ * Terms of use are as specified in COPYING
+ */
 #ifndef LIB_H
 #define LIB_H
 

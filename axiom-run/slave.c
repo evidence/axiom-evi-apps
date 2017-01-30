@@ -1,10 +1,13 @@
-/**
+/*!
+ * \file slave.c
+ *
+ * \version     v0.10
+ *
  * Manage services for axion-run slave process.
  *
- * @file slave.c
- * @version v0.7
+ * Copyright (C) 2016, Evidence Srl.
+ * Terms of use are as specified in COPYING
  */
-
 #include <sys/select.h>
 #include <sys/eventfd.h>
 #include <sys/types.h>

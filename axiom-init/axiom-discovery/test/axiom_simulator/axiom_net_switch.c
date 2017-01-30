@@ -1,3 +1,11 @@
+/*!
+ * \file axiom_net_switch.c
+ *
+ * \version     v0.3
+ *
+ * Copyright (C) 2016, Evidence Srl.
+ * Terms of use are as specified in COPYING
+ */
 #include <errno.h>
 #include <pthread.h>
 #include <stdio.h>

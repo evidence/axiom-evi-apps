@@ -1,10 +1,13 @@
-/**
+/*!
+ * \file axiom-run.c
+ *
+ * \version     v0.10
+ *
  * The axiom-run application.
- * 
- * @file axiom-run.c
- * @version v0.7
+ *
+ * Copyright (C) 2016, Evidence Srl.
+ * Terms of use are as specified in COPYING
  */
-
 #include <sys/eventfd.h>
 #include <getopt.h>
 #include <stdio.h>

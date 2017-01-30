@@ -8,6 +8,9 @@
  *
  * axiom-init starts an axiom node in slave or master mode and handles all
  * control messagges received on port 0.
+ *
+ * Copyright (C) 2016, Evidence Srl.
+ * Terms of use are as specified in COPYING
  */
 #include <pthread.h>
 #include <ctype.h>

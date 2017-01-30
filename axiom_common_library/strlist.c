@@ -1,8 +1,12 @@
-/**
+/*!
+ * \file strlist.c
+ *
+ * \version     v0.10
+ *
  * String list manipulation functions.
  *
- * @file strlist.c
- * @version v0.7
+ * Copyright (C) 2016, Evidence Srl.
+ * Terms of use are as specified in COPYING
  */
 #include <stdlib.h>
 #include <string.h>

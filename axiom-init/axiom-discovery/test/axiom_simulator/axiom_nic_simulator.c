@@ -1,5 +1,13 @@
-/*
+/*!
+ * \file axiom_nic_simulator.c
+ *
+ * \version     v0.3
+ *
+ * Axiom session management.
  * This file contains the AXIOM NIC API simulation
+ *
+ * Copyright (C) 2016, Evidence Srl.
+ * Terms of use are as specified in COPYING
  */
 #include <stdio.h>
 #include <stdint.h>

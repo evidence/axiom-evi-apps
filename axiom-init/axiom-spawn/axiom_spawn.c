@@ -1,10 +1,13 @@
-/**
+/*!
+ * \file axiom_spawn.c
+ *
+ * \version     v0.10
+ *
  * Axiom process spawn (i.e. exec) service management.
  *
- * @file axiom_spawn.c
- * @version v0.7
+ * Copyright (C) 2016, Evidence Srl.
+ * Terms of use are as specified in COPYING
  */
-
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/wait.h>

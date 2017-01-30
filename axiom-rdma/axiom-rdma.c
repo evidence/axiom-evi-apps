@@ -6,6 +6,8 @@
  *
  * This file contains the implementation of axiom-rdma application.
  *
+ * Copyright (C) 2016, Evidence Srl.
+ * Terms of use are as specified in COPYING
  */
 #include <ctype.h>
 #include <stdio.h>

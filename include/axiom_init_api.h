@@ -1,9 +1,13 @@
-/**
+/*!
+ * \file axiom_init_api.h
+ *
+ * \version     v0.10
+ *
  * axiom-init API services.
  * API for applications using service provided by axiom-init application.
  *
- * @file axiom_init_api.h
- * @version 0.7
+ * Copyright (C) 2016, Evidence Srl.
+ * Terms of use are as specified in COPYING
  */
 #ifndef AXIOM_INIT_API_H
 #define AXIOM_INIT_API_H

@@ -1,3 +1,11 @@
+/*!
+ * \file rpcfuncs.c
+ *
+ * \version     v0.10
+ *
+ * Copyright (C) 2016, Evidence Srl.
+ * Terms of use are as specified in COPYING
+ */
 #include <sys/uio.h>
 #include <stdint.h>
 

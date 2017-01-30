@@ -1,10 +1,13 @@
-/**
+/*!
+ * \file axiom_session.c
+ *
+ * \version     v0.10
+ *
  * Axiom session management.
  *
- * @file axiom_session.c
- * @version v0.7
+ * Copyright (C) 2016, Evidence Srl.
+ * Terms of use are as specified in COPYING
  */
-
 #include <stdio.h>
 #include <stdint.h>
 #include <limits.h>

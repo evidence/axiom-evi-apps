@@ -1,5 +1,12 @@
-/*
+/*!
+ * \file axiom_discovery_protocol_test.c
+ *
+ * \version     v0.3
+ *
  * This file tests the AXIOM discovery-routing implementation
+ *
+ * Copyright (C) 2016, Evidence Srl.
+ * Terms of use are as specified in COPYING
  */
 #include <pthread.h>
 #include <stdio.h>

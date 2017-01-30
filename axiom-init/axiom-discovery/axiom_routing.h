@@ -1,5 +1,3 @@
-#ifndef AXIOM_ROUTING_H
-#define AXIOM_ROUTING_H
 /*!
  * \file axiom_routing.h
  *
@@ -7,8 +5,12 @@
  * \date        2016-05-03
  *
  * This file contains the defines and prototypes of axiom routing.
+ *
+ * Copyright (C) 2016, Evidence Srl.
+ * Terms of use are as specified in COPYING
  */
-
+#ifndef AXIOM_ROUTING_H
+#define AXIOM_ROUTING_H
 
 #define AXIOM_NULL_RT_INTERFACE  0
 

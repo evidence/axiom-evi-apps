@@ -6,6 +6,9 @@
  *
  * This file contains the functions used in the axiom-init deamon to handle
  * the discovery and routing messages for Master and Slaves nodes.
+ *
+ * Copyright (C) 2016, Evidence Srl.
+ * Terms of use are as specified in COPYING
  */
 #include <stdio.h>
 #include <stdint.h>

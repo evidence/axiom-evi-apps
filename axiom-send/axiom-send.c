@@ -7,6 +7,9 @@
  * This file contains the implementation of axiom-send application.
  *
  * axiom-send sends AXIOM raw or long message to a specified remote node.
+ *
+ * Copyright (C) 2016, Evidence Srl.
+ * Terms of use are as specified in COPYING
  */
 #include <ctype.h>
 #include <stdio.h>

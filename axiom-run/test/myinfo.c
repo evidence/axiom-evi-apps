@@ -1,10 +1,13 @@
-
-/*
+/*!
+ * \file myinfo.c
+ *
+ * \version     v0.10
  *
  * A simple program to test axiom-run stdio redirection.
  *
+ * Copyright (C) 2016, Evidence Srl.
+ * Terms of use are as specified in COPYING
  */
-
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>

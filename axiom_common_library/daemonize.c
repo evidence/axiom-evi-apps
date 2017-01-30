@@ -1,10 +1,13 @@
-/**
+/*!
+ * \file daemonize.c
+ *
+ * \version     v0.10
+ *
  * The daemonize() utility function.
- * 
- * @file daemonize.c
- * @version v0.7
+ *
+ * Copyright (C) 2016, Evidence Srl.
+ * Terms of use are as specified in COPYING
  */
-
 // to use the execvpe() function
 #define _GNU_SOURCE
 #include <features.h>

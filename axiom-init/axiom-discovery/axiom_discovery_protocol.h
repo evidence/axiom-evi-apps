@@ -1,5 +1,3 @@
-#ifndef AXIOM_DSCV_PROTOCOL_H
-#define AXIOM_DSCV_PROTOCOL_H
 /*!
  * \file axiom_discovery_protocol.h
  *
@@ -7,7 +5,13 @@
  * \date        2016-05-03
  *
  * This file contains the defines and prototypes of axiom discovery phase.
+ *
+ * Copyright (C) 2016, Evidence Srl.
+ * Terms of use are as specified in COPYING
  */
+#ifndef AXIOM_DSCV_PROTOCOL_H
+#define AXIOM_DSCV_PROTOCOL_H
+
 #include "dprintf.h"
 #include "axiom_nic_types.h"
 #include "axiom_nic_api_user.h"

@@ -1,5 +1,3 @@
-#ifndef AXIOM_INIT_h
-#define AXIOM_INIT_h
 /*!
  * \file axiom-init.h
  *
@@ -8,7 +6,13 @@
  *
  * This file contains the functions used in the axiom-init deamon to handle
  * the control axiom messages.
+ *
+ * Copyright (C) 2016, Evidence Srl.
+ * Terms of use are as specified in COPYING
  */
+#ifndef AXIOM_INIT_h
+#define AXIOM_INIT_h
+
 #include "axiom_nic_init.h"
 
 /*!

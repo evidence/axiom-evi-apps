@@ -1,8 +1,12 @@
-
-/*
+/*!
+ * \file mylong.c
+ *
+ * \version     v0.10
  *
  * A simple program to test axiom long message exchange
  *
+ * Copyright (C) 2016, Evidence Srl.
+ * Terms of use are as specified in COPYING
  */
 #include <stdint.h>
 #include <sys/types.h>

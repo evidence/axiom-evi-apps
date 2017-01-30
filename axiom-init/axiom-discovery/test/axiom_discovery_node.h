@@ -1,3 +1,13 @@
+/*!
+ * \file axiom_discovery_node.h
+ *
+ * \version     v0.3
+ *
+ * This file contains AXIOM node network simulation structure and prototypes
+ *
+ * Copyright (C) 2016, Evidence Srl.
+ * Terms of use are as specified in COPYING
+ */
 #ifndef AXIOM_DISCOVERY_PROTOCOL_h
 #define AXIOM_DISCOVERY_PROTOCOL_h
 

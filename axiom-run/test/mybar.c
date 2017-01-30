@@ -1,9 +1,13 @@
-
-/*
+/*!
+ * \file mybar.c
+ *
+ * \version     v0.10
+ *
  * A simple test program to test axiom-run barriers.
  *
+ * Copyright (C) 2016, Evidence Srl.
+ * Terms of use are as specified in COPYING
  */
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>

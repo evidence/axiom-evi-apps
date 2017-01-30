@@ -7,6 +7,9 @@
  * This file contains the implementation of axiom-ping application.
  *
  * axiom-ping estimate the round trip time (RTT) between two axiom nodes.
+ *
+ * Copyright (C) 2016, Evidence Srl.
+ * Terms of use are as specified in COPYING
  */
 #include <ctype.h>
 #include <stdio.h>

@@ -1,9 +1,13 @@
-/**
+/*!
+ * \file axiom_common.h
+ *
+ * \version     v0.10
+ *
  * Common internal functions.
  * A collections of functions used by some axiom-evi application.
  *
- * @file axiom_common.h
- * @version v0.7
+ * Copyright (C) 2016, Evidence Srl.
+ * Terms of use are as specified in COPYING
  */
 #ifndef AXIOM_COMMON_H
 #define AXIOM_COMMON_H

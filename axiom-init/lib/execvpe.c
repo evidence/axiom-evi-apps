@@ -1,4 +1,11 @@
-
+/*!
+ * \file execvpe.c
+ *
+ * \version     v0.10
+ *
+ * Copyright (C) 2016, Evidence Srl.
+ * Terms of use are as specified in COPYING
+ */
 #include <stddef.h>
 #include <stdlib.h>
 #include <stdint.h>
