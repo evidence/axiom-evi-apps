@@ -44,6 +44,7 @@ static struct option long_options[] = {
     {"guard", required_argument, 0, 'g'},
     {"full", no_argument, 0, 'F'},
     {"half", no_argument, 0, 'H'},
+    {"check", no_argument, 0, 'c'},
     {0, 0, 0, 0}
 };
 
