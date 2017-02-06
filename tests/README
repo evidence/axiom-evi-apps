@@ -93,3 +93,18 @@ for all command line options. To run, for example:
 ```
 ./run_test_axiom.sh ./testrdma -d -n 64 -b 32768 -g 128
 ```
+
+### 3. testasync
+
+This test use an Asynchronous remote DMA to transfer block of memory between two nodes.
+It is similar to 'testrdma' but use async transfert (so the sender explicity wait for rdma completition before sendig an acknoledgment).
+The '-c' command line option is used to use the axiom_rdma_check (not blocking call) instead of axiom_rdma_wait (blocking call).
+
+Use
+```
+./testasync --help
+```
+for all command line options. To run, for example:
+```
+./run_test_axiom.sh ./testasync -d -n 64 -b 32768 -g 128
+```
