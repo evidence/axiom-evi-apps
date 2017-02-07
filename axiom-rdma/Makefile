@@ -21,7 +21,7 @@ all: $(APPS)
 axiom-rdma: $(OBJS)
 
 install: all
-	for DESTDIR in $(TARGET_DIR); do \
+	for DESTDIR in $(TARGET_INST_DIR); do \
 		mkdir -p $${DESTDIR}/usr/bin ;\
 		cp $(APPS) $${DESTDIR}/usr/bin/ ;\
 	done

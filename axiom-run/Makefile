@@ -45,7 +45,7 @@ lib/libaxiom_run_api.so.$(VERSION): $(LIBS_OBJS)
 		$(call PKG-LDLIBS, axiom_user_api) $(AXIOM_COMMON_LDLIBS)
 
 libs: $(foreach lib,$(LIBS),$(lib).$(VERSION))
-	for DESTDIR in $(SYSROOT_DIR); do \
+	for DESTDIR in $(SYSROOT_INST_DIR); do \
 		mkdir -p $${DESTDIR}/usr/lib/pkgconfig ;\
 		for LIB in $(LIBS); do \
 			LIBNAME=$$(basename $$LIB) ;\
@@ -59,7 +59,7 @@ libs: $(foreach lib,$(LIBS),$(lib).$(VERSION))
 			cp $(AXIOM_APPS_INCLUDE)/$${NAME}.h $${DESTDIR}/usr/include/axiom ;\
 		done ;\
 	done
-	for DESTDIR in $(TARGET_DIR); do \
+	for DESTDIR in $(TARGET_INST_DIR); do \
 		mkdir -p $${DESTDIR}/usr/lib ;\
 		for LIB in $(LIBS); do \
 			cp $${LIB}.$(VERSION) $${DESTDIR}/usr/lib/ ;\
@@ -90,7 +90,7 @@ libs: $(foreach lib,$(LIBS),$(lib).$(VERSION))
 #
 
 install: all libs
-	for DESTDIR in $(TARGET_DIR); do \
+	for DESTDIR in $(TARGET_INST_DIR); do \
 		mkdir -p $${DESTDIR}/usr/bin ;\
 		cp $(APPS) $${DESTDIR}/usr/bin/ ;\
 	done

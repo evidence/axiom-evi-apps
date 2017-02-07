@@ -26,6 +26,9 @@ TARGET_DIR := $(realpath ${OUTPUT_DIR}/target)
 SYSROOT_DIR := $(realpath ${OUTPUT_DIR}/staging)
 HOST_DIR := $(realpath ${OUTPUT_DIR}/host)
 
+SYSROOT_INST_DIR ?= $(SYSROOT_DIR)
+TARGET_INST_DIR ?= $(TARGET_DIR)
+
 #
 # pkg-config configuration
 #
