@@ -1,0 +1,78 @@
+#!/usr/bin/make -f
+
+DEBIAN_DIR := $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
+
+#DEB_TARGET_ARCH=arm64
+#DEB_TARGET_ARCH_BITS=64
+#DEB_TARGET_ARCH_CPU=arm64
+#DEB_TARGET_ARCH_ENDIAN=little
+#DEB_TARGET_ARCH_OS=linux
+#DEB_TARGET_GNU_CPU=aarch64
+#DEB_TARGET_GNU_SYSTEM=linux-gnu
+#DEB_TARGET_GNU_TYPE=aarch64-linux-gnu
+#DEB_TARGET_MULTIARCH=aarch64-linux-gnu
+
+.PHONY: build build-arch build-indep binary binary-arch binary-indep clean
+
+build: build-arch build-indep
+
+build-arch:
+	dh_testdir
+	make
+
+build-indep:
+
+binary: binary-arch binary-indep
+
+binary-arch: make-changelog
+	dh_testroot
+	dh_prep
+	dh_installdirs
+	make SYSROOT_INST_DIR=$(DEBIAN_DIR)/tmp TARGET_INST_DIR=$(DEBIAN_DIR)/tmp install
+	dh_install --fail-missing
+	dh_installdocs
+	dh_installchangelogs
+	dh_lintian
+	dh_link
+	dh_compress
+	dh_fixperms
+#	dh_strip
+#	dh_makeshlibs
+#	dh_shlibdeps
+	dh_installdeb
+	dh_gencontrol
+	dh_md5sums
+	for PKG in $(shell cat $(DEBIAN_DIR)/control| grep "^Package" | sed -e 's/Package: //'); do \
+	  sed -i -e 's/amd64/arm64/' $(DEBIAN_DIR)/$${PKG}/DEBIAN/control ;\
+	done
+	dh_builddeb
+
+binary-indep:
+
+clean: clean-changelog
+	dh_testdir
+	make clean
+	dh_clean
+
+#
+# changelog
+#
+
+VERSION := $(shell git describe --tags --dirty | sed -e 's/^axiom-v//'  -e 's/-/+/' -e 's/-/~/g')
+
+define changelog
+axiom-apps ($(VERSION)) unstable; urgency=low
+
+  * Dummy changelog.
+
+ -- Foo <foo@bar>  Tue, 07 Feb 2017 09:48:11 +0100
+endef
+export changelog
+
+.PHONY: make-changelog clean-changelog
+
+make-changelog:
+	echo "$$changelog" >$(DEBIAN_DIR)/changelog
+
+clean-changelog:
+	rm -f $(DEBIAN_DIR)/changelog
