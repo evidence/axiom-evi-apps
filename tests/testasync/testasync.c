@@ -146,7 +146,7 @@ void *checker(void *_data) {
     return NULL;
 }
 
-static uint8_t *source;
+static uint8_t *source,*source_other;
 static int num=NUM;
 static int blocksize=BUFSIZE;
 static int guard=GUARD;
@@ -224,7 +224,7 @@ void  *receiver(void *data) {
     axiom_raw_payload_size_t size;
     axiom_node_id_t src_id;
     axiom_type_t type;
-    uint8_t *addr,*start=NULL;
+    uint8_t *addr;
     uint8_t c;
     int i,j;
     int emit=0;
@@ -245,7 +245,6 @@ void  *receiver(void *data) {
             }
             break;
         }
-        if (start==NULL) start=addr-guard;
         if (!AXIOM_RET_IS_OK(err)) {
             perror("axiom_recv_raw()");
             continue;
@@ -262,6 +261,8 @@ void  *receiver(void *data) {
             dump(stderr,addr,blocksize);
 
         // CHECK rdma block
+        /* the check are at the end because the sender can send packets out of order */
+/*
         emit=1;
         for (j=0;j<blocksize;j++) {
             c=rand_next(&r);
@@ -274,17 +275,18 @@ void  *receiver(void *data) {
             }
             addr++;
         }
+*/
     }
 
     // FINAL CHECK all memory and block guard
     rand_init(&r,seed+yournode);
-    addr=start;
+    addr=source_other;
     for (i=0;i<num;i++) {
         emit=1;
         for (j=0;j<guard;j++) {
             if (*addr!=0) {
                 if (emit) {
-                    fprintf(stderr,"ERROR guard block dirty, found 0x%02x\n",(unsigned)*addr);
+                    fprintf(stderr,"ERROR on guard block %d pos %4d: dirty, found 0x%02x\n",num,j,(unsigned)*addr);
                     emit=0;
                 }
                 errors++;
@@ -297,7 +299,7 @@ void  *receiver(void *data) {
             if (*addr!=c) {
                 errors++;
                 if (emit) {
-                    fprintf(stderr,"ERROR expected 0x%02x found 0x%02x\n",(unsigned)c,(unsigned)*addr);
+                    fprintf(stderr,"ERROR on block %d pos %4d: expected 0x%02x found 0x%02x\n",num,j,(unsigned)c,(unsigned)*addr);
                     emit=0;
                 }
             }
@@ -308,7 +310,7 @@ void  *receiver(void *data) {
     for (j=0;j<guard;j++) {
         if (*addr!=0) {
             if (emit) {
-                fprintf(stderr,"ERROR guard block dirty, found 0x%02x\n",(unsigned)*addr);
+                fprintf(stderr,"ERROR on guard block %d pos %4d: dirty, found 0x%02x\n",num,j,(unsigned)*addr);
                 emit=0;
             }
             errors++;
@@ -462,8 +464,13 @@ int main(int argc, char**argv) {
         exit(EXIT_FAILURE);
     }
 
-    source=base;
-    if (mynode&0x1) source+=SIZENEED/2;
+    if (mynode&0x1) {
+        source_other=base;
+        source=source_other+SIZENEED/2;
+    } else {
+        source=base;
+        source_other=source+SIZENEED/2;
+    }
 
     if (mode==MODE_FULL||(mode==MODE_HALF&&(mynode&0x1)==0x0)) {
         res = pthread_create(&threcv, NULL, receiver, NULL);

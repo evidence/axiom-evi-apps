@@ -169,6 +169,7 @@ void  *receiver(void *data) {
             dump(stderr,addr,blocksize);
 
         // CHECK rdma block
+        // Note that in case of raw message reordering the following test fail :-(
         emit=1;
         for (j=0;j<blocksize;j++) {
             c=rand_next(&r);
