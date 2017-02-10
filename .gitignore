@@ -69,6 +69,7 @@ Module.symvers
 # Debian directory (make deb-pkg)
 #
 #/debian/
+/debian/changelog
 
 #
 # git files that we don't want to ignore even it they are dot-files
