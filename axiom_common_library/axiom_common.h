@@ -334,15 +334,17 @@ extern "C" {
      * Exec a program in background.
      * If pipefs pointer is not null 3 pipes for stdin, stdout and stderr are made and returned.
      * The semantic of exec, args, env are the same of execvpe().
+     * If 'exec' is NULL then no new program is executed so the function return a pid_t of zero into the new daemonized process.
+     * So if 'exec' is NULL the 'args' and 'env' parameters are ignored.
      *
-     * @param cwd The working directory where to run.
-     * @param exec The executable.
+     * @param cwd The working directory where to run (can be null).
+     * @param exec The executable (can be null).
      * @param args The executable arguments.
      * @param env The executable environment.
-     * @param pipefd A pointer to int[3] for pipes.
+     * @param pipefd A pointer to int[3] for pipes (can be null).
      * @param newsession if true create a new session/new process group
      * @param verbose Emit log message of "what are you doing?"
-     * @return The pid of the new process or -1 in case of failure (set errno).
+     * @return The pid of the new process or 0 in the new process (only if exec is NULL this is returned into the new process) or -1 in case of failure (set errno).
      */
     pid_t daemonize(char *cwd, char *exec, char **args, char **env, int *pipefd, int newsession, int verbose);
 

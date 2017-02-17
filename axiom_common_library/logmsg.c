@@ -87,11 +87,15 @@ void logmsg_init() {
     value = getenv("AXIOM_LOG_LEVEL");
     if (value != NULL) {
         int i;
-        for (i = 0; i<sizeof (logmsg_name) / sizeof (char*); i++)
+        for (i = 0; i<sizeof (logmsg_name) / sizeof (char*); i++) {
             if (strcasecmp(logmsg_name[i], value) == 0) {
                 logmsg_level = i;
                 break;
             }
+        }
+        if (i==sizeof (logmsg_name) / sizeof (char*)) {
+            fprintf(stderr,"WARNING..... unknwon AXIOM_LOG_LEVEL value %s\n",value);
+        }
     }
     //
     value = getenv("AXIOM_LOG_ZONES");

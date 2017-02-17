@@ -179,10 +179,12 @@ pid_t daemonize(char *cwd, char *exec, char **args, char **env, int *pipefd, int
                 close(i);
         }
         // exec
-        execvpe(exec, args == NULL || *args == NULL ? nullargs : args, env == NULL ? environ : env);
-        // exit... in case of execvpe failure
-        elogmsg("execvpe() failure");
-        exit(EXIT_FAILURE);
+        if (exec!=NULL) {
+            execvpe(exec, args == NULL || *args == NULL ? nullargs : args, env == NULL ? environ : env);
+            // exit... in case of execvpe failure
+            elogmsg("execvpe() failure");
+            exit(EXIT_FAILURE);
+        }
     }
 
     return pid;
