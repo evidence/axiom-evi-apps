@@ -12,9 +12,11 @@
  */
 #include <stdio.h>
 #include <stdint.h>
+#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 #include <sys/types.h>
+#include <sys/wait.h>
 
 #include "axiom_nic_packets.h"
 #include "axiom_nic_discovery.h"
@@ -22,6 +24,8 @@
 #include "axiom_routing.h"
 #include "axiom_discovery_protocol.h"
 #include "../axiom-init.h"
+
+static void notify_end_of_discovery();
 
 static void
 print_topology(axiom_node_id_t tpl[][AXIOM_INTERFACES_MAX],
@@ -136,6 +140,10 @@ axiom_discovery_master(axiom_dev_t *dev,
 
     /* print local routing table */
     print_routing_table(dev, master_id, last_node - 1);
+
+    /* notification end of discovery */
+    notify_end_of_discovery();
+
 }
 
 /* Slave node code*/
@@ -183,5 +191,41 @@ axiom_discovery_slave(axiom_dev_t *dev,
     /* print local routing table */
     print_routing_table(dev, node_id, max_node_id);
 
+    /* notification end of discovery */
+    notify_end_of_discovery();
+
     IPRINTF(verbose, "SLAVE[%u]: end", node_id);
+}
+
+#define NOTIFY_SCRIPT_NAME "axiom_end_discovery.sh"
+#define NOTIFY_SCRIPT ("/etc/" NOTIFY_SCRIPT_NAME)
+
+static void
+notify_end_of_discovery() {
+    if (access(NOTIFY_SCRIPT,X_OK)==0) {
+        pid_t pid=fork();
+        if (pid==-1) {
+            EPRINTF("fork() error");
+            return;
+        }
+        if (pid==0) {
+            // CHILD
+            pid_t pid2=fork();
+            if (pid2==-1) {
+                EPRINTF("fork() 2 error");
+                exit(EXIT_FAILURE);
+            }
+            if (pid2==0) {
+                // CHILD of CHILD
+                // exec notify script!!!
+                execl(NOTIFY_SCRIPT,NOTIFY_SCRIPT_NAME,NULL);
+                EPRINTF("execl() error");
+                exit(EXIT_FAILURE);
+            }
+            exit(EXIT_SUCCESS);
+        } else {
+            int status;
+            waitpid(pid,&status,0);
+        }
+    }
 }
