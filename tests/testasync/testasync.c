@@ -112,8 +112,8 @@ void *checker(void *_data) {
 
     if (check) {
         for (;;) {
-            ret=axiom_rdma_check(dev,&data->token);
-            if (AXIOM_RET_IS_OK(ret)) break;
+            ret=axiom_rdma_check(dev, &data->token, 1);
+            if (ret == 1) break;
             if (ret!=AXIOM_RET_NOTAVAIL) {
                 perror("axiom_rdma_check()");
                 usleep(1000000);
