@@ -59,7 +59,7 @@
 
 static char const MAC[]={0x42,0xD9,0xAF,0x86,0x0B,0x34};
 static char const BROADCAST[]={0xff,0xff,0xff,0xff,0xff,0xff};
-#define PORT 4
+#define PORT 1
 
 #define MACSTR "%02x:%02x:%02x:%02x:%02x:%02x"
 #define MACVAL(p) *(p),*((p)+1),*((p)+2),*((p)+3),*((p)+4),*((p)+5)

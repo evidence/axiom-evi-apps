@@ -1,5 +1,5 @@
 /*!
- * \file testrdma.c
+ * \file testasync.c
  *
  * \version     v0.11
  *
@@ -100,6 +100,7 @@ typedef struct {
 
 static volatile int done_counter=0;
 static int check=0;
+static int port=PORT;
 
 void *checker(void *_data) {
     int ret;
@@ -131,7 +132,7 @@ void *checker(void *_data) {
     if (debug>1)
         fprintf(stderr,"token 0x%016lx arrived... sending remote notification...\n",data->token.raw);
     
-    ret=axiom_send_raw(dev,yournode, PORT, AXIOM_TYPE_RAW_DATA, sizeof(data->addr), &data->addr);
+    ret=axiom_send_raw(dev,yournode, port, AXIOM_TYPE_RAW_DATA, sizeof(data->addr), &data->addr);
     if (!AXIOM_RET_IS_OK(ret)) {
         perror("axiom_send_raw()");
     }
@@ -220,7 +221,7 @@ static int errors=0;
 
 void  *receiver(void *data) {
     axiom_err_t err;
-    axiom_port_t port;
+    axiom_port_t myport;
     axiom_raw_payload_size_t size;
     axiom_node_id_t src_id;
     axiom_type_t type;
@@ -236,9 +237,9 @@ void  *receiver(void *data) {
     rand_init(&r,seed+yournode);
     for (i=0;i<num;i++) {
         size=sizeof(addr);
-        port=PORT;
+        myport=port;
         for (;;) {
-            err=axiom_recv_raw(dev, &src_id, &port, &type, &size, (void*)&addr);
+            err=axiom_recv_raw(dev, &src_id, &myport, &type, &size, (void*)&addr);
             if (err==AXIOM_RET_NOTAVAIL) {
                 usleep(125000);
                 continue;
@@ -355,7 +356,6 @@ static void help() {
 }
 
 int main(int argc, char**argv) {
-    int port=PORT;
     size_t privatesize;
 
     int opt,long_index;
@@ -412,9 +412,11 @@ int main(int argc, char**argv) {
         }
     }
 
+/*
     struct axiom_args openargs;
     openargs.flags = AXIOM_FLAG_NOBLOCK;
-    dev = axiom_open(&openargs);
+*/
+    dev = axiom_open(NULL);
     if (dev == NULL) {
         perror("axiom_open()");
         exit(EXIT_FAILURE);

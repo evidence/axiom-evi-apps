@@ -45,9 +45,6 @@ static struct option long_options[] = {
     {0, 0, 0, 0}
 };
 
-static axiom_dev_t *dev;
-static int mynode,yournode;
-
 // seed for rand
 #define SEED 42
 // used axiom port to send raw messages
@@ -61,6 +58,10 @@ static int mynode,yournode;
 // rdma memory required
 #define SIZENEED ((num*(blocksize+guard)+guard)*2)
 //#define SIZENEED 269488128
+
+static axiom_dev_t *dev;
+static int mynode,yournode;
+static int port=PORT;
 
 /*
 #define MEMBLOCKSTR "%p...%p"
@@ -114,11 +115,11 @@ void  *sender(void *data) {
         if (debug>2)
             dump(stderr,source_addr,blocksize);
 
-        ret=axiom_rdma_write(dev, yournode, blocksize, source_addr, source_addr, NULL);
+        ret=axiom_rdma_write_sync(dev, yournode, blocksize, source_addr, source_addr, NULL);
         if (!AXIOM_RET_IS_OK(ret)) {
             perror("axiom_rdma_write()");
         }
-        ret=axiom_send_raw(dev,yournode, PORT, AXIOM_TYPE_RAW_DATA, sizeof(source_addr), &source_addr);
+        ret=axiom_send_raw(dev,yournode, port, AXIOM_TYPE_RAW_DATA, sizeof(source_addr), &source_addr);
         if (!AXIOM_RET_IS_OK(ret)) {
             perror("axiom_send_raw()");
         }
@@ -134,7 +135,7 @@ static int errors=0;
 
 void  *receiver(void *data) {
     axiom_msg_id_t id;
-    axiom_port_t port;
+    axiom_port_t myport;
     axiom_raw_payload_size_t size;
     axiom_node_id_t src_id;
     axiom_type_t type;
@@ -150,8 +151,8 @@ void  *receiver(void *data) {
     rand_init(&r,seed+yournode);
     for (i=0;i<num;i++) {
         size=sizeof(addr);
-        port=PORT;
-        id= axiom_recv_raw(dev, &src_id, &port, &type, &size, (void*)&addr);
+        myport=port;
+        id= axiom_recv_raw(dev, &src_id, &myport, &type, &size, (void*)&addr);
         if (start==NULL) start=addr-guard;
         if (!AXIOM_RET_IS_OK(id)) {
             perror("axiom_recv_raw");
@@ -258,7 +259,6 @@ static void help() {
 }
 
 int main(int argc, char**argv) {
-    int port=PORT;
     size_t privatesize;
 
     int opt,long_index;
