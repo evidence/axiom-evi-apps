@@ -126,7 +126,7 @@ axrdma_read(axrdma_status_t *s)
             s->local_id, s->slave_id, s->payload_size, s->rdma_start,
             s->master_offset, s->slave_offset);
 
-    ret = axiom_rdma_read(s->dev, s->slave_id, s->payload_size,
+    ret = axiom_rdma_read_sync(s->dev, s->slave_id, s->payload_size,
             s->rdma_start + s->slave_offset, s->rdma_start + s->master_offset,
             NULL);
 
@@ -160,7 +160,7 @@ axrdma_write(axrdma_status_t *s)
             s->local_id, s->slave_id, s->payload_size, s->rdma_start,
             s->master_offset, s->slave_offset);
 
-    ret = axiom_rdma_write(s->dev, s->slave_id, s->payload_size,
+    ret = axiom_rdma_write_sync(s->dev, s->slave_id, s->payload_size,
             s->rdma_start + s->master_offset, s->rdma_start + s->slave_offset,
             NULL);
 

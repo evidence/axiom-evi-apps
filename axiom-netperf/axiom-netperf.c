@@ -267,7 +267,7 @@ axnetperf_rdma(axnetperf_status_t *s)
         }
 
         /* write payload to remote node */
-        err = axiom_rdma_write(s->dev, s->dest_node, AXIOM_RAW_PORT_INIT,
+        err = axiom_rdma_write_sync(s->dev, s->dest_node, AXIOM_RAW_PORT_INIT,
                 rdma_psize, s->sent_bytes, s->sent_bytes);
         if (unlikely(!AXIOM_RET_IS_OK(err))) {
             EPRINTF("send error");
@@ -284,7 +284,7 @@ axnetperf_rdma(axnetperf_status_t *s)
             >> AXIOM_RDMA_PAYLOAD_SIZE_ORDER;
 
         /* write payload to remote node */
-        err = axiom_rdma_write(s->dev, s->dest_node, AXIOM_RAW_PORT_INIT,
+        err = axiom_rdma_write_sync(s->dev, s->dest_node, AXIOM_RAW_PORT_INIT,
                 rdma_psize, s->sent_bytes, s->sent_bytes);
         if (unlikely(!AXIOM_RET_IS_OK(err))) {
             EPRINTF("send error");
