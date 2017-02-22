@@ -77,7 +77,7 @@ static int seed=SEED;
 void  *sender(void *data) {
     sender_data_t *p=(sender_data_t *)data;
     uint8_t buffer[AXIOM_LONG_PAYLOAD_MAX_SIZE];
-    int i,j,ret;
+    int i,j,k,ret;
     long sc=0;
     rand_t r0;
     rand_t r1;
@@ -104,7 +104,11 @@ void  *sender(void *data) {
                 dump(stderr, buffer,blocksize);
             }
         }
-        ret=axiom_send_long(dev, p->destnode, port, blocksize, buffer);
+        k=0;
+        while ((ret=axiom_send_long(dev, p->destnode, port, blocksize, buffer))==AXIOM_RET_NOTAVAIL) {
+            if (++k>3) break;
+            usleep(125000);
+        }
         if (!AXIOM_RET_IS_OK(ret)) {
             perror("axiom_send_long()");
         }
@@ -205,9 +209,11 @@ static void help() {
     fprintf(stderr, "  -F|--full      full mode (i.e. every node send and receive fron only another node) [DEFAULT]\n");
     fprintf(stderr, "  -H|--half      half mode (i.e. every node send or receive but not both)\n");
     fprintf(stderr, "  -M|--multi     multi mode (i.e. every send to all other nodes)\n");
+    fprintf(stderr, "  -k|--noblock   open device in NOT BLOCKING operation mode\n");
 }
 
 int main(int argc, char**argv) {
+    struct axiom_args openargs;
     int opt,long_index;
     axiom_err_t err;
     pthread_t threcv, thsend;
@@ -216,7 +222,7 @@ int main(int argc, char**argv) {
     int res,ret;
 
     opterr = 0;
-    while ((opt = getopt_long(argc, argv, "hs:p:n:b:g:HMFd", long_options, &long_index)) != -1) {
+    while ((opt = getopt_long(argc, argv, "hs:p:n:b:g:HMFdk", long_options, &long_index)) != -1) {
         switch (opt) {
             case 'd':
                 debug++;
@@ -247,6 +253,9 @@ int main(int argc, char**argv) {
             case 'M':
                 mode=MODE_MULTI;
                 break;
+            case 'k':
+                openargs.flags = AXIOM_FLAG_NOBLOCK;
+                break;
             case 'h':
                 help();
                 exit(EXIT_SUCCESS);
@@ -261,8 +270,7 @@ int main(int argc, char**argv) {
     //
     // open & bind axiom device
     //
-
-    dev = axiom_open(NULL);
+    dev = axiom_open(&openargs);
     if (dev == NULL) {
         perror("axiom_open()");
         exit(EXIT_FAILURE);
