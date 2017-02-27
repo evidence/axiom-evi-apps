@@ -107,8 +107,8 @@ void  *sender(void *data) {
         }
         k=0;
         while ((ret=axiom_send_long(dev, p->destnode, port, blocksize, buffer))==AXIOM_RET_NOTAVAIL) {
-            if (++k>3) break;
-            usleep(125000);
+            if (++k>16) break;
+            usleep(k>8?250000:125000);
         }
         if (!AXIOM_RET_IS_OK(ret)) {
             perror("axiom_send_long()");
@@ -126,7 +126,7 @@ static int errors=0;
 static volatile int received=0;
 
 void  *receiver(void *data) {
-    axiom_msg_id_t id;
+    axiom_err_t err;
     axiom_port_t myport;
     axiom_long_payload_size_t size;
     axiom_node_id_t src_id;
@@ -146,8 +146,9 @@ void  *receiver(void *data) {
     while (endnum>__sync_fetch_and_or(&received,0)) {
         size=sizeof(buffer);
         myport=port;
-        id= axiom_recv_long(dev, &src_id, &myport, &size, buffer);
-        if (!AXIOM_RET_IS_OK(id)) {
+        err= axiom_recv_long(dev, &src_id, &myport, &size, buffer);
+        if (err==AXIOM_RET_NOTAVAIL) continue;
+        if (!AXIOM_RET_IS_OK(err)) {
             perror("axiom_recv_long()");
             continue;
         }
@@ -215,7 +216,7 @@ static void help() {
     fprintf(stderr, "  -k|--noblock        open device in NOT BLOCKING operation mode\n");
     fprintf(stderr, "  -r|--receivers NUM  number of receivers thread [default: 1]\n");
     fprintf(stderr, "note:\n");
-    fprintf(stderr, "  if you use more than one receivers (i.e. -r NUM with NUM>1) and a blocking operation (i.e. no -k specified) than the text should not terminate!");
+    fprintf(stderr, "  if you use more than one receivers (i.e. -r NUM with NUM>1) and a blocking operation (i.e. no -k specified) than the test should not terminate!");
 }
 
 int main(int argc, char**argv) {
