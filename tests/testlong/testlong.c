@@ -42,6 +42,7 @@ static struct option long_options[] = {
     {"num", required_argument, 0, 'n'},
     {"block", required_argument, 0, 'b'},
     {"debug", required_argument, 0, 'd'},
+    {"receivers", required_argument, 0, 'r'},
     {"full", no_argument, 0, 'F'},
     {"half", no_argument, 0, 'H'},
     {"multi", no_argument, 0, 'M'},
@@ -122,6 +123,7 @@ void  *sender(void *data) {
 }
 
 static int errors=0;
+static volatile int received=0;
 
 void  *receiver(void *data) {
     axiom_msg_id_t id;
@@ -141,7 +143,7 @@ void  *receiver(void *data) {
         fprintf(stderr,"receiver: start\n");
     }
 
-    for (i=0;i<endnum;i++) {
+    while (endnum>__sync_fetch_and_or(&received,0)) {
         size=sizeof(buffer);
         myport=port;
         id= axiom_recv_long(dev, &src_id, &myport, &size, buffer);
@@ -149,6 +151,7 @@ void  *receiver(void *data) {
             perror("axiom_recv_long()");
             continue;
         }
+        __sync_fetch_and_add(&received,1);
         if (size!=blocksize) {
             fprintf(stderr,"ERROR received from %2u %u bytes but expected %d bytes\n", (unsigned)src_id, (unsigned)size, blocksize);
             errors++;
@@ -201,28 +204,34 @@ static inline int i_am_the_first(int mynode) {
 
 static void help() {
     fprintf(stderr, "usage: testlong [options]\n");
-    fprintf(stderr, "  -d|--debug     debug (every -d increase verbosiness, max 3)\n");
-    fprintf(stderr, "  -s|--seed SEED seed for srand [default: %d]\n",SEED);
-    fprintf(stderr, "  -p|--port PORT axiom port [default: %d]\n",PORT);
-    fprintf(stderr, "  -n|--num NUM   numbers of block transmitted/received [default: %d]\n",NUM);
-    fprintf(stderr, "  -b|--block SZ  block size in bytes [min:%ld default:%d max:%d]\n",sizeof(unsigned int)+1,BUFSIZE,AXIOM_LONG_PAYLOAD_MAX_SIZE);
-    fprintf(stderr, "  -F|--full      full mode (i.e. every node send and receive fron only another node) [DEFAULT]\n");
-    fprintf(stderr, "  -H|--half      half mode (i.e. every node send or receive but not both)\n");
-    fprintf(stderr, "  -M|--multi     multi mode (i.e. every send to all other nodes)\n");
-    fprintf(stderr, "  -k|--noblock   open device in NOT BLOCKING operation mode\n");
+    fprintf(stderr, "  -d|--debug          debug (every -d increase verbosiness, max 3)\n");
+    fprintf(stderr, "  -s|--seed SEED      seed for srand [default: %d]\n",SEED);
+    fprintf(stderr, "  -p|--port PORT      axiom port [default: %d]\n",PORT);
+    fprintf(stderr, "  -n|--num NUM        numbers of block transmitted/received [default: %d]\n",NUM);
+    fprintf(stderr, "  -b|--block SZ       block size in bytes [min:%ld default:%d max:%d]\n",sizeof(unsigned int)+1,BUFSIZE,AXIOM_LONG_PAYLOAD_MAX_SIZE);
+    fprintf(stderr, "  -F|--full           full mode (i.e. every node send and receive fron only another node) [DEFAULT]\n");
+    fprintf(stderr, "  -H|--half           half mode (i.e. every node send or receive but not both)\n");
+    fprintf(stderr, "  -M|--multi          multi mode (i.e. every send to all other nodes)\n");
+    fprintf(stderr, "  -k|--noblock        open device in NOT BLOCKING operation mode\n");
+    fprintf(stderr, "  -r|--receivers NUM  number of receivers thread [default: 1]\n");
+    fprintf(stderr, "note:\n");
+    fprintf(stderr, "  if you use more than one receivers (i.e. -r NUM with NUM>1) and a blocking operation (i.e. no -k specified) than the text should not terminate!");
 }
 
 int main(int argc, char**argv) {
     struct axiom_args openargs;
     int opt,long_index;
     axiom_err_t err;
-    pthread_t threcv, thsend;
+    pthread_t thsend;
+    pthread_t *threcv=NULL;
     pthread_t *thsenders=NULL;
     sender_data_t *pdata=NULL;
     int res,ret;
+    int receivers=1;
+    int c;
 
     opterr = 0;
-    while ((opt = getopt_long(argc, argv, "hs:p:n:b:g:HMFdk", long_options, &long_index)) != -1) {
+    while ((opt = getopt_long(argc, argv, "hs:p:n:b:g:HMFdkr:", long_options, &long_index)) != -1) {
         switch (opt) {
             case 'd':
                 debug++;
@@ -235,6 +244,9 @@ int main(int argc, char**argv) {
                 break;
             case 'n':
                 num=asc2int(optarg);
+                break;
+            case 'r':
+                receivers=asc2int(optarg);
                 break;
             case 'b':
                 blocksize=asc2int(optarg);
@@ -301,10 +313,17 @@ int main(int argc, char**argv) {
     //
 
     if (mode==MODE_FULL||mode==MODE_MULTI||(mode==MODE_HALF&&(mynode&0x1)==0x0)) {
-        res = pthread_create(&threcv, NULL, receiver, NULL);
-        if (res != 0) {
-            perror("pthread_create()");
+        threcv=malloc(receivers*sizeof(pthread_t));
+        if (threcv==NULL) {
+            perror("malloc()");
             exit(EXIT_FAILURE);
+        }
+        for (c=0;c<receivers;c++) {
+            res = pthread_create(threcv+c, NULL, receiver, NULL);
+            if (res != 0) {
+                perror("pthread_create()");
+                exit(EXIT_FAILURE);
+            }
         }
     }
 
@@ -354,10 +373,12 @@ int main(int argc, char**argv) {
     }
     
     if (mode==MODE_FULL||mode==MODE_MULTI||(mode==MODE_HALF&&(mynode&0x1)==0x0)) {
-        res = pthread_join(threcv, NULL);
-        if (res != 0) {
-            perror("pthread_join()");
-            exit(EXIT_FAILURE);
+        for (c=0;c<receivers;c++) {
+            res = pthread_join(threcv[c], NULL);
+            if (res != 0) {
+                perror("pthread_join()");
+                exit(EXIT_FAILURE);
+            }
         }
     }
 
