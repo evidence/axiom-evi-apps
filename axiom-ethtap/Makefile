@@ -1,7 +1,7 @@
 
 include ../common.mk
 
-APPS := axiom-tuntap
+APPS := axiom-ethtap
 
 SRCS := $(wildcard *.c)
 OBJS := $(SRCS:.c=.o)
@@ -18,7 +18,7 @@ all: $(APPS)
 
 -include $(DEPS)
 
-axiom-tuntap: $(OBJS)
+axiom-ethtap: $(OBJS)
 
 install: all
 	for DESTDIR in $(TARGET_INST_DIR); do \

@@ -1,7 +1,7 @@
 
 APPS_DIR := axiom-init axiom-run axiom-recv axiom-send axiom-whoami 
 APPS_DIR += axiom-ping axiom-traceroute axiom-netperf axiom-rdma axiom-info
-APPS_DIR += axiom-utility axiom-tuntap
+APPS_DIR += axiom-utility axiom-ethtap
 LIBS_DIR := axiom-init axiom-run
 COMS_DIR := axiom_common_library
 TESTS_DIR := tests
