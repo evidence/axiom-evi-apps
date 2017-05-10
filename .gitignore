@@ -13,7 +13,7 @@ axiom-ping/axiom-ping
 axiom-traceroute/axiom-traceroute
 axiom-netperf/axiom-netperf
 axiom-rdma/axiom-rdma
-axiom-tuntap/axiom-tuntap
+axiom-ethtap/axiom-ethtap
 axiom-run/axiom-run
 axiom-run/test/myinfo
 axiom-run/test/mybar
