@@ -218,14 +218,10 @@ static void
 print_ni_control(axiom_dev_t *dev)
 {
     uint32_t control;
-    int loopback;
 
     control = axiom_read_ni_control(dev);
 
     printf("\tcontrol register = 0x%08x\n", control);
-
-    loopback =  ((control & AXIOMREG_CONTROL_LOOPBACK) != 0);
-    printf("\t\tLOOPBACK = %d\n", loopback);
 
     printf("\n");
 }
