@@ -61,15 +61,15 @@ usage(void)
 {
     printf("usage: axiom-rdma [arguments] -m mode [-s payload size  payload (list of bytes)]\n");
     printf("Application to use RDMA features of Axiom NIC\n");
+    printf("Must be run with axiom-run (eg. axiom-run -P all axiom-rdma -m r -s 1k 1\n");
     printf("\n\n");
     printf("Arguments:\n");
-    printf("-m, --mode      r,w,d,s        r = rdma read, w = rdma write, d = local dump,\n");
-    printf("                               s = local store\n");
+    printf("-m, --mode      r,w,d,s        r = rdma read, w = rdma write\n");
     printf("-n, --sid       node_id        slave node id \n");
     printf("-N, --mid       node_id        master node id \n");
     printf("-o, --soff      off[B|K|M|G]   slave offset in the RDMA zone [default 0]\n");
     printf("-O, --moff      off[B|K|M|G]   master offset in the RDMA zone [default 0]\n");
-    printf("-s, --size      size[B|K|M|G]  size of payload in byte\n");
+    printf("-s, --size      size[B|K|M|G]  size of region to transfer in byte\n");
     printf("                               The suffix specifies the size unit\n");
     printf("-p, --port      port           port used for the RDMA transfer\n");
     printf("-v, --verbose                  verbose\n");
@@ -297,6 +297,7 @@ main(int argc, char **argv)
                     exit(-1);
                 }
                 data_scale = get_scale(char_scale);
+                s.slave_offset = s.slave_offset << data_scale;
                 break;
             case 'O':
                 if (sscanf(optarg, "%" SCNu32 "%c", &s.master_offset,
@@ -306,6 +307,7 @@ main(int argc, char **argv)
                     exit(-1);
                 }
                 data_scale = get_scale(char_scale);
+                s.master_offset = s.master_offset << data_scale;
                 break;
             case 's':
                 if (sscanf(optarg, "%" SCNu32 "%c", &s.payload_size,
