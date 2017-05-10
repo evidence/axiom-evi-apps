@@ -1,7 +1,7 @@
 /*!
  * \file axiom_discovery_node.h
  *
- * \version     v0.11
+ * \version     v0.12
  *
  * This file contains AXIOM node network simulation structure and prototypes
  *

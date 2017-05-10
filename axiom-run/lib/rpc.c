@@ -1,7 +1,7 @@
 /*!
  * \file rpc.c
  *
- * \version     v0.11
+ * \version     v0.12
  *
  * Copyright (C) 2016, Evidence Srl.
  * Terms of use are as specified in COPYING
