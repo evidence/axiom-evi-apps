@@ -8,8 +8,14 @@ Homepage: <insert the upstream URL, if relevant>
 #Vcs-Git: git://anonscm.debian.org/collab-maint/axiom-apps.git
 #Vcs-Browser: http://anonscm.debian.org/?p=collab-maint/axiom-apps.git;a=summary
 
-Package: axiom-apps
+Package: libaxiom-run
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}
-Description: axiom system applications
- axiom system applications
+Depends: ${shlibs:Depends}, ${misc:Depends}, libaxiom-init
+Description: axiom run library
+ axiom run library
+
+Package: libaxiom-run-dev
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, libaxiom-run
+Description: axiom run library - development files
+ axiom run library - development files

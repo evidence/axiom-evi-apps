@@ -28,9 +28,7 @@ binary-arch: make-changelog
 	dh_testroot
 	dh_prep
 	dh_installdirs
-
 	make SYSROOT_INST_DIR=$(DEBIAN_DIR)/tmp TARGET_INST_DIR=$(DEBIAN_DIR)/tmp install
-	rm -r -f $(DEBIAN_DIR)/tmp/usr/lib $(DEBIAN_DIR)/tmp/usr/include
 
 	dh_install --list-missing
 	dh_installdocs
@@ -74,6 +72,30 @@ binary-arch: make-changelog
 	dh_installdeb
 	dh_gencontrol
 	dh_md5sums
+	dh_builddeb
+
+
+
+
+ddddddd:
+	dh_install --list-missing
+	dh_installdocs
+	dh_installchangelogs
+	dh_lintian
+	dh_link
+	dh_compress
+	dh_fixperms
+#	dh_strip
+	PATH=$(LINARO)/host/usr/bin:$(PATH) dh_makeshlibs
+	echo XXX $(ROOTFS)
+	dh_shlibdeps --sysroot=$(ROOTFS)
+#		-S/home/massy/axiom-evi/axiom-evi-nic/debian/libaxiom-user/usr
+	dh_installdeb
+	dh_gencontrol
+	dh_md5sums
+#	for PKG in $(shell cat $(DEBIAN_DIR)/control| grep "^Package" | sed -e 's/Package: //'); do \
+	  sed -i -e 's/amd64/arm64/' $(DEBIAN_DIR)/$${PKG}/DEBIAN/control ;\
+	done
 	dh_builddeb
 
 binary-indep:
