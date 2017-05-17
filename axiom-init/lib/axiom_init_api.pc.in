@@ -9,6 +9,6 @@ Name: axiom_init_api
 Description: axiom init api description
 Version: 0.9
 
-Cflags: -I${includedir}/axiom
+Cflags: -I${includedir}/axiom -I${includedir}
 Libs: -L${libdir} -laxiom_init_api 
 

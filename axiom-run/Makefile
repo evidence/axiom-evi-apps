@@ -45,8 +45,10 @@ lib/libaxiom_run_api.so.$(VERSION): $(LIBS_OBJS)
 		$(call PKG-LDLIBS, axiom_user_api) $(AXIOM_COMMON_LDLIBS)
 
 libs: $(foreach lib,$(LIBS),$(lib).$(VERSION))
+ifneq ($(P),1)
 	for DESTDIR in $(SYSROOT_INST_DIR); do \
 		mkdir -p $${DESTDIR}/usr/lib/pkgconfig ;\
+		mkdir -p $${DESTDIR}/usr/include/axiom ;\
 		for LIB in $(LIBS); do \
 			LIBNAME=$$(basename $$LIB) ;\
 			cp $${LIB}.$(VERSION) $${DESTDIR}/usr/lib/ ;\
@@ -59,14 +61,24 @@ libs: $(foreach lib,$(LIBS),$(lib).$(VERSION))
 			cp $(AXIOM_APPS_INCLUDE)/$${NAME}.h $${DESTDIR}/usr/include/axiom ;\
 		done ;\
 	done
+endif
+	$(FAKEROOT) $(MAKE) libs-real-install
+
+.PHONY: libs-real-install
+libs-real-install:
 	for DESTDIR in $(TARGET_INST_DIR); do \
-		mkdir -p $${DESTDIR}/usr/lib ;\
+		mkdir -p $${DESTDIR}/usr/lib/pkgconfig ;\
+		mkdir -p $${DESTDIR}/usr/include/axiom ;\
 		for LIB in $(LIBS); do \
 			cp $${LIB}.$(VERSION) $${DESTDIR}/usr/lib/ ;\
 			LIBNAME=$$(basename $$LIB) ;\
 			ln -sf $${LIBNAME}.$(VERSION) $${DESTDIR}/usr/lib/$${LIBNAME}.$(MAJOR).$(MINOR) ;\
 			ln -sf $${LIBNAME}.$(MAJOR).$(MINOR) $${DESTDIR}/usr/lib/$${LIBNAME}.$(MAJOR) ;\
 			ln -sf $${LIBNAME}.$(MAJOR) $${DESTDIR}/usr/lib/$${LIBNAME} ;\
+			NAME=$$(basename $$LIB .so | sed -e 's/^lib//') ;\
+			D=$$(dirname $$LIB) ;\
+			sed -e 's,@PREFIX@,/usr,' $${D}/$${NAME}.pc.in > $${DESTDIR}/usr/lib/pkgconfig/$${NAME}.pc ;\
+			cp $(AXIOM_APPS_INCLUDE)/$${NAME}.h $${DESTDIR}/usr/include/axiom ;\
 		done ;\
 	done
 
@@ -91,8 +103,8 @@ libs: $(foreach lib,$(LIBS),$(lib).$(VERSION))
 
 install: all libs
 	for DESTDIR in $(TARGET_INST_DIR); do \
-		mkdir -p $${DESTDIR}/usr/bin ;\
-		cp $(APPS) $${DESTDIR}/usr/bin/ ;\
+		$(FAKEROOT) mkdir -p $${DESTDIR}/usr/bin ;\
+		$(FAKEROOT) cp $(APPS) $${DESTDIR}/usr/bin/ ;\
 	done
 
 clean distclean:

@@ -1,5 +1,5 @@
 
-.PHONY: clean build install distclean
+.PHONY: clean build install distclean install-real
 
 include ../../common.mk
 
@@ -21,6 +21,9 @@ clean distclean:
 	rm -f $(OBJS) $(DEPS) $(EXECS)
 
 install: build
+	$(FAKEROOT) $(MAKE) install-real
+
+install-real:
 	for DESTDIR in $(TARGET_DIR); do \
 	    mkdir -p $${DESTDIR}/root/tests_axiom ;\
 	    cp $(EXECS) $${DESTDIR}/root/tests_axiom ;\

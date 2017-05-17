@@ -9,5 +9,5 @@ Name: axiom_run_api
 Description: axiom run api description
 Version: 0.9
 
-Cflags: -I${includedir}/axiom
+Cflags: -I${includedir}/axiom -I${includedir}
 Libs: -L${libdir} -laxiom_run_api

@@ -21,13 +21,28 @@ VERSION := $(MAJOR).$(MINOR).$(SUBLEVEL)
 
 COMMKFILE_DIR := $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
 #BUILDROOT := ${COMMKFILE_DIR}/../axiom-evi-buildroot
+ifeq ($(P),1)
+TARGET_DIR := $(realpath ${ROOTFS})
+SYSROOT_DIR := $(realpath ${ROOTFS})
+HOST_DIR := $(realpath ${LINARO}/host)
+else
 OUTPUT_DIR := ${COMMKFILE_DIR}/../output
 TARGET_DIR := $(realpath ${OUTPUT_DIR}/target)
 SYSROOT_DIR := $(realpath ${OUTPUT_DIR}/staging)
 HOST_DIR := $(realpath ${OUTPUT_DIR}/host)
+endif
 
 SYSROOT_INST_DIR ?= $(SYSROOT_DIR)
 TARGET_INST_DIR ?= $(TARGET_DIR)
+
+# fakeroot
+
+FAKEROOT :=
+ifeq ($(P),1)
+ifndef FAKEROOTKEY
+FAKEROOT := fakeroot -i $(ROOTFS).faked -s $(ROOTFS).faked
+endif
+endif
 
 #
 # pkg-config configuration
@@ -63,7 +78,11 @@ AXIOM_COMMON_LDLIBS := -laxiom_common
 # tools
 #
 
+ifeq ($(P),1)
+CCPREFIX := ${LINARO}/host/usr/bin/$(CCARCH)-linux-gnu-
+else
 CCPREFIX := ${HOST_DIR}/usr/bin/$(CCARCH)-linux-
+endif
 CC := ${CCPREFIX}gcc
 AR := ${CCPREFIX}ar
 RANLIB := ${CCPREFIX}ranlib

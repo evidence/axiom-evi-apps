@@ -22,8 +22,8 @@ axiom-recv: $(OBJS)
 
 install: all
 	for DESTDIR in $(TARGET_INST_DIR); do \
-		mkdir -p $${DESTDIR}/usr/bin ;\
-		cp $(APPS) $${DESTDIR}/usr/bin/ ;\
+		$(FAKEROOT) mkdir -p $${DESTDIR}/usr/bin ;\
+		$(FAKEROOT) cp $(APPS) $${DESTDIR}/usr/bin/ ;\
 	done
 
 clean distclean:

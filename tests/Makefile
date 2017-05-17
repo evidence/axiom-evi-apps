@@ -1,4 +1,6 @@
 
+export P
+
 include ../common.mk
 
 .PHONY: clean distclean build install
