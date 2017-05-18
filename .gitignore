@@ -67,29 +67,6 @@ modules.builtin
 Module.symvers
 
 #
-# Debian directory (make deb-pkg)
-#
-#/debian/
-/debian/changelog
-/debian/axiom-apps.debhelper.log
-/debian/axiom-apps.substvars
-/debian/axiom-apps/
-/debian/files
-/debian/libaxiom-init-dev.debhelper.log
-/debian/libaxiom-init-dev.substvars
-/debian/libaxiom-init-dev/
-/debian/libaxiom-init.debhelper.log
-/debian/libaxiom-init.substvars
-/debian/libaxiom-init/
-/debian/libaxiom-run-dev.debhelper.log
-/debian/libaxiom-run-dev.substvars
-/debian/libaxiom-run-dev/
-/debian/libaxiom-run.debhelper.log
-/debian/libaxiom-run.substvars
-/debian/libaxiom-run/
-/debian/tmp/
-
-#
 # git files that we don't want to ignore even it they are dot-files
 #
 !.gitignore
