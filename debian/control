@@ -13,3 +13,21 @@ Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}
 Description: axiom system applications
  axiom system applications
+
+Package: axiom-init
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: axiom-init application
+ axiom-init application
+ 
+Package: axiom-run
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: axiom-run application
+ axiom-run application
+
+Package: axiom-ethtap
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: axiom-ethtap application
+ axiom-ethtap application

@@ -32,7 +32,7 @@ binary-arch: make-changelog
 	make SYSROOT_INST_DIR=$(DEBIAN_DIR)/tmp TARGET_INST_DIR=$(DEBIAN_DIR)/tmp install
 	rm -r -f $(DEBIAN_DIR)/tmp/usr/lib $(DEBIAN_DIR)/tmp/usr/include
 
-	dh_install --list-missing
+	dh_install --fail-missing
 	dh_installdocs
 	dh_installchangelogs
 	dh_installexamples

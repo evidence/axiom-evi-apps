@@ -1,1 +1,10 @@
-/usr/bin/*
+/usr/bin/axiom-info
+/usr/bin/axiom-netperf
+/usr/bin/axiom-ping
+/usr/bin/axiom-rdma
+/usr/bin/axiom-send
+/usr/bin/axiom-recv
+/usr/bin/axiom-traceroute
+/usr/bin/axiom-utility
+/usr/bin/axiom-whoami
+
