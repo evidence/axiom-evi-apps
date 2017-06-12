@@ -1,6 +1,15 @@
 axiom-apps.debhelper.log
 axiom-apps.substvars
 axiom-apps
+axiom-init.debhelper.log
+axiom-init.substvars
+axiom-init
+axiom-run.debhelper.log
+axiom-run.substvars
+axiom-run
+axiom-ethtap.debhelper.log
+axiom-ethtap.substvars
+axiom-ethtap
 changelog
 files
 tmp
