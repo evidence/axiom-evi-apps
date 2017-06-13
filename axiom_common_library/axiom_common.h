@@ -1,7 +1,7 @@
 /*!
  * \file axiom_common.h
  *
- * \version     v0.12
+ * \version     v0.13
  *
  * Common internal functions.
  * A collections of functions used by some axiom-evi application.

@@ -1,7 +1,7 @@
 /*!
  * \file rpcfuncs.c
  *
- * \version     v0.12
+ * \version     v0.13
  *
  * Copyright (C) 2016, Evidence Srl.
  * Terms of use are as specified in COPYING
