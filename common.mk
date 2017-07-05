@@ -21,7 +21,7 @@ VERSION := $(MAJOR).$(MINOR).$(SUBLEVEL)
 
 COMMKFILE_DIR := $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
 #BUILDROOT := ${COMMKFILE_DIR}/../axiom-evi-buildroot
-ifeq ($(P),1)
+ifeq ($(FS),seco)
 TARGET_DIR := $(realpath ${ROOTFS})
 SYSROOT_DIR := $(realpath ${ROOTFS})
 HOST_DIR := $(realpath ${LINARO}/host)
@@ -38,7 +38,7 @@ TARGET_INST_DIR ?= $(TARGET_DIR)
 # fakeroot
 
 FAKEROOT :=
-ifeq ($(P),1)
+ifeq ($(FS),seco)
 ifndef FAKEROOTKEY
 FAKEROOT := fakeroot -i $(ROOTFS).faked -s $(ROOTFS).faked
 endif
@@ -78,7 +78,7 @@ AXIOM_COMMON_LDLIBS := -laxiom_common
 # tools
 #
 
-ifeq ($(P),1)
+ifeq ($(FS),seco)
 CCPREFIX := ${LINARO}/host/usr/bin/$(CCARCH)-linux-gnu-
 else
 CCPREFIX := ${HOST_DIR}/usr/bin/$(CCARCH)-linux-

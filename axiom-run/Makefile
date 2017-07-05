@@ -45,7 +45,7 @@ lib/libaxiom_run_api.so.$(VERSION): $(LIBS_OBJS)
 		$(call PKG-LDLIBS, axiom_user_api) $(AXIOM_COMMON_LDLIBS)
 
 libs: $(foreach lib,$(LIBS),$(lib).$(VERSION))
-ifneq ($(P),1)
+ifneq ($(FS),seco)
 	for DESTDIR in $(SYSROOT_INST_DIR); do \
 		mkdir -p $${DESTDIR}/usr/lib/pkgconfig ;\
 		mkdir -p $${DESTDIR}/usr/include/axiom ;\
