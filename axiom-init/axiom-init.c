@@ -14,6 +14,7 @@
  */
 #include <pthread.h>
 #include <ctype.h>
+#include <inttypes.h>
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -38,18 +39,64 @@ usage(void)
     printf("usage: axiom-init [arguments]\n");
     printf("Start AXIOM node in slaves mode (or master if it is specified)\n\n");
     printf("Arguments:\n");
-    printf("-m, --master        start node as master\n");
-    printf("-v, --verbose       verbose output\n");
-    printf("-h, --help          print this help\n\n");
+    printf("-m, --master           start node as master\n");
+    printf("-n, --nodeid    id     set node id\n");
+    printf("-r, --routing   file   load routing table from file (each row (X) must contain the interface to reach node X)\n");
+    printf("-v, --verbose          verbose output\n");
+    printf("-h, --help             print this help\n\n");
+}
+
+
+int
+axiom_rt_from_file(axiom_dev_t *dev, char *filename)
+{
+    axiom_if_id_t routing_table[AXIOM_NODES_MAX];
+    FILE *file = NULL;
+    char *line = NULL;
+    size_t len = 0;
+    int line_count = 0;
+
+    memset(routing_table, 0, sizeof(routing_table));
+
+    file = fopen(filename, "r");
+    if (file == NULL)  {
+        printf("File not exist\n");
+        return -1;
+    }
+
+    while ((getline(&line, &len, file)) != -1) {
+        line_count++;
+        if (line_count > AXIOM_NODES_MAX) {
+            printf("The routing table contains more than %d nodes\n", AXIOM_NODES_MAX);
+            free(line);
+            return -1;
+        }
+
+        long val = strtol(line, NULL, 10);
+        if ((val >= 0) || (val < AXIOM_INTERFACES_MAX))
+            routing_table[line_count - 1] = (1 << val);
+    }
+
+    free(line);
+    fclose(file);
+
+    /* set final routing table */
+    for (axiom_node_id_t nid = 0; nid < AXIOM_NODES_MAX; nid++) {
+        axiom_set_routing(dev, nid, routing_table[nid]);
+    }
+
+    return 0;
 }
 
 int
 main(int argc, char **argv)
 {
-    int master = 0, run = 1;
+    int master = 0, run = 1, set_nodeid = 0, set_rt = 0;
+    char rt_filename[1024];
     axiom_dev_t *dev = NULL;
     axiom_args_t axiom_args;
     axiom_node_id_t topology[AXIOM_NODES_MAX][AXIOM_INTERFACES_MAX];
+    axiom_node_id_t node_id = 0;
     axiom_if_id_t final_routing_table[AXIOM_NODES_MAX];
     axiom_err_t ret;
 
@@ -57,18 +104,35 @@ main(int argc, char **argv)
     int opt = 0;
     static struct option long_options[] = {
         {"master", no_argument, 0, 'm'},
+        {"nodeid", required_argument, 0, 'n'},
+        {"routing", required_argument, 0, 'r'},
         {"verbose", no_argument, 0, 'v'},
         {"help", no_argument, 0, 'h'},
         {0, 0, 0, 0}
     };
 
-
-    while ((opt = getopt_long(argc, argv,"hvm",
+    while ((opt = getopt_long(argc, argv,"hvmn:r:",
                          long_options, &long_index )) != -1) {
         switch (opt) {
             case 'm':
                 master = 1;
                 break;
+            case 'n':
+                if (sscanf(optarg, "%" SCNu8, &node_id) != 1) {
+                    EPRINTF("wrong node ID");
+                    usage();
+                    exit(-1);
+                }
+                set_nodeid = 1;
+                break;
+            case 'r':
+                if (snprintf(rt_filename, sizeof(rt_filename) - 1, "%s",
+                            optarg) < 0) {
+                    EPRINTF("wrong filename");
+                    usage();
+                    exit(-1);
+                }
+                set_rt = 1;
             case 'v':
                 verbose = 1;
                 break;
@@ -98,6 +162,17 @@ main(int argc, char **argv)
 
     axiom_spawn_init();
     axiom_allocator_l1_init();
+
+    if (set_nodeid) {
+        axiom_set_node_id(dev, node_id);
+    }
+
+    if (set_rt) {
+        if (axiom_rt_from_file(dev, rt_filename)) {
+            axiom_close(dev);
+            exit(-1);
+        }
+    }
 
     if (master) {
         axiom_discovery_master(dev, topology, final_routing_table, verbose);
