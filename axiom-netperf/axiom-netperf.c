@@ -394,11 +394,15 @@ axnetperf_stop(axnetperf_status_t *s)
     IPRINTF(verbose, "elapsed_tx_nsec = %" PRIu64 " - elapsed_rx_nsec = %"
             PRIu64, elapsed_nsec, elapsed_rx_nsec);
 
-    printf("Throughput bytes/Sec    TX %3.3f (raw %3.3f) KB/s - "
-            "RX %3.3f (raw %3.3f) KB/s\n",
-            tx_th / 1024, tx_raw_th / 1024, rx_th / 1024, rx_raw_th / 1024);
-    printf("Throughput packets/Sec  TX %3.3f Kpps - RX %3.3f Kpps\n",
-            tx_pps / 1000, rx_pps / 1000);
+#define AXNP_RES_BYTE_SCALE             1024 / 1024 / 1024
+#define AXNP_RES_PKT_SCALE              1000 / 1000
+
+    printf("Throughput bytes/Sec    TX %3.3f (raw %3.3f) GB/s - "
+            "RX %3.3f (raw %3.3f) GB/s\n",
+            tx_th / AXNP_RES_BYTE_SCALE, tx_raw_th / AXNP_RES_BYTE_SCALE,
+            rx_th / AXNP_RES_BYTE_SCALE, rx_raw_th / AXNP_RES_BYTE_SCALE);
+    printf("Throughput packets/Sec  TX %3.3f Mpps - RX %3.3f Mpps\n",
+            tx_pps / AXNP_RES_PKT_SCALE, rx_pps / AXNP_RES_PKT_SCALE);
 
     if (payload.error) {
         printf("\n Remote node reports some ERRORS [%u]", payload.error);

@@ -56,8 +56,8 @@ axiom_netperf_send_reply(axiom_dev_t *dev, axiom_netperf_status_t *cur_status,
         elapsed_ts = timespec_sub(cur_status->cur_ts, cur_status->start_ts);
         elapsed_nsec = timespec2nsec(elapsed_ts);
         rx_th = (double)(cur_status->received_bytes / nsec2sec(elapsed_nsec));
-        IPRINTF(verbose, "Rx throughput = %3.3f KB/s - elapsed_nsec = %llu",
-                rx_th / 1024, (long long unsigned)elapsed_nsec);
+        IPRINTF(verbose, "Rx throughput = %3.3f GB/s - elapsed_nsec = %llu",
+                rx_th / 1024 / 1024 / 1024, (long long unsigned)elapsed_nsec);
 
         /* send elapsed time to netperf application */
         payload.command = AXIOM_CMD_NETPERF_END;
