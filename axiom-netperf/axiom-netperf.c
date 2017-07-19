@@ -54,6 +54,7 @@ typedef struct axnetperf_status {
     void *rdma_zone;
     uint64_t rdma_size;
     uint8_t magic;
+    int rdma_sync;
 
 } axnetperf_status_t;
 
@@ -66,11 +67,11 @@ usage(void)
     printf("AXIOM netperf: estimate the throughput between this node and the\n");
     printf("               specified dest_node\n\n");
     printf("Arguments:\n");
-    printf("-t, --type      raw|rdma|long  message type to use [default: LONG]\n");
-    printf("-d, --dest      dest_node      destination node id of axiom-netperf\n");
-    printf("-l, --length    x[B|K|M|G]     bytes to send to the destination node\n");
-    printf("                               The suffix specifies the length unit\n");
-    printf("-p, --payload   size           payload size in bytes [default: "
+    printf("-t, --type      raw|long|rdma|srdma message type to use [default: long]\n");
+    printf("-d, --dest      dest_node           destination node id of axiom-netperf\n");
+    printf("-l, --length    x[B|K|M|G]          bytes to send to the destination node\n");
+    printf("                                    The suffix specifies the length unit\n");
+    printf("-p, --payload   size                payload size in bytes [default: "
             "raw - %d rdma - %d long - %d]\n",
             AXIOM_NETPERF_DEF_RAW_PSIZE, AXIOM_NETPERF_DEF_RDMA_PSIZE,
             AXIOM_NETPERF_DEF_LONG_PSIZE);
@@ -222,11 +223,6 @@ axnetperf_rdma_init(axnetperf_status_t *s)
         return -1;
     }
 
-    if (s->payload_size & 0x7) {
-        EPRINTF("RDMA payload size must be aligned to 8 bytes");
-        return -1;
-    }
-
     /* map rdma zone */
     s->rdma_zone = axiom_rdma_mmap(s->dev, &s->rdma_size);
     if (!s->rdma_zone) {
@@ -247,59 +243,120 @@ axnetperf_rdma_init(axnetperf_status_t *s)
     return 0;
 }
 
-static int
-axnetperf_rdma(axnetperf_status_t *s)
-{
-    axiom_netperf_payload_t payload;
-    int payload_size = s->payload_size;
-    axiom_err_t err;
+#define TOKEN_LEN 2048
 
-    /* get time of the first sent netperf message */
-    axnetperf_start_time(s);
+static axiom_err_t
+axnetperf_rdma_async(axnetperf_status_t *s)
+{
+    int payload_size = s->payload_size, i = 0;
+    axiom_err_t err = AXIOM_RET_OK;
+    axiom_token_t tokens[TOKEN_LEN];
 
     for (s->sent_bytes = 0; s->sent_bytes < s->total_bytes;
             s->sent_bytes += payload_size) {
 
-#if 0
         if ((s->total_bytes - s->sent_bytes) < payload_size) {
             payload_size = s->total_bytes - s->sent_bytes;
-            rdma_psize = payload_size >> AXIOM_RDMA_PAYLOAD_SIZE_ORDER;
         }
 
         /* write payload to remote node */
-        err = axiom_rdma_write_sync(s->dev, s->dest_node, AXIOM_RAW_PORT_INIT,
-                rdma_psize, s->sent_bytes, s->sent_bytes);
+        err = axiom_rdma_write(s->dev, s->dest_node, payload_size,
+                (void *) s->sent_bytes, (void *) s->sent_bytes, &tokens[i]);
         if (unlikely(!AXIOM_RET_IS_OK(err))) {
-            EPRINTF("send error");
             return err;
         }
-#endif
+
+        s->total_packets++;
+        i++;
+        if (i == TOKEN_LEN) {
+            axiom_rdma_wait(s->dev, tokens, i);
+            i = 0;
+        }
+    }
+
+    if ((s->total_bytes - s->sent_bytes) > 0) {
+        payload_size = s->total_bytes - s->sent_bytes;
+
+        /* write payload to remote node */
+        err = axiom_rdma_write_sync(s->dev, s->dest_node, payload_size,
+                (void *) s->sent_bytes, (void *) s->sent_bytes, &tokens[i]);
+        if (unlikely(!AXIOM_RET_IS_OK(err))) {
+            return err;
+        }
+
+        s->total_packets++;
+        i++;
+    }
+
+    err = axiom_rdma_wait(s->dev, tokens, i);
+
+    return err;
+}
+
+static axiom_err_t
+axnetperf_rdma_sync(axnetperf_status_t *s)
+{
+    int payload_size = s->payload_size;
+    axiom_err_t err = AXIOM_RET_OK;
+
+    for (s->sent_bytes = 0; s->sent_bytes < s->total_bytes;
+            s->sent_bytes += payload_size) {
+
+        if ((s->total_bytes - s->sent_bytes) < payload_size) {
+            payload_size = s->total_bytes - s->sent_bytes;
+        }
+
+        /* write payload to remote node */
+        err = axiom_rdma_write_sync(s->dev, s->dest_node, payload_size,
+                (void *) s->sent_bytes, (void *) s->sent_bytes, NULL);
+        if (unlikely(!AXIOM_RET_IS_OK(err))) {
+            return err;
+        }
 
         s->total_packets++;
     }
 
     if ((s->total_bytes - s->sent_bytes) > 0) {
-#if 0
-        rdma_psize = (s->total_bytes - s->sent_bytes)
-            >> AXIOM_RDMA_PAYLOAD_SIZE_ORDER;
+        payload_size = s->total_bytes - s->sent_bytes;
 
         /* write payload to remote node */
-        err = axiom_rdma_write_sync(s->dev, s->dest_node, AXIOM_RAW_PORT_INIT,
-                rdma_psize, s->sent_bytes, s->sent_bytes);
+        err = axiom_rdma_write_sync(s->dev, s->dest_node, payload_size,
+                (void *) s->sent_bytes, (void *) s->sent_bytes, NULL);
         if (unlikely(!AXIOM_RET_IS_OK(err))) {
-            EPRINTF("send error");
             return err;
         }
-#endif
 
         s->total_packets++;
+    }
+
+    return err;
+}
+
+static int
+axnetperf_rdma(axnetperf_status_t *s)
+{
+    axiom_netperf_payload_t payload;
+    axiom_err_t err;
+
+    /* get time of the first sent netperf message */
+    axnetperf_start_time(s);
+
+    if (s->rdma_sync)
+        err = axnetperf_rdma_sync(s);
+    else
+        err = axnetperf_rdma_async(s);
+
+    if (unlikely(!AXIOM_RET_IS_OK(err))) {
+        EPRINTF("send error");
+        return err;
     }
 
     /* get time of the last sent netperf message */
     axnetperf_end_time(s);
 
-    /* TODO: raw bytes include also the header */
-    s->sent_raw_bytes = s->sent_bytes;
+    /* raw bytes include also the header */
+    s->sent_raw_bytes = s->sent_bytes +
+        (s->total_packets * sizeof(axiom_rdma_hdr_t));
 
     /* send end message to the slave */
     payload.command = AXIOM_CMD_NETPERF_END;
@@ -397,15 +454,15 @@ axnetperf_stop(axnetperf_status_t *s)
 #define AXNP_RES_BYTE_SCALE             1024 / 1024 / 1024
 #define AXNP_RES_PKT_SCALE              1000 / 1000
 
-    printf("Throughput bytes/Sec    TX %3.3f (raw %3.3f) GB/s - "
-            "RX %3.3f (raw %3.3f) GB/s\n",
-            tx_th / AXNP_RES_BYTE_SCALE, tx_raw_th / AXNP_RES_BYTE_SCALE,
-            rx_th / AXNP_RES_BYTE_SCALE, rx_raw_th / AXNP_RES_BYTE_SCALE);
+    printf("Throughput bytes/Sec    TX %3.3f (raw %3.3f) Gb/s - "
+            "RX %3.3f (raw %3.3f) Gb/s\n",
+            tx_th * 8 / AXNP_RES_BYTE_SCALE, tx_raw_th * 8 / AXNP_RES_BYTE_SCALE,
+            rx_th * 8 / AXNP_RES_BYTE_SCALE, rx_raw_th * 8 / AXNP_RES_BYTE_SCALE);
     printf("Throughput packets/Sec  TX %3.3f Mpps - RX %3.3f Mpps\n",
             tx_pps / AXNP_RES_PKT_SCALE, rx_pps / AXNP_RES_PKT_SCALE);
 
     if (payload.error) {
-        printf("\n Remote node reports some ERRORS [%u]", payload.error);
+        printf("\n Remote node reports some ERRORS [%u]\n", payload.error);
     }
 
     return 0;
@@ -461,6 +518,10 @@ main(int argc, char **argv)
 
                 if (strncmp(type_string, "rdma", 4) == 0) {
                     s.np_type = AXNP_RDMA;
+                    s.rdma_sync = 0;
+                } else if (strncmp(type_string, "srdma", 4) == 0) {
+                    s.np_type = AXNP_RDMA;
+                    s.rdma_sync = 1;
                 } else if (strncmp(type_string, "long", 4) == 0) {
                     s.np_type = AXNP_LONG;
                 } else if (strncmp(type_string, "raw", 3) == 0) {
