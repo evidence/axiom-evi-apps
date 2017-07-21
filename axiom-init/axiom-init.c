@@ -133,6 +133,7 @@ main(int argc, char **argv)
                     exit(-1);
                 }
                 set_rt = 1;
+                break;
             case 'v':
                 verbose = 1;
                 break;
