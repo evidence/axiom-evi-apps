@@ -29,6 +29,7 @@
 #include <ifaddrs.h>
 
 #include "axiom_nic_api_user.h"
+#include "axiom_nic_limits.h"
 
 #include "axiom_common.h"
 
@@ -134,7 +135,7 @@ static char const *options="p:hfd";
 
 void  *sender(void *d) {
     //int i,j,ret;
-    uint8_t buf[4096];
+    uint8_t buf[AXIOM_LONG_PAYLOAD_MAX_SIZE];
     int sz,ret,no;
 
     logmsg(LOG_INFO,"sender (eth -> axiom) starting");
@@ -179,7 +180,7 @@ void  *receiver(void *data) {
     axiom_port_t port;
     axiom_type_t type;
 
-    uint8_t buf[4096];
+    uint8_t buf[AXIOM_LONG_PAYLOAD_MAX_SIZE];
     size_t sz,msz;
     int ret;
 
