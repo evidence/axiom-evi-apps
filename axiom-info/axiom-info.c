@@ -32,11 +32,13 @@
 #define PRINT_STATUS            0x0020
 #define PRINT_CONTROL           0x0040
 #define PRINT_NUMNODES          0x0080
-#define PRINT_DEBUG             0x0100
+#define PRINT_STATS             0x0100
+
+#define PRINT_DEBUG             0x8000
 
 #define PRINT_ALL               0xFFFF
 
-#define PRINT_ALL_RTSET         (PRINT_ALL & ~PRINT_ROUTING_ALL)
+#define PRINT_DEF               (PRINT_ALL & ~PRINT_ROUTING_ALL & ~PRINT_DEBUG)
 
 int verbose = 0;
 int quiet = 0;
@@ -47,7 +49,7 @@ usage(void)
     printf("usage: axiom-info [arguments]\n");
     printf("Print information about the AXIOM NIC\n\n");
     printf("Arguments:\n");
-    printf("-a, --all (default)         print all information\n");
+    printf("-a, --all (default)         print all information (except NIC debug [-d])\n");
     printf("-n, --nodeid                print node id\n");
     printf("-i, --ifnumber              print number of interfaces\n");
     printf("-f, --ifinfo      if_id     print information of given interface (if_id)\n");
@@ -56,6 +58,7 @@ usage(void)
     printf("-R, --routing-all           print routing table (all nodes)\n");
     printf("-s, --status                print status register\n");
     printf("-c, --control               print control register\n");
+    printf("-S, --statistics            print NIC statistics\n");
     printf("-d, --debug                 print axiom-nic debug info\n");
     printf("-q, --quiet                 easy script parsing\n");
     printf("-h, --help                  print this help\n\n");
@@ -197,6 +200,71 @@ print_routing_table(axiom_dev_t *dev, int all_nodes)
 }
 
 static void
+print_ni_statistics(axiom_dev_t *dev)
+{
+    axiom_stats_t stats;
+    axiom_err_t ret;
+
+    ret = axiom_get_statistics(dev, &stats);
+    if (!AXIOM_RET_IS_OK(ret)) {
+        EPRINTF("Unable to get statistics - err: %x", ret);
+        return;
+    }
+
+    printf("\tNIC statistics\n");
+
+    printf("\n\t\tInterrupts - total: %lu\n", stats.irq);
+    printf("\t\t%+15s %+15s %+15s %+15s\n",
+            "IRQ_RAW_TX", "IRQ_RAW_RX", "IRQ_RDMA_TX", "IRQ_RDMA_RX");
+    printf("\t\t%+15lu %+15lu %+15lu %+15lu\n", stats.irq_raw_tx,
+            stats.irq_raw_rx, stats.irq_rdma_tx, stats.irq_rdma_rx);
+
+#define BYTES_FACTOR    (double)(1024) / 1024
+
+    printf("\n\t\tPackets - total: %lu\n", stats.pkt_raw_tx + stats.pkt_raw_rx +
+            stats.pkt_rdma_tx + stats.pkt_long_rx);
+    printf("\n\t\t%-10s %+15s %+15s %+10s %+15s %+15s %+15s %+10s\n",
+            "Type", "Packets", "MBytes", "Bytes/Pkt", "Wait",
+            "Poll", "Poll-avail", "Errors");
+    printf("\t\t%-10s %+15lu %15.4f %+10lu %+15lu %+15lu %+15lu %10lu\n",
+            "RAW-TX", stats.pkt_raw_tx, stats.bytes_raw_tx / BYTES_FACTOR,
+            stats.pkt_raw_tx != 0 ? stats.bytes_raw_tx / stats.pkt_raw_tx : 0,
+            stats.wait_raw_tx, stats.poll_raw_tx, stats.poll_avail_raw_tx,
+            stats.err_raw_tx);
+    printf("\t\t%-10s %+15lu %15.4f %+10lu %+15lu %+15lu %+15lu %10lu\n",
+            "RAW-RX", stats.pkt_raw_rx, stats.bytes_raw_rx / BYTES_FACTOR,
+            stats.pkt_raw_rx != 0 ? stats.bytes_raw_rx / stats.pkt_raw_rx : 0,
+            stats.wait_raw_rx, stats.poll_raw_rx, stats.poll_avail_raw_rx,
+            stats.err_raw_rx);
+    printf("\t\t%-10s %+15lu %15.4f %+10lu %+15lu %+15lu %+15lu %10lu\n",
+            "LONG-TX", stats.pkt_long_tx, stats.bytes_long_tx / BYTES_FACTOR,
+            stats.pkt_long_tx != 0 ? stats.bytes_long_tx / stats.pkt_long_tx : 0,
+            stats.wait_long_tx, stats.poll_long_tx, stats.poll_avail_long_tx,
+            stats.err_long_tx);
+    printf("\t\t%-10s %+15lu %15.4f %+10lu %+15lu %+15lu %+15lu %10lu\n",
+            "LONG-RX", stats.pkt_long_rx, stats.bytes_long_rx / BYTES_FACTOR,
+            stats.pkt_long_rx != 0 ? stats.bytes_long_rx / stats.pkt_long_rx : 0,
+            stats.wait_long_rx, stats.poll_long_rx, stats.poll_avail_long_rx,
+            stats.err_long_rx);
+    printf("\t\t%-10s %+15lu %15.4f %+10lu %+15lu %+15lu %+15lu %10lu\n",
+            "RDMA", stats.pkt_rdma_tx, stats.bytes_rdma_tx / BYTES_FACTOR,
+            stats.pkt_rdma_tx != 0 ? stats.bytes_rdma_tx / stats.pkt_rdma_tx : 0,
+            stats.wait_rdma_tx, stats.poll_rdma_tx, stats.poll_avail_rdma_tx,
+            stats.err_rdma_tx);
+    printf("\t\t%-10s %+15lu %15.4f %+10lu %+15lu %+15lu %+15lu %10lu\n",
+            "RDMA-ACK", stats.pkt_rdma_rx, stats.bytes_rdma_rx / BYTES_FACTOR,
+            stats.pkt_rdma_rx != 0 ? stats.bytes_rdma_rx / stats.pkt_rdma_rx : 0,
+            stats.wait_rdma_rx, stats.poll_rdma_rx, stats.poll_avail_rdma_rx,
+            stats.err_rdma_rx);
+
+    printf("\n\t\tRDMA/LONG retrasmission: %lu [discarded %lu]\n",
+            stats.retries_rdma, stats.discarded_rdma);
+
+
+    printf("\n");
+}
+
+static void
 print_ni_status(axiom_dev_t *dev)
 {
     uint32_t status;
@@ -244,6 +312,7 @@ main(int argc, char **argv)
         {"routing", no_argument, 0, 'r'},
         {"routing-all", no_argument, 0, 'R'},
         {"status", no_argument, 0, 's'},
+        {"statistics", no_argument, 0, 'S'},
         {"control", no_argument, 0, 'c'},
         {"debug", no_argument, 0, 'd'},
         {"quiet", no_argument, 0, 'q'},
@@ -251,11 +320,11 @@ main(int argc, char **argv)
         {0, 0, 0, 0}
     };
 
-    while ((opt = getopt_long(argc, argv, "anqifrRNscdh",
+    while ((opt = getopt_long(argc, argv, "anqifrRNsScdh",
             long_options, &long_index)) != -1) {
         switch(opt) {
             case 'a':
-                print_bitmap |= PRINT_ALL;
+                print_bitmap |= PRINT_ALL & ~PRINT_DEBUG;
                 break;
 
             case 'n':
@@ -286,6 +355,10 @@ main(int argc, char **argv)
                 print_bitmap |= PRINT_STATUS;
                 break;
 
+            case 'S':
+                print_bitmap |= PRINT_STATS;
+                break;
+
             case 'c':
                 print_bitmap |= PRINT_CONTROL;
                 break;
@@ -305,14 +378,13 @@ main(int argc, char **argv)
     }
 
     if (print_bitmap == 0) {
-        print_bitmap = PRINT_ALL_RTSET;
+        print_bitmap = PRINT_DEF;
     }
 
     if (!quiet) printf("AXIOM NIC informations\n");
     /* open the axiom device */
     dev = axiom_open(NULL);
-    if (dev == NULL)
-    {
+    if (dev == NULL) {
         perror("axiom_open()");
         exit(-1);
     }
@@ -331,6 +403,9 @@ main(int argc, char **argv)
 
     if (print_bitmap & PRINT_ROUTING)
         print_routing_table(dev, (print_bitmap & PRINT_ROUTING_ALL));
+
+    if (print_bitmap & PRINT_STATS)
+        print_ni_statistics(dev);
 
     if (print_bitmap & PRINT_STATUS)
         print_ni_status(dev);
