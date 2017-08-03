@@ -20,10 +20,16 @@ all: $(APPS)
 
 axiom-ping: $(OBJS)
 
+ifeq ($(FS),x86)
+MYPREFIX:=/usr/local
+else
+MYPREFIX:=/usr
+endif
+
 install: all
 	for DESTDIR in $(TARGET_INST_DIR); do \
-		$(FAKEROOT) mkdir -p $${DESTDIR}/usr/bin ;\
-		$(FAKEROOT) cp $(APPS) $${DESTDIR}/usr/bin/ ;\
+		$(FAKEROOT) mkdir -p $${DESTDIR}$(MYPREFIX)/bin ;\
+		$(FAKEROOT) cp $(APPS) $${DESTDIR}$(MYPREFIX)/bin/ ;\
 	done
 
 clean distclean:

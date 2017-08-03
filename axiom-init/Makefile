@@ -47,7 +47,7 @@ lib/libaxiom_init_api.so.$(VERSION): $(LIBS_OBJS)
 		$(call PKG-LDLIBS, axiom_user_api) $(AXIOM_COMMON_LDLIBS)
 
 libs: $(foreach lib,$(LIBS),$(lib).$(VERSION))
-ifneq ($(FS),seco)
+ifeq ($(FS),br)
 	for DESTDIR in $(SYSROOT_INST_DIR); do \
 		mkdir -p $${DESTDIR}/usr/lib/pkgconfig ;\
 		mkdir -p $${DESTDIR}/usr/include/axiom ;\
@@ -64,31 +64,42 @@ ifneq ($(FS),seco)
 		done ;\
 	done
 endif
-	$(FAKEROOT) $(MAKE) libs-real-install
+ifeq ($(FS),x86)
+	sudo $(MAKE) TARGET_INST_DIR=/ PREFIX=/usr/local libs-real-install
+else
+	$(FAKEROOT) $(MAKE) PREFIX=/usr libs-real-install
+endif
 
-.PHONY: libs-real-install
+.Phony: libs-real-install
 libs-real-install:
 	for DESTDIR in $(TARGET_INST_DIR); do \
-		mkdir -p $${DESTDIR}/usr/lib/pkgconfig ;\
-		mkdir -p $${DESTDIR}/usr/include/axiom ;\
+		mkdir -p $${DESTDIR}$(PREFIX)/lib/pkgconfig ;\
+		mkdir -p $${DESTDIR}$(PREFIX)/include/axiom ;\
 		for LIB in $(LIBS); do \
-			cp $${LIB}.$(VERSION) $${DESTDIR}/usr/lib/ ;\
+			cp $${LIB}.$(VERSION) $${DESTDIR}$(PREFIX)/lib/ ;\
 			LIBNAME=$$(basename $$LIB) ;\
-			ln -sf $${LIBNAME}.$(VERSION) $${DESTDIR}/usr/lib/$${LIBNAME}.$(MAJOR).$(MINOR) ;\
-			ln -sf $${LIBNAME}.$(MAJOR).$(MINOR) $${DESTDIR}/usr/lib/$${LIBNAME}.$(MAJOR) ;\
-			ln -sf $${LIBNAME}.$(MAJOR) $${DESTDIR}/usr/lib/$${LIBNAME} ;\
+			ln -sf $${LIBNAME}.$(VERSION) $${DESTDIR}$(PREFIX)/lib/$${LIBNAME}.$(MAJOR).$(MINOR) ;\
+			ln -sf $${LIBNAME}.$(MAJOR).$(MINOR) $${DESTDIR}$(PREFIX)/lib/$${LIBNAME}.$(MAJOR) ;\
+			ln -sf $${LIBNAME}.$(MAJOR) $${DESTDIR}$(PREFIX)/lib/$${LIBNAME} ;\
 			NAME=$$(basename $$LIB .so | sed -e 's/^lib//') ;\
 			D=$$(dirname $$LIB) ;\
-			sed -e 's,@PREFIX@,/usr,' $${D}/$${NAME}.pc.in > $${DESTDIR}/usr/lib/pkgconfig/$${NAME}.pc ;\
-			cp $(AXIOM_APPS_INCLUDE)/$${NAME}.h $${DESTDIR}/usr/include/axiom ;\
+			sed -e 's,@PREFIX@,/usr,' $${D}/$${NAME}.pc.in > $${DESTDIR}$(PREFIX)/lib/pkgconfig/$${NAME}.pc ;\
+			cp $(AXIOM_APPS_INCLUDE)/$${NAME}.h $${DESTDIR}$(PREFIX)/include/axiom ;\
 		done ;\
 	done
 
 install: all libs
+ifeq ($(FS),x86)
+	for DESTDIR in /; do \
+		sudo mkdir -p $${DESTDIR}/usr/local/bin ;\
+		sudo cp $(APPS) $${DESTDIR}/usr/local/bin/ ;\
+	done
+else
 	for DESTDIR in $(TARGET_INST_DIR); do \
 		$(FAKEROOT) mkdir -p $${DESTDIR}/usr/bin ;\
 		$(FAKEROOT) cp $(APPS) $${DESTDIR}/usr/bin/ ;\
 	done
+endif
 
 clean distclean:
 	rm -rf $(CLEANFILES)

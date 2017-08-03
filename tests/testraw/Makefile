@@ -23,8 +23,14 @@ clean distclean:
 install: build
 	$(FAKEROOT) $(MAKE) install-real
 
+ifeq ($(FS),x86)
+SUDO := sudo
+else
+SUDO :=
+endif
+
 install-real:
 	for DESTDIR in $(TARGET_DIR); do \
-	    mkdir -p $${DESTDIR}/root/tests_axiom; \
-	    cp $(EXECS) $${DESTDIR}/root/tests_axiom; \
+	    $(SUDO) mkdir -p $${DESTDIR}/root/tests_axiom; \
+	    $(SUDO) cp $(EXECS) $${DESTDIR}/root/tests_axiom; \
 	done
