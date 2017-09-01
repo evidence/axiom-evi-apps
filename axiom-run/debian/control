@@ -14,6 +14,12 @@ Depends: ${shlibs:Depends}, ${misc:Depends}, libaxiom-init
 Description: axiom run library
  axiom run library
 
+Package: libaxiom-run-dbg
+Architecture: any
+Depends: libaxiom-run (= ${binary:Version}), ${misc:Depends}
+Description: axiom run library debug symbols
+ axiom run library debug symbols
+
 Package: libaxiom-run-dev
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}, libaxiom-run

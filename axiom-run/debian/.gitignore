@@ -8,4 +8,7 @@ libaxiom-run.postinst.debhelper
 libaxiom-run.postrm.debhelper
 libaxiom-run.substvars
 libaxiom-run
+libaxiom-run-dbg.debhelper.log
+libaxiom-run-dbg.substvars
+libaxiom-run-dbg
 tmp

@@ -14,6 +14,12 @@ Depends: ${shlibs:Depends}, ${misc:Depends}
 Description: axiom init library
  axiom init library
 
+Package: libaxiom-init-dbg
+Architecture: any
+Depends: libaxiom-init (= ${binary:Version}), ${misc:Depends}
+Description: axiom init library debug symbols
+ axiom init library debug symbols
+
 Package: libaxiom-init-dev
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}, libaxiom-init

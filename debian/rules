@@ -68,7 +68,11 @@ binary-arch: make-changelog
 	dh_compress
 	dh_fixperms
 
-#	dh_strip
+	dh_strip -paxiom-apps --dbg-package=axiom-apps-dbg
+	dh_strip -paxiom-init --dbg-package=axiom-init-dbg
+	dh_strip -paxiom-run --dbg-package=axiom-run-dbg
+	dh_strip -paxiom-ethtap --dbg-package=axiom-ethtap-dbg
+
 	PATH=$(LINARO)/host/usr/bin:$(PATH) dh_makeshlibs
 	dh_shlibdeps  --sysroot=$(ROOTFS)
 	dh_installdeb

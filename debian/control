@@ -14,11 +14,23 @@ Depends: ${shlibs:Depends}, ${misc:Depends}
 Description: axiom system applications
  axiom system applications
 
+Package: axiom-apps-dbg
+Architecture: any
+Depends: axiom-apps (= ${binary:Version}), ${misc:Depends}
+Description: axiom system applications debugging symbols
+ axiom system applications debugging symbols
+
 Package: axiom-init
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}
 Description: axiom-init application
  axiom-init application
+
+Package: axiom-init-dbg
+Architecture: any
+Depends: axiom-init (= ${binary:Version}), ${misc:Depends}
+Description: axiom-init application debugging symbols
+ axiom-init application debugging symbols
  
 Package: axiom-run
 Architecture: any
@@ -26,8 +38,20 @@ Depends: ${shlibs:Depends}, ${misc:Depends}
 Description: axiom-run application
  axiom-run application
 
+Package: axiom-run-dbg
+Architecture: any
+Depends: axiom-run (= ${binary:Version}), ${misc:Depends}
+Description: axiom-run application
+ axiom-run application
+
 Package: axiom-ethtap
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: axiom-ethtap application
+ axiom-ethtap application
+
+Package: axiom-ethtap-dbg
+Architecture: any
+Depends: axiom-ethtap (= ${binary:Version}), ${misc:Depends}
 Description: axiom-ethtap application
  axiom-ethtap application

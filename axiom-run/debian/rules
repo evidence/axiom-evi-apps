@@ -68,7 +68,7 @@ binary-arch: make-changelog
 	dh_compress
 	dh_fixperms
 
-#	dh_strip
+	dh_strip -plibaxiom-run --dbg-package=libaxiom-run-dbg
 	PATH=$(LINARO)/host/usr/bin:$(PATH) dh_makeshlibs
 	dh_shlibdeps  --sysroot=$(ROOTFS)
 	dh_installdeb

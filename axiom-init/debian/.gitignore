@@ -8,4 +8,7 @@ libaxiom-init.postinst.debhelper
 libaxiom-init.postrm.debhelper
 libaxiom-init.substvars
 libaxiom-init
+libaxiom-init-dbg.debhelper.log
+libaxiom-init-dbg.substvars
+libaxiom-init-dbg
 tmp
