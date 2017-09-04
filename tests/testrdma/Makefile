@@ -29,8 +29,9 @@ else
 SUDO :=
 endif
 
+#default if not overwritten
+DESTDIR=$(TARGET_DIR)
+
 install-real:
-	for DESTDIR in $(TARGET_DIR); do \
-	    $(SUDO) mkdir -p $${DESTDIR}/root/tests_axiom ;\
-	    $(SUDO) cp $(EXECS) $${DESTDIR}/root/tests_axiom ;\
-	done
+	$(SUDO) mkdir -p $${DESTDIR}/opt/axiom/tests_axiom
+	$(SUDO) cp $(EXECS) $${DESTDIR}/opt/axiom/tests_axiom

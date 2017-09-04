@@ -1,5 +1,5 @@
 
-export P
+export KERN FS
 
 include ../common.mk
 
