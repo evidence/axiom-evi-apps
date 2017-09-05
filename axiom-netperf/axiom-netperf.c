@@ -32,34 +32,7 @@
 #include "axiom_utility.h"
 #include "dprintf.h"
 
-#define AXIOM_NETPERF_DEF_CHAR_SCALE    'B'
-#define AXIOM_NETPERF_DEF_DATA_SCALE    10
-#define AXIOM_NETPERF_DEF_DATA_LENGTH   1024
-#define AXIOM_NETPERF_DEF_RDMA_PSIZE    AXIOM_RDMA_PAYLOAD_MAX_SIZE
-#define AXIOM_NETPERF_DEF_RAW_PSIZE     AXIOM_RAW_PAYLOAD_MAX_SIZE
-#define AXIOM_NETPERF_DEF_LONG_PSIZE    AXIOM_LONG_PAYLOAD_MAX_SIZE
-#define AXIOM_NETPERF_DEF_TYPE          AXNP_LONG
-
-#define AXNP_RES_BYTE_SCALE             1024 / 1024 / 1024
-#define AXNP_RES_PKT_SCALE              1000
-
-typedef struct axnetperf_status {
-    axiom_dev_t *dev;
-    axiom_netperf_type_t np_type;
-    axiom_node_id_t dest_node;
-    struct timespec start_ts;
-    struct timespec end_ts;
-    size_t  payload_size;
-    uint64_t total_packets;
-    uint64_t total_bytes;
-    uint64_t sent_bytes;
-    uint64_t sent_raw_bytes;
-    void *rdma_zone;
-    uint64_t rdma_size;
-    uint8_t magic;
-    int rdma_sync;
-
-} axnetperf_status_t;
+#include "axiom-netperf.h"
 
 int verbose = 0;
 
@@ -72,14 +45,17 @@ usage(void)
     printf("Arguments:\n");
     printf("-t, --type      raw|long|rdma|srdma message type to use [default: long]\n");
     printf("-d, --dest      dest_node           destination node id of axiom-netperf\n");
+    printf("-p, --port      port                destination port [def. %d]\n",
+            AXIOM_NETPERF_DEF_PORT);
     printf("-l, --length    x[B|K|M|G]          bytes to send to the destination node\n");
     printf("                                    The suffix specifies the length unit\n");
-    printf("-p, --payload   size                payload size in bytes [default: "
+    printf("-P, --payload   size                payload size in bytes [default: "
             "raw - %d rdma - %d long - %d]\n",
             AXIOM_NETPERF_DEF_RAW_PSIZE, AXIOM_NETPERF_DEF_RDMA_PSIZE,
             AXIOM_NETPERF_DEF_LONG_PSIZE);
-    printf("-v, --verbose                  verbose output\n");
-    printf("-h, --help                     print this help\n\n");
+    printf("-s, --server                        server mode\n");
+    printf("-v, --verbose                       verbose output\n");
+    printf("-h, --help                          print this help\n\n");
 }
 
 static int
@@ -110,370 +86,6 @@ get_scale(char char_scale) {
     return scale;
 }
 
-inline static void
-axnetperf_start_time(axnetperf_status_t *s)
-{
-    int ret;
-    ret = clock_gettime(CLOCK_REALTIME, &s->start_ts);
-    IPRINTF(verbose,"Start timestamp: %ld sec %ld nanosec - ret: %d\n",
-            s->start_ts.tv_sec, s->start_ts.tv_nsec, ret);
-}
-
-inline static void
-axnetperf_end_time(axnetperf_status_t *s)
-{
-    int ret;
-    ret = clock_gettime(CLOCK_REALTIME, &s->end_ts);
-    IPRINTF(verbose,"End timestamp: %ld sec %ld nanosec - ret: %d\n",
-            s->end_ts.tv_sec, s->end_ts.tv_nsec, ret);
-}
-
-static int
-axnetperf_raw_init(axnetperf_status_t *s)
-{
-    /* set default payload size if it is unspecified */
-    if (s->payload_size == 0) {
-        s->payload_size = AXIOM_NETPERF_DEF_RAW_PSIZE;
-    }
-
-    if (s->payload_size < 1 || s->payload_size > AXIOM_RAW_PAYLOAD_MAX_SIZE) {
-        EPRINTF("RAW payload size must be between 1 and %d bytes",
-                AXIOM_RAW_PAYLOAD_MAX_SIZE);
-        return -1;
-    }
-
-    return 0;
-}
-
-static int
-axnetperf_long_init(axnetperf_status_t *s)
-{
-    /* set default payload size if it is unspecified */
-    if (s->payload_size == 0) {
-        s->payload_size = AXIOM_NETPERF_DEF_LONG_PSIZE;
-    }
-
-    if (s->payload_size < 1 || s->payload_size > AXIOM_LONG_PAYLOAD_MAX_SIZE) {
-        EPRINTF("LONG payload size must be between 1 and %d bytes",
-                AXIOM_LONG_PAYLOAD_MAX_SIZE);
-        return -1;
-    }
-
-    return 0;
-}
-
-static int
-axnetperf_raw_long(axnetperf_status_t *s)
-{
-    axiom_netperf_payload_t payload;
-    axiom_long_payload_t long_payload;
-    axiom_err_t err;
-
-    payload.command = AXIOM_CMD_NETPERF;
-
-    memcpy(&long_payload, &payload, sizeof(payload));
-
-    /* get time of the first sent netperf message */
-    axnetperf_start_time(s);
-
-    for (s->sent_bytes = 0; s->sent_bytes < s->total_bytes;
-            s->sent_bytes += s->payload_size) {
-
-        /* send netperf message */
-        if (s->np_type == AXNP_RAW) {
-            err = axiom_send_raw(s->dev, s->dest_node, AXIOM_RAW_PORT_INIT,
-                    AXIOM_TYPE_RAW_DATA, s->payload_size, &payload);
-        } else {
-            err = axiom_send_long(s->dev, s->dest_node, AXIOM_RAW_PORT_INIT,
-                    s->payload_size, &long_payload);
-        }
-
-        if (unlikely(!AXIOM_RET_IS_OK(err))) {
-            EPRINTF("send error");
-            return err;
-        }
-
-        s->total_packets++;
-
-        DPRINTF("NETPERF msg sent to: %u - total_bytes: %" PRIu64
-                " sent_bytes: %" PRIu64, s->dest_node, s->total_bytes,
-                s->sent_bytes + sizeof(axiom_raw_msg_t));
-    }
-
-    /* get time of the last sent netperf message */
-    axnetperf_end_time(s);
-
-    /* raw bytes include also the header */
-    s->sent_raw_bytes = s->sent_bytes +
-        (s->total_packets * sizeof(axiom_raw_hdr_t));
-
-    return 0;
-}
-
-static int
-axnetperf_rdma_init(axnetperf_status_t *s)
-{
-
-    /* set default payload size if it is unspecified */
-    if (s->payload_size == 0) {
-        s->payload_size = AXIOM_NETPERF_DEF_RDMA_PSIZE;
-    }
-
-    if (s->payload_size < 1 ||
-            s->payload_size > AXIOM_RDMA_PAYLOAD_MAX_SIZE) {
-        EPRINTF("RDMA payload size must be between 1 and %d bytes",
-                AXIOM_RDMA_PAYLOAD_MAX_SIZE);
-        return -1;
-    }
-
-    /* map rdma zone */
-    s->rdma_zone = axiom_rdma_mmap(s->dev, &s->rdma_size);
-    if (!s->rdma_zone) {
-        EPRINTF("rdma map failed");
-        return -1;
-    }
-
-    if (s->total_bytes > s->rdma_size) {
-        EPRINTF("Out of RDMA zone - rdma_size: %" PRIu64, s->rdma_size);
-        return -1;
-    }
-
-    /* fill the rdma zone with magic value */
-    memset(s->rdma_zone, s->magic, s->total_bytes);
-
-    IPRINTF(verbose, "rdma_mmap - addr: %p size: %" PRIu64,
-            s->rdma_zone, s->rdma_size);
-    return 0;
-}
-
-#define TOKEN_LEN 2048
-
-static axiom_err_t
-axnetperf_rdma_async(axnetperf_status_t *s)
-{
-    int payload_size = s->payload_size, i = 0;
-    axiom_err_t err = AXIOM_RET_OK;
-    axiom_token_t tokens[TOKEN_LEN];
-
-    for (s->sent_bytes = 0; s->sent_bytes < s->total_bytes;
-            s->sent_bytes += payload_size) {
-
-        if ((s->total_bytes - s->sent_bytes) < payload_size) {
-            payload_size = s->total_bytes - s->sent_bytes;
-        }
-
-        /* write payload to remote node */
-        err = axiom_rdma_write(s->dev, s->dest_node, payload_size,
-                (void *) s->sent_bytes, (void *) s->sent_bytes, &tokens[i]);
-        if (unlikely(!AXIOM_RET_IS_OK(err))) {
-            return err;
-        }
-
-        s->total_packets++;
-        i++;
-        if (i == TOKEN_LEN) {
-            axiom_rdma_wait(s->dev, tokens, i);
-            i = 0;
-        }
-    }
-
-    if ((s->total_bytes - s->sent_bytes) > 0) {
-        payload_size = s->total_bytes - s->sent_bytes;
-
-        /* write payload to remote node */
-        err = axiom_rdma_write_sync(s->dev, s->dest_node, payload_size,
-                (void *) s->sent_bytes, (void *) s->sent_bytes, &tokens[i]);
-        if (unlikely(!AXIOM_RET_IS_OK(err))) {
-            return err;
-        }
-
-        s->total_packets++;
-        i++;
-    }
-
-    err = axiom_rdma_wait(s->dev, tokens, i);
-
-    return err;
-}
-
-static axiom_err_t
-axnetperf_rdma_sync(axnetperf_status_t *s)
-{
-    int payload_size = s->payload_size;
-    axiom_err_t err = AXIOM_RET_OK;
-
-    for (s->sent_bytes = 0; s->sent_bytes < s->total_bytes;
-            s->sent_bytes += payload_size) {
-
-        if ((s->total_bytes - s->sent_bytes) < payload_size) {
-            payload_size = s->total_bytes - s->sent_bytes;
-        }
-
-        /* write payload to remote node */
-        err = axiom_rdma_write_sync(s->dev, s->dest_node, payload_size,
-                (void *) s->sent_bytes, (void *) s->sent_bytes, NULL);
-        if (unlikely(!AXIOM_RET_IS_OK(err))) {
-            return err;
-        }
-
-        s->total_packets++;
-    }
-
-    if ((s->total_bytes - s->sent_bytes) > 0) {
-        payload_size = s->total_bytes - s->sent_bytes;
-
-        /* write payload to remote node */
-        err = axiom_rdma_write_sync(s->dev, s->dest_node, payload_size,
-                (void *) s->sent_bytes, (void *) s->sent_bytes, NULL);
-        if (unlikely(!AXIOM_RET_IS_OK(err))) {
-            return err;
-        }
-
-        s->total_packets++;
-    }
-
-    return err;
-}
-
-static int
-axnetperf_rdma(axnetperf_status_t *s)
-{
-    axiom_netperf_payload_t payload;
-    axiom_err_t err;
-
-    /* get time of the first sent netperf message */
-    axnetperf_start_time(s);
-
-    if (s->rdma_sync)
-        err = axnetperf_rdma_sync(s);
-    else
-        err = axnetperf_rdma_async(s);
-
-    if (unlikely(!AXIOM_RET_IS_OK(err))) {
-        EPRINTF("send error");
-        return err;
-    }
-
-    /* get time of the last sent netperf message */
-    axnetperf_end_time(s);
-
-    /* raw bytes include also the header */
-    s->sent_raw_bytes = s->sent_bytes +
-        (s->total_packets * sizeof(axiom_rdma_hdr_t));
-
-    /* send end message to the slave */
-    payload.command = AXIOM_CMD_NETPERF_END;
-    payload.total_bytes = s->sent_bytes;
-    payload.type = s->np_type;
-    payload.magic = s->magic;
-
-    err = axiom_send_raw(s->dev, s->dest_node, AXIOM_RAW_PORT_INIT,
-            AXIOM_TYPE_RAW_DATA, sizeof(payload), &payload);
-    if (unlikely(!AXIOM_RET_IS_OK(err))) {
-        EPRINTF("send error");
-        return err;
-    }
-
-    return 0;
-}
-
-static int
-axnetperf_start(axnetperf_status_t *s)
-{
-    axiom_netperf_payload_t payload;
-    axiom_err_t err;
-
-    payload.command = AXIOM_CMD_NETPERF_START;
-    payload.total_bytes = s->total_bytes;
-    payload.type = s->np_type;
-    payload.magic = s->magic;
-
-    err = axiom_send_raw(s->dev, s->dest_node, AXIOM_RAW_PORT_INIT,
-            AXIOM_TYPE_RAW_DATA, sizeof(payload), &payload);
-    if (unlikely(!AXIOM_RET_IS_OK(err))) {
-        EPRINTF("send error");
-        return err;
-    }
-
-    printf("Starting axiom-netperf to node %u\n", s->dest_node);
-    if (s->np_type == AXNP_RAW)
-        printf("   message type: RAW\n");
-    else if (s->np_type == AXNP_RDMA)
-        printf("   message type: RDMA\n");
-    else if (s->np_type == AXNP_LONG)
-        printf("   message type: LONG\n");
-    printf("   payload size: %zu bytes\n", s->payload_size);
-    printf("   total bytes: %" PRIu64 " bytes\n", s->total_bytes);
-    printf("   magic number: %" PRIu8 "\n", s->magic);
-
-    return 0;
-}
-
-static int
-axnetperf_stop(axnetperf_status_t *s)
-{
-    axiom_raw_payload_size_t pld_recv_size;
-    axiom_netperf_payload_t payload;
-    axiom_node_id_t src_node;
-    axiom_port_t port;
-    axiom_type_t type;
-    axiom_err_t err;
-    double tx_th, rx_th, tx_raw_th, rx_raw_th, tx_pps, rx_pps;
-    uint64_t elapsed_nsec, elapsed_rx_nsec;
-    struct timespec elapsed_ts;
-
-    /* compute time elapsed ms */
-    elapsed_ts = timespec_sub(s->end_ts, s->start_ts);
-    elapsed_nsec = timespec2nsec(elapsed_ts);
-
-    printf("Sent %" PRIu64 " bytes to node %u in %3.3f s\n", s->total_bytes,
-            s->dest_node, nsec2sec(elapsed_nsec));
-
-    tx_th = (double)(s->sent_bytes) / nsec2sec(elapsed_nsec);
-    tx_raw_th = (double)(s->sent_raw_bytes) / nsec2sec(elapsed_nsec);
-    tx_pps = (double)(s->total_packets) / nsec2sec(elapsed_nsec);
-
-    printf("Throughput bytes/Sec    TX %3.3f (raw %3.3f) Gb/s - "
-            "packets/Sec  TX %3.3f Kpps\n",
-            tx_th * 8 / AXNP_RES_BYTE_SCALE, tx_raw_th * 8 / AXNP_RES_BYTE_SCALE,
-            tx_pps / AXNP_RES_PKT_SCALE);
-
-    printf("Wainting RX checks...\n");
-
-    /* receive elapsed rx throughput time form dest_node */
-    elapsed_rx_nsec = 0;
-    pld_recv_size = sizeof(payload);
-    err =  axiom_recv_raw(s->dev, &src_node, &port, &type, &pld_recv_size,
-            &payload);
-    if (!AXIOM_RET_IS_OK(err) || (src_node != s->dest_node) ||
-            payload.command != AXIOM_CMD_NETPERF_END) {
-        EPRINTF("recv_elapsed_time error - err: 0x%x node: 0x%x [0x%x] "
-                "command 0x%x [0x%x]", err, src_node, s->dest_node,
-                payload.command, AXIOM_CMD_NETPERF_END);
-        return -1;
-    }
-
-    elapsed_rx_nsec = payload.elapsed_time;
-
-    rx_th = (double)(s->sent_bytes) / nsec2sec(elapsed_rx_nsec);
-    rx_raw_th = (double)(s->sent_raw_bytes) / nsec2sec(elapsed_rx_nsec);
-    rx_pps = (double)(s->total_packets) / nsec2sec(elapsed_rx_nsec);
-
-    IPRINTF(verbose, "elapsed_tx_nsec = %" PRIu64 " - elapsed_rx_nsec = %"
-            PRIu64, elapsed_nsec, elapsed_rx_nsec);
-
-    printf("Throughput bytes/Sec    RX %3.3f (raw %3.3f) Gb/s - "
-            "packets/Sec  RX %3.3f Mpps\n",
-            rx_th * 8 / AXNP_RES_BYTE_SCALE, rx_raw_th * 8 / AXNP_RES_BYTE_SCALE,
-            rx_pps / AXNP_RES_PKT_SCALE);
-
-    if (payload.error) {
-        printf("\n Remote node reports some ERRORS [%u]\n", payload.error);
-    }
-
-    return 0;
-}
-
 int
 main(int argc, char **argv)
 {
@@ -482,25 +94,27 @@ main(int argc, char **argv)
     axnetperf_status_t s = {
         .dev = NULL,
         .dest_node = AXIOM_NULL_NODE,
+        .server_port = AXIOM_NETPERF_DEF_PORT,
         .np_type = AXIOM_NETPERF_DEF_TYPE,
         .payload_size = 0,
     };
     axiom_err_t err;
-    int ret;
 
     int long_index, opt;
     static struct option long_options[] = {
         {"dest", required_argument, 0, 'd'},
+        {"port", required_argument, 0, 'p'},
         {"type", required_argument, 0, 't'},
         {"length", required_argument, 0, 'l'},
-        {"payload", required_argument, 0, 'p'},
+        {"payload", required_argument, 0, 'P'},
+        {"server", no_argument, 0, 's'},
         {"verbose", no_argument, 0, 'v'},
         {"help", no_argument, 0, 'h'},
         {0, 0, 0, 0}
     };
 
 
-    while ((opt = getopt_long(argc, argv,"vhd:l:p:t:",
+    while ((opt = getopt_long(argc, argv,"svhd:l:p:P:t:",
                          long_options, &long_index )) != -1) {
         char *type_string = NULL;
         char char_scale = AXIOM_NETPERF_DEF_CHAR_SCALE;
@@ -508,7 +122,15 @@ main(int argc, char **argv)
         switch (opt) {
             case 'd' :
                 if (sscanf(optarg, "%" SCNu8, &s.dest_node) != 1) {
-                    EPRINTF("wrong number of destination nodes");
+                    EPRINTF("wrong number of destination node");
+                    usage();
+                    exit(-1);
+                }
+                break;
+
+            case 'p' :
+                if (sscanf(optarg, "%" SCNu8, &s.server_port) != 1) {
+                    EPRINTF("wrong number of destination port");
                     usage();
                     exit(-1);
                 }
@@ -551,12 +173,16 @@ main(int argc, char **argv)
                 data_scale = get_scale(char_scale);
                 break;
 
-            case 'p' :
+            case 'P' :
                 if (sscanf(optarg, "%zu", &s.payload_size) != 1) {
                     EPRINTF("wrong number of payload size");
                     usage();
                     exit(-1);
                 }
+                break;
+
+            case 's':
+                s.np_type = 0;
                 break;
 
             case 'v':
@@ -570,12 +196,8 @@ main(int argc, char **argv)
         }
     }
 
-    /* check if dest_node parameter has been inserted */
-    if (s.dest_node == AXIOM_NULL_NODE) {
-        EPRINTF("You must specify the destination node")
-        usage();
-        return 0;
-    }
+    /* XXX: to change */
+    s.client_port = s.server_port;
 
     /* open the axiom device */
     s.dev = axiom_open(NULL);
@@ -584,70 +206,36 @@ main(int argc, char **argv)
         exit(-1);
     }
 
-    s.total_bytes = data_length << data_scale;
+    /* server mode */
+    if (s.np_type == 0) {
 
-    /* generate random magic */
-    srand(time(NULL));
-    s.magic = rand() % 255;
-
-    ret = 0;
-    /* init subsystems */
-    switch (s.np_type) {
-        case AXNP_RDMA:
-            ret = axnetperf_rdma_init(&s);
-            break;
-
-        case AXNP_RAW:
-            ret = axnetperf_raw_init(&s);
-            break;
-
-        case AXNP_LONG:
-            ret = axnetperf_long_init(&s);
-            break;
-
-        default:
-            EPRINTF("axiom-netperf type invalid");
-            ret = -1;
-    }
-
-    if (ret) {
-        EPRINTF("init failed");
-        goto err;
-    }
-
-    /* bind the current process on port */
-    err = axiom_bind(s.dev, AXIOM_RAW_PORT_NETUTILS);
-    if (err != AXIOM_RAW_PORT_NETUTILS) {
-        EPRINTF("axiom_bind error");
-        goto err;
-    }
-
-    /* send start message */
-    ret = axnetperf_start(&s);
-    if (ret) {
-        goto err;
-    }
-
-    switch (s.np_type) {
-        case AXNP_RDMA:
-            ret = axnetperf_rdma(&s);
-            break;
-
-        case AXNP_RAW:
-        case AXNP_LONG:
-            ret = axnetperf_raw_long(&s);
-            break;
-
-        default:
-            EPRINTF("axiom-netperf type invalid");
+        err = axiom_bind(s.dev, s.server_port);
+        if (err != s.server_port) {
+            EPRINTF("axiom_bind error");
             goto err;
+        }
+
+        axnetperf_server(&s);
+
+    } else {
+
+        err = axiom_bind(s.dev, s.client_port);
+        if (err != s.server_port) {
+            EPRINTF("axiom_bind error");
+            goto err;
+        }
+
+        /* check if dest_node parameter has been inserted */
+        if (s.dest_node == AXIOM_NULL_NODE) {
+            EPRINTF("You must specify the destination node");
+            goto err;
+        }
+
+        s.total_bytes = data_length << data_scale;
+
+        axnetperf_client(&s);
     }
 
-    /* receive end message */
-    ret = axnetperf_stop(&s);
-    if (ret) {
-        goto err;
-    }
 
 err:
     axiom_close(s.dev);

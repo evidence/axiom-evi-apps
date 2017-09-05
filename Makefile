@@ -1,5 +1,5 @@
 
-APPS_DIR := axiom-init axiom-run axiom-recv axiom-send axiom-whoami 
+APPS_DIR := axiom-init axiom-run axiom-recv axiom-send axiom-whoami
 APPS_DIR += axiom-ping axiom-traceroute axiom-netperf axiom-rdma axiom-info
 APPS_DIR += axiom-utility axiom-ethtap axiom-rdma-dbg
 LIBS_DIR := axiom-init axiom-run
@@ -19,7 +19,7 @@ libs: com_libs
 tests: all
 	for DIR in $(TESTS_DIR); do { $(MAKE) -C $$DIR install || exit 1; }; done
 
-com_libs: 
+com_libs:
 	for DIR in $(COMS_DIR); do { $(MAKE) -C $$DIR || exit 1; }; done
 
 install:

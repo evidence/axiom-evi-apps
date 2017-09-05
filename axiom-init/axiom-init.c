@@ -206,12 +206,6 @@ main(int argc, char **argv)
                 axiom_traceroute_reply(dev, src, &payload, verbose);
                 break;
 
-            case AXIOM_CMD_NETPERF:
-            case AXIOM_CMD_NETPERF_START:
-            case AXIOM_CMD_NETPERF_END:
-                axiom_netperf_reply(dev, src, payload_size, &payload, verbose);
-                break;
-
             case AXIOM_CMD_SPAWN_REQ:
                 axiom_spawn_req(dev, src, payload_size, &payload, verbose);
                 break;
