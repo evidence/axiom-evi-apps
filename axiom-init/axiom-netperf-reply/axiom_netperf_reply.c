@@ -134,7 +134,7 @@ axiom_netperf_reply(axiom_dev_t *dev, axiom_node_id_t src, size_t payload_size,
 
         axiom_netperf_send_reply(dev, cur_status, src, failed, verbose);
     } else if (recv_payload->command == AXIOM_CMD_NETPERF) {
-        /* RAW message */
+        /* RAW or LONG message */
         cur_status->received_bytes += payload_size;
 
         DPRINTF("NETPERF msg received from: %u - expected_bytes: %llu "

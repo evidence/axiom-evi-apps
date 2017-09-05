@@ -40,6 +40,9 @@
 #define AXIOM_NETPERF_DEF_LONG_PSIZE    AXIOM_LONG_PAYLOAD_MAX_SIZE
 #define AXIOM_NETPERF_DEF_TYPE          AXNP_LONG
 
+#define AXNP_RES_BYTE_SCALE             1024 / 1024 / 1024
+#define AXNP_RES_PKT_SCALE              1000
+
 typedef struct axnetperf_status {
     axiom_dev_t *dev;
     axiom_netperf_type_t np_type;
@@ -426,6 +429,17 @@ axnetperf_stop(axnetperf_status_t *s)
     printf("Sent %" PRIu64 " bytes to node %u in %3.3f s\n", s->total_bytes,
             s->dest_node, nsec2sec(elapsed_nsec));
 
+    tx_th = (double)(s->sent_bytes) / nsec2sec(elapsed_nsec);
+    tx_raw_th = (double)(s->sent_raw_bytes) / nsec2sec(elapsed_nsec);
+    tx_pps = (double)(s->total_packets) / nsec2sec(elapsed_nsec);
+
+    printf("Throughput bytes/Sec    TX %3.3f (raw %3.3f) Gb/s - "
+            "packets/Sec  TX %3.3f Kpps\n",
+            tx_th * 8 / AXNP_RES_BYTE_SCALE, tx_raw_th * 8 / AXNP_RES_BYTE_SCALE,
+            tx_pps / AXNP_RES_PKT_SCALE);
+
+    printf("Wainting RX checks...\n");
+
     /* receive elapsed rx throughput time form dest_node */
     elapsed_rx_nsec = 0;
     pld_recv_size = sizeof(payload);
@@ -441,25 +455,17 @@ axnetperf_stop(axnetperf_status_t *s)
 
     elapsed_rx_nsec = payload.elapsed_time;
 
-    tx_th = (double)(s->sent_bytes) / nsec2sec(elapsed_nsec);
     rx_th = (double)(s->sent_bytes) / nsec2sec(elapsed_rx_nsec);
-    tx_raw_th = (double)(s->sent_raw_bytes) / nsec2sec(elapsed_nsec);
     rx_raw_th = (double)(s->sent_raw_bytes) / nsec2sec(elapsed_rx_nsec);
-    tx_pps = (double)(s->total_packets) / nsec2sec(elapsed_nsec);
     rx_pps = (double)(s->total_packets) / nsec2sec(elapsed_rx_nsec);
 
     IPRINTF(verbose, "elapsed_tx_nsec = %" PRIu64 " - elapsed_rx_nsec = %"
             PRIu64, elapsed_nsec, elapsed_rx_nsec);
 
-#define AXNP_RES_BYTE_SCALE             1024 / 1024 / 1024
-#define AXNP_RES_PKT_SCALE              1000 / 1000
-
-    printf("Throughput bytes/Sec    TX %3.3f (raw %3.3f) Gb/s - "
-            "RX %3.3f (raw %3.3f) Gb/s\n",
-            tx_th * 8 / AXNP_RES_BYTE_SCALE, tx_raw_th * 8 / AXNP_RES_BYTE_SCALE,
-            rx_th * 8 / AXNP_RES_BYTE_SCALE, rx_raw_th * 8 / AXNP_RES_BYTE_SCALE);
-    printf("Throughput packets/Sec  TX %3.3f Mpps - RX %3.3f Mpps\n",
-            tx_pps / AXNP_RES_PKT_SCALE, rx_pps / AXNP_RES_PKT_SCALE);
+    printf("Throughput bytes/Sec    RX %3.3f (raw %3.3f) Gb/s - "
+            "packets/Sec  RX %3.3f Mpps\n",
+            rx_th * 8 / AXNP_RES_BYTE_SCALE, rx_raw_th * 8 / AXNP_RES_BYTE_SCALE,
+            rx_pps / AXNP_RES_PKT_SCALE);
 
     if (payload.error) {
         printf("\n Remote node reports some ERRORS [%u]\n", payload.error);
