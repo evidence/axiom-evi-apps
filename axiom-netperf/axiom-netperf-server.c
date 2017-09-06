@@ -175,7 +175,7 @@ axnetperf_server(void *arg)
         err = axiom_recv(s->dev, &src, &port, &type, &payload_size, &payload);
         if (!AXIOM_RET_IS_OK(err)) {
             EPRINTF("error receiving message");
-            break;
+            return (void *)AXIOM_RET_ERROR;
         }
 
         pthread_mutex_lock(&s->mutex);
@@ -183,5 +183,5 @@ axnetperf_server(void *arg)
         pthread_mutex_unlock(&s->mutex);
     }
 
-    return AXIOM_RET_OK;
+    return (void *)AXIOM_RET_OK;
 }

@@ -530,7 +530,7 @@ axnetperf_client(void * arg)
             EPRINTF("init failed");
             s->state = AXN_STATE_ERROR;
             pthread_mutex_unlock(&s->mutex);
-            return ret;
+            return (void *)AXIOM_RET_ERROR;
         }
 
         /* send start message */
@@ -538,7 +538,7 @@ axnetperf_client(void * arg)
         if (ret) {
             s->state = AXN_STATE_ERROR;
             pthread_mutex_unlock(&s->mutex);
-            return ret;
+            return (void *)AXIOM_RET_ERROR;
         }
 
         s->state = AXN_STATE_INIT;
@@ -546,7 +546,7 @@ axnetperf_client(void * arg)
     pthread_mutex_unlock(&s->mutex);
 
     if (s->state == AXN_STATE_ERROR) {
-        return AXIOM_RET_ERROR;
+        return (void *)AXIOM_RET_ERROR;
     }
 
     switch (s->np_type) {
@@ -561,7 +561,7 @@ axnetperf_client(void * arg)
 
         default:
             EPRINTF("axiom-netperf type invalid");
-            return ret;
+            return (void *)AXIOM_RET_ERROR;
     }
 
     pthread_mutex_lock(&s->mutex);
@@ -571,9 +571,11 @@ axnetperf_client(void * arg)
         ret = axnetperf_stop(s);
         if (ret) {
             EPRINTF("axiom-netperf stop failed");
+            pthread_mutex_unlock(&s->mutex);
+            return (void *)AXIOM_RET_ERROR;
         }
     }
     pthread_mutex_unlock(&s->mutex);
 
-    return ret;
+    return (void *)AXIOM_RET_OK;
 }

@@ -22,7 +22,7 @@
 
 #define AXNP_RES_BYTE_SCALE             1024 / 1024 / 1024
 #define AXNP_RES_PKT_SCALE              1000
-#define AXNP_MAX_THREADS                16
+#define AXNP_MAX_THREADS                64
 
 typedef enum {
     AXN_STATE_NULL,
