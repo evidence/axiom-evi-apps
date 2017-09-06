@@ -165,7 +165,9 @@ axnetperf_rdma_init(axnetperf_status_t *s)
     }
 
     /* fill the rdma zone with magic value */
-    memset(s->client.rdma_zone, s->client.magic, s->client.total_bytes);
+    for (int i = 0; i < s->client.total_bytes; i += 8) {
+        *(uint64_t *)(((uint8_t *)s->client.rdma_zone) + i) = s->client.magic;
+    }
 
     IPRINTF(verbose, "rdma_mmap - addr: %p size: %" PRIu64,
             s->client.rdma_zone, s->client.rdma_size);
@@ -331,7 +333,7 @@ axnetperf_start(axnetperf_status_t *s)
         printf("   message type: LONG\n");
     printf("   payload size: %zu bytes\n", s->client.payload_size);
     printf("   total bytes: %" PRIu64 " bytes\n", s->client.total_bytes);
-    printf("   magic number: %" PRIu8 "\n", s->client.magic);
+    printf("   magic number: %" PRIu64 "\n", s->client.magic);
 
     return 0;
 }
@@ -408,7 +410,7 @@ axnetperf_client(axnetperf_status_t *s)
 
     /* generate random magic */
     srand(time(NULL));
-    s->client.magic = rand() % 255;
+    s->client.magic = rand();
 
     /* init subsystems */
     switch (s->np_type) {

@@ -30,10 +30,10 @@ typedef struct axiom_netperf_payload {
     uint64_t total_bytes;       /*!< \brief Total bytes of the stream */
     uint64_t elapsed_time;      /*!< \brief Time elapsed to receive data */
     uint8_t  type;              /*!< \brief Type of message used in the test */
-    uint8_t  magic;             /*!< \brief Magic byte written in the payload */
+    uint64_t magic;            /*!< \brief Magic byte written in the payload */
     uint8_t  error;             /*!< \brief Error report */
     uint8_t  reply_port;
-    uint8_t  spare[100];
+    uint8_t  spare[93];
 } axiom_netperf_payload_t;
 
 typedef struct {
@@ -46,7 +46,7 @@ typedef struct {
     uint64_t sent_raw_bytes;
     void *rdma_zone;
     uint64_t rdma_size;
-    uint8_t magic;
+    uint64_t magic;
     int rdma_sync;
 } axnetperf_client_t;
 

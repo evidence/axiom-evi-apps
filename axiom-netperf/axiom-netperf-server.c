@@ -104,7 +104,7 @@ axiom_netperf_reply(axnetperf_status_t *s, axiom_node_id_t src, size_t payload_s
                 server->reply_port);
         return;
     } else if (recv_payload->command == AXIOM_CMD_NETPERF_END) {
-        int i, ret;
+        int i;
         uint8_t failed = 0;
         void *rdma_zone;
         uint64_t rdma_size;
@@ -125,10 +125,9 @@ axiom_netperf_reply(axnetperf_status_t *s, axiom_node_id_t src, size_t payload_s
 
         if (!failed) {
             /* TODO: check magic */
-            for (i = 0; i < server->received_bytes; i++) {
-                ret = memcmp(rdma_zone + i, &recv_payload->magic,
-                        sizeof(recv_payload->magic));
-                if (ret) {
+            for (i = 0; i < server->received_bytes; i += 8) {
+                if (*(uint64_t *)(((uint8_t *)rdma_zone) + i) !=
+                        recv_payload->magic) {
                     failed = 1;
                     break;
                 }
