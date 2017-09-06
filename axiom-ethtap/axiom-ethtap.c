@@ -61,6 +61,8 @@
 static char const MAC[]={0x42,0xD9,0xAF,0x86,0x0B,0x34};
 static char const BROADCAST[]={0xff,0xff,0xff,0xff,0xff,0xff};
 #define PORT 2
+#define MAX_THREADS 64
+
 
 #define MACSTR "%02x:%02x:%02x:%02x:%02x:%02x"
 #define MACVAL(p) *(p),*((p)+1),*((p)+2),*((p)+3),*((p)+4),*((p)+5)
@@ -105,6 +107,8 @@ static void _usage(char *msg, ...) {
     fprintf(stderr, "    run in foreground (i.e. do not daemonize)\n");
     fprintf(stderr, "-p, --port NUM\n");
     fprintf(stderr, "    use axiom raw port NUM for comunication (default: %d)\n",PORT);
+    fprintf(stderr, "-n, --num_threads NUM\n");
+    fprintf(stderr, "    number of threads (max: %d)\n", MAX_THREADS);
 #ifndef NLOG
     fprintf(stderr, "-d, --debug\n");
     fprintf(stderr, "    override environment AXIOM_LOG_LEVEL settng it to DEBUG log level\n");
@@ -120,6 +124,7 @@ static void _usage(char *msg, ...) {
 static struct option long_options[] = {
     {"foreground", no_argument, 0, 'f'},
     {"port", required_argument, 0, 'p'},
+    {"num_threads", required_argument, 0, 'n'},
     {"help", no_argument, 0, 'h'},
 #ifndef NLOG
     {"debug", no_argument, 0, 'd'},
@@ -128,9 +133,9 @@ static struct option long_options[] = {
 };
 
 #ifdef NLOG
-static char const *options="p:hf";
+static char const *options="p:n:hf";
 #else
-static char const *options="p:hfd";
+static char const *options="p:n:hfd";
 #endif
 
 void  *sender(void *d) {
@@ -310,7 +315,8 @@ static void tuntap_deinit() {
 
 int main(int argc, char **argv)
 {
-    pthread_t threcv,thsend;
+    pthread_t threcv[MAX_THREADS],thsend[MAX_THREADS];
+    int num_threads = 1, i;
     int long_index;
     int err,res,opt;
     int foreground=0;
@@ -327,6 +333,9 @@ int main(int argc, char **argv)
                 break;
             case 'p':
                 port = atoi(optarg);
+                break;
+            case 'n':
+                num_threads = atoi(optarg);
                 break;
 #ifndef NLOG
             case 'd':
@@ -358,30 +367,34 @@ int main(int argc, char **argv)
 
     /* threads */
     
-    err = pthread_create(&threcv, NULL, receiver, NULL);
-    if (err != 0) {
-        elogmsg("pthread_create()");
-        exit(EXIT_FAILURE);
-    }
+    for (i = 0; i < num_threads; i++) {
+        err = pthread_create(&threcv[i], NULL, receiver, NULL);
+        if (err != 0) {
+            elogmsg("pthread_create()");
+            exit(EXIT_FAILURE);
+        }
 
-    err = pthread_create(&thsend, NULL, sender, NULL);
-    if (err != 0) {
-        elogmsg("pthread_create()");
-        exit(EXIT_FAILURE);
+        err = pthread_create(&thsend[i], NULL, sender, NULL);
+        if (err != 0) {
+            elogmsg("pthread_create()");
+            exit(EXIT_FAILURE);
+        }
     }
 
     logmsg(LOG_DEBUG,"waiting...");
 
-    res = pthread_join(thsend, NULL);
-    if (res != 0) {
-        elogmsg("pthread_join()");
-        exit(EXIT_FAILURE);
-    }
+    for (i = 0; i < num_threads; i++) {
+        res = pthread_join(thsend[i], NULL);
+        if (res != 0) {
+            elogmsg("pthread_join()");
+            exit(EXIT_FAILURE);
+        }
 
-    res = pthread_join(threcv, NULL);
-    if (res != 0) {
-        elogmsg("pthread_join()");
-        exit(EXIT_FAILURE);
+        res = pthread_join(threcv[i], NULL);
+        if (res != 0) {
+            elogmsg("pthread_join()");
+            exit(EXIT_FAILURE);
+        }
     }
 
     return 0;
