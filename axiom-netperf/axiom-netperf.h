@@ -37,15 +37,6 @@ typedef struct axiom_netperf_payload {
 } axiom_netperf_payload_t;
 
 typedef struct {
-
-} axnetperf_client_t;
-
-typedef struct {
-    axiom_dev_t *dev;
-    axiom_netperf_type_t np_type;
-    axiom_node_id_t dest_node;
-    axiom_port_t server_port;
-    axiom_port_t client_port;
     struct timespec start_ts;
     struct timespec end_ts;
     size_t  payload_size;
@@ -57,7 +48,24 @@ typedef struct {
     uint64_t rdma_size;
     uint8_t magic;
     int rdma_sync;
+} axnetperf_client_t;
 
+typedef struct {
+    struct timespec start_ts;   /*!< \brief timestamp of the first byte */
+    struct timespec cur_ts;     /*!< \brief current timestamp */
+    uint64_t expected_bytes;    /*!< \brief total bytes that will be received */
+    uint64_t received_bytes;    /*!< \brief number of bytes received */
+    uint8_t reply_port;
+} axnetperf_server_t;
+
+typedef struct {
+    axiom_dev_t *dev;
+    axiom_netperf_type_t np_type;
+    axiom_node_id_t server_id;
+    axiom_port_t client_port;
+    axiom_port_t server_port;
+    axnetperf_client_t client;
+    axnetperf_server_t server[AXIOM_NODES_MAX];
 } axnetperf_status_t;
 
 axiom_err_t axnetperf_client(axnetperf_status_t *s);
