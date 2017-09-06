@@ -12,6 +12,7 @@
  * Terms of use are as specified in COPYING
  */
 #include <ctype.h>
+#include <pthread.h>
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -46,7 +47,7 @@ axiom_netperf_send_reply(axiom_dev_t *dev, axnetperf_server_t *server,
     uint64_t elapsed_nsec;
     double rx_th;
 
-    IPRINTF(verbose,"End timestamp: %ld sec %ld nanosec\n",
+    IPRINTF(verbose,"End timestamp: %ld sec %ld nanosec",
             server->cur_ts.tv_sec, server->cur_ts.tv_nsec);
 
     /* compute time elapsed */
@@ -99,7 +100,7 @@ axiom_netperf_reply(axnetperf_status_t *s, axiom_node_id_t src, size_t payload_s
 
         /* get time of the first netperf message received */
         memcpy(&server->start_ts, &server->cur_ts, sizeof(server->start_ts));
-        IPRINTF(verbose,"Start timestamp: %ld sec %ld nsec - Reply-port: 0x%x\n",
+        IPRINTF(verbose,"Start timestamp: %ld sec %ld nsec - Reply-port: 0x%x",
                 server->cur_ts.tv_sec, server->cur_ts.tv_nsec,
                 server->reply_port);
         return;
@@ -145,17 +146,19 @@ axiom_netperf_reply(axnetperf_status_t *s, axiom_node_id_t src, size_t payload_s
                 (long long unsigned)server->expected_bytes,
                 (long long unsigned)server->received_bytes);
 
-        if (server->received_bytes >= server->expected_bytes)
+        if (server->received_bytes >= server->expected_bytes) {
             axiom_netperf_send_reply(s->dev, server, src, 0, verbose);
+        }
     } else {
         EPRINTF("receive a not AXIOM_CMD_NETPERF message");
         return;
     }
 }
 
-axiom_err_t
-axnetperf_server(axnetperf_status_t *s)
+void *
+axnetperf_server(void *arg)
 {
+    axnetperf_status_t *s = ((axnetperf_status_t *) arg);
     axiom_node_id_t src;
     axiom_port_t port;
     axiom_type_t type;
@@ -164,7 +167,7 @@ axnetperf_server(axnetperf_status_t *s)
 
     int run = 1;
 
-    printf("SERVER started on port %d\n", s->server_port);
+    printf("[TID %ld] SERVER started on port %d\n", gettid(), s->server_port);
 
     while(run) {
         size_t payload_size = sizeof(payload);
@@ -175,7 +178,9 @@ axnetperf_server(axnetperf_status_t *s)
             break;
         }
 
+        pthread_mutex_lock(&s->mutex);
         axiom_netperf_reply(s, src, payload_size, &payload, verbose);
+        pthread_mutex_unlock(&s->mutex);
     }
 
     return AXIOM_RET_OK;

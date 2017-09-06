@@ -12,6 +12,7 @@
  * Terms of use are as specified in COPYING
  */
 #include <ctype.h>
+#include <pthread.h>
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -60,6 +61,7 @@ usage(void)
     printf("   -s, --server                        enable server mode\n");
     printf("   -p, --port      server_port         server port [def. %d]\n",
             AXIOM_NETPERF_DEF_PORT);
+    printf("-n, --num-threads  num_threads         number of threads [def. 1]\n");
     printf("-v, --verbose                          verbose output\n");
     printf("-h, --help                             print this help\n\n");
 }
@@ -104,7 +106,10 @@ main(int argc, char **argv)
         .client_port = AXIOM_NETPERF_DEF_PORT,
         .np_type = AXIOM_NETPERF_DEF_TYPE,
         .client.payload_size = 0,
+        .num_threads = 1,
+        .mutex = PTHREAD_MUTEX_INITIALIZER,
     };
+    int i;
     axiom_err_t err;
 
     int long_index, opt;
@@ -115,6 +120,7 @@ main(int argc, char **argv)
         {"cport", required_argument, 0, 'P'},
         {"length", required_argument, 0, 'l'},
         {"payload", required_argument, 0, 'L'},
+        {"num_threads", required_argument, 0, 'n'},
         {"server", no_argument, 0, 's'},
         {"verbose", no_argument, 0, 'v'},
         {"help", no_argument, 0, 'h'},
@@ -122,7 +128,7 @@ main(int argc, char **argv)
     };
 
 
-    while ((opt = getopt_long(argc, argv,"svhd:l:L:p:P:t:",
+    while ((opt = getopt_long(argc, argv,"svhd:l:L:p:P:t:n:",
                          long_options, &long_index )) != -1) {
         char *type_string = NULL;
         char char_scale = AXIOM_NETPERF_DEF_CHAR_SCALE;
@@ -197,6 +203,14 @@ main(int argc, char **argv)
                 }
                 break;
 
+            case 'n' :
+                if (sscanf(optarg, "%u", &s.num_threads) != 1) {
+                    EPRINTF("wrong number of threads");
+                    usage();
+                    exit(-1);
+                }
+                break;
+
             case 's':
                 s.np_type = 0;
                 break;
@@ -219,6 +233,15 @@ main(int argc, char **argv)
         exit(-1);
     }
 
+    if (s.num_threads > AXNP_MAX_THREADS) {
+        EPRINTF("Number of threads exceeds the maximum allowed [%d]",
+                AXNP_MAX_THREADS);
+        exit(-1);
+    }
+
+    s.state = AXN_STATE_NULL;
+
+
     /* server mode */
     if (s.np_type == 0) {
         err = axiom_bind(s.dev, s.server_port);
@@ -227,7 +250,9 @@ main(int argc, char **argv)
             goto err;
         }
 
-        axnetperf_server(&s);
+        for (i = 0; i < s.num_threads; i++) {
+            pthread_create(&s.threads[i], NULL, axnetperf_server, &s);
+        }
     } else {
         err = axiom_bind(s.dev, s.client_port);
         if (err != s.client_port) {
@@ -243,9 +268,14 @@ main(int argc, char **argv)
 
         s.client.total_bytes = data_length << data_scale;
 
-        axnetperf_client(&s);
+        for (i = 0; i < s.num_threads; i++) {
+            pthread_create(&s.threads[i], NULL, axnetperf_client, &s);
+        }
     }
 
+    for (i = 0; i < s.num_threads; i++) {
+        pthread_join(s.threads[i], NULL);
+    }
 
 err:
     axiom_close(s.dev);

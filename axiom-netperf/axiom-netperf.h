@@ -9,6 +9,7 @@
  */
 #ifndef AXIOM_NETPERF_h
 #define AXIOM_NETPERF_h
+#include <sys/syscall.h>
 
 #define AXIOM_NETPERF_DEF_CHAR_SCALE    'B'
 #define AXIOM_NETPERF_DEF_DATA_SCALE    10
@@ -21,7 +22,16 @@
 
 #define AXNP_RES_BYTE_SCALE             1024 / 1024 / 1024
 #define AXNP_RES_PKT_SCALE              1000
+#define AXNP_MAX_THREADS                16
 
+typedef enum {
+    AXN_STATE_NULL,
+    AXN_STATE_INIT,
+    AXN_STATE_START,
+    AXN_STATE_END,
+    AXN_STATE_STOP,
+    AXN_STATE_ERROR
+} axnetperf_state_t;
 
 /*! \brief Message payload for the axiom-netperf application */
 typedef struct axiom_netperf_payload {
@@ -60,15 +70,25 @@ typedef struct {
 
 typedef struct {
     axiom_dev_t *dev;
+    axnetperf_state_t state;
     axiom_netperf_type_t np_type;
     axiom_node_id_t server_id;
     axiom_port_t client_port;
     axiom_port_t server_port;
+    unsigned int num_threads;
+    pthread_t threads[AXNP_MAX_THREADS];
+    pthread_mutex_t mutex;
     axnetperf_client_t client;
     axnetperf_server_t server[AXIOM_NODES_MAX];
 } axnetperf_status_t;
 
-axiom_err_t axnetperf_client(axnetperf_status_t *s);
-axiom_err_t axnetperf_server(axnetperf_status_t *s);
+void *axnetperf_client(void *s);
+void *axnetperf_server(void *s);
+
+static inline long
+gettid(void)
+{
+    return syscall(SYS_gettid);
+}
 
 #endif /* !AXIOM_NETPERF_h */

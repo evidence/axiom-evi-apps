@@ -9,7 +9,7 @@ DEPS := $(SRCS:.c=.d)
 CLEANFILES = $(APPS) $(OBJS) $(DEPS)
 
 CFLAGS += -Wall $(DFLAGS) $(call PKG-CFLAGS, axiom_user_api)
-LDFLAGS += $(call PKG-LDFLAGS, axiom_user_api)
+LDFLAGS += $(call PKG-LDFLAGS, axiom_user_api) -pthread
 LDLIBS += $(call PKG-LDLIBS, axiom_user_api)
 
 .PHONY: all clean install
