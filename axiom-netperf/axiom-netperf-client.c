@@ -1,14 +1,14 @@
 /*!
- * \file axiom-netperf.c
+ * \file axiom-netperf-client.c
  *
  * \version     v0.13
- * \date        2016-05-03
+ * \date        2017-09-05
  *
- * This file contains the implementation of axiom-netperf application.
+ * This file contains the implementation of axiom-netperf client application.
  *
- * axiom-netperf estimates the throughput between two axiom nodes.
+ * axiom-netperf estimates the throughput between two AXIOM nodes.
  *
- * Copyright (C) 2016, Evidence Srl.
+ * Copyright (C) 2017, Evidence Srl.
  * Terms of use are as specified in COPYING
  */
 #include <ctype.h>
