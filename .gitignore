@@ -24,6 +24,7 @@ axiom-run/test/myrdma
 lib/tests/axiom-test-galloc
 axiom-run/test/myputbulk
 axiom-utility/axiom-utility
+axiom-rdma-dbg/axiom-rdma-dbg
 
 #
 # Normal rules

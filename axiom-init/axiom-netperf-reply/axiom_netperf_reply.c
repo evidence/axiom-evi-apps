@@ -56,8 +56,8 @@ axiom_netperf_send_reply(axiom_dev_t *dev, axiom_netperf_status_t *cur_status,
         elapsed_ts = timespec_sub(cur_status->cur_ts, cur_status->start_ts);
         elapsed_nsec = timespec2nsec(elapsed_ts);
         rx_th = (double)(cur_status->received_bytes / nsec2sec(elapsed_nsec));
-        IPRINTF(verbose, "Rx throughput = %3.3f KB/s - elapsed_nsec = %llu",
-                rx_th / 1024, (long long unsigned)elapsed_nsec);
+        IPRINTF(verbose, "Rx throughput = %3.3f Gb/s - elapsed_nsec = %llu",
+                rx_th * 8 / 1024 / 1024 / 1024, (long long unsigned)elapsed_nsec);
 
         /* send elapsed time to netperf application */
         payload.command = AXIOM_CMD_NETPERF_END;
@@ -134,7 +134,7 @@ axiom_netperf_reply(axiom_dev_t *dev, axiom_node_id_t src, size_t payload_size,
 
         axiom_netperf_send_reply(dev, cur_status, src, failed, verbose);
     } else if (recv_payload->command == AXIOM_CMD_NETPERF) {
-        /* RAW message */
+        /* RAW or LONG message */
         cur_status->received_bytes += payload_size;
 
         DPRINTF("NETPERF msg received from: %u - expected_bytes: %llu "
