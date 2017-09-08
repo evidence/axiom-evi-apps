@@ -1,7 +1,7 @@
 /*!
  * \file axiom_nic_simulator.c
  *
- * \version     v0.13
+ * \version     v0.14
  *
  * Axiom session management.
  * This file contains the AXIOM NIC API simulation

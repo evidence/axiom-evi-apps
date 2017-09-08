@@ -1,7 +1,7 @@
 /*!
  * \file axiom-init.c
  *
- * \version     v0.13
+ * \version     v0.14
  * \date        2016-05-03
  *
  * This file contains the implementation of axiom-init deamon.
