@@ -107,7 +107,7 @@ AR := ${CCPREFIX}ar
 RANLIB := ${CCPREFIX}ranlib
 
 #DFLAGS := -g -DPDEBUG
-DFLAGS := -g
+DFLAGS := -g -O3
 
 #
 # source file dependencies management

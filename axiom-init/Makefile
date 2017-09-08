@@ -2,7 +2,7 @@
 include ../common.mk
 
 SUBDIRS := axiom-discovery axiom-pong axiom-spawn axiom-traceroute-reply
-SUBDIRS += axiom-netperf-reply axiom-allocator-l1 axiom-session
+SUBDIRS += axiom-allocator-l1 axiom-session
 
 APPS := axiom-init
 SRCS := $(wildcard *.c) $(foreach dir,$(SUBDIRS),$(wildcard $(dir)/*.c))

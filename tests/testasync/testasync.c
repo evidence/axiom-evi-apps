@@ -123,7 +123,7 @@ void *checker(void *_data) {
             usleep(125000);
         }
     } else {
-        ret=axiom_rdma_wait(dev,&data->token);
+        ret=axiom_rdma_wait(dev,&data->token,1);
         if (!AXIOM_RET_IS_OK(ret)) {
             perror("axiom_rdma_wait()");
         }

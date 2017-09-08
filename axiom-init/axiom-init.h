@@ -56,19 +56,6 @@ axiom_pong(axiom_dev_t *dev, axiom_if_id_t first_src, void *first_payload,
         int verbose);
 
 /*!
- * \brief This function implements the reply to the netperf message.
- *
- * \param dev                   The axiom device private data pointer
- * \param src                   Source node of netperf message
- * \param payload_size          Size of payload of netperf message
- * \param payload               Payload of netperf message
- * \param verbose               Enable verbose output
- */
-void
-axiom_netperf_reply(axiom_dev_t *dev, axiom_node_id_t src, size_t payload_size,
-        void *payload, int verbose);
-
-/*!
  * \brief This function implements the reply to the traceroute message.
  *
  * \param dev                   The axiom device private data pointer
