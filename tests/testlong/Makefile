@@ -24,7 +24,11 @@ install: build
 	$(FAKEROOT) $(MAKE) install-real
 
 ifeq ($(FS),x86)
+ifdef FROMDEB
+SUDO :=
+else
 SUDO := sudo
+endif
 else
 SUDO :=
 endif

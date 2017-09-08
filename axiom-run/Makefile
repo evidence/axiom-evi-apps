@@ -63,7 +63,11 @@ ifeq ($(FS),br)
 	done
 endif
 ifeq ($(FS),x86)
+ifdef FROMDEB
+	$(MAKE) TARGET_INST_DIR=$(TARGET_INST_DIR) PREFIX=/usr/local libs-real-install
+else
 	sudo $(MAKE) TARGET_INST_DIR=/ PREFIX=/usr/local libs-real-install
+endif
 else
 	$(FAKEROOT) $(MAKE) PREFIX=/usr libs-real-install
 endif
@@ -107,8 +111,17 @@ libs-real-install:
 
 install: all libs
 ifeq ($(FS),x86)
-	sudo mkdir -p /usr/local/bin
-	sudo cp $(APPS) /usr/local/bin/
+ifdef TARGET_INST_DIR
+	for DESTDIR in $(TARGET_INST_DIR); do \
+		mkdir -p $${DESTDIR}/usr/local/bin ;\
+		cp $(APPS) $${DESTDIR}/usr/local/bin/ ;\
+	done
+else
+	for DESTDIR in /; do \
+		sudo mkdir -p $${DESTDIR}/usr/local/bin ;\
+		sudo cp $(APPS) $${DESTDIR}/usr/local/bin/ ;\
+	done
+endif
 else
 	for DESTDIR in $(TARGET_INST_DIR); do \
 		$(FAKEROOT) mkdir -p $${DESTDIR}/usr/bin ;\

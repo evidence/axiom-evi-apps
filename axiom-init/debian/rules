@@ -2,16 +2,6 @@
 
 DEBIAN_DIR := $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
 
-#DEB_TARGET_ARCH=arm64
-#DEB_TARGET_ARCH_BITS=64
-#DEB_TARGET_ARCH_CPU=arm64
-#DEB_TARGET_ARCH_ENDIAN=little
-#DEB_TARGET_ARCH_OS=linux
-#DEB_TARGET_GNU_CPU=aarch64
-#DEB_TARGET_GNU_SYSTEM=linux-gnu
-#DEB_TARGET_GNU_TYPE=aarch64-linux-gnu
-#DEB_TARGET_MULTIARCH=aarch64-linux-gnu
-
 .PHONY: build build-arch build-indep binary binary-arch binary-indep clean
 
 build: build-arch build-indep
@@ -24,13 +14,13 @@ build-indep:
 
 binary: binary-arch binary-indep
 
-binary-arch: make-changelog
+binary-arch: make-changelog init-install
 	dh_testroot
 	dh_prep
 	dh_installdirs
 
-	make SYSROOT_INST_DIR=$(DEBIAN_DIR)/tmp TARGET_INST_DIR=$(DEBIAN_DIR)/tmp install
-	rm -f $(DEBIAN_DIR)/tmp/usr/bin/axiom-init
+	make FROMDEB=1 SYSROOT_INST_DIR=$(DEBIAN_DIR)/tmp TARGET_INST_DIR=$(DEBIAN_DIR)/tmp install
+	rm -f $(DEBIAN_DIR)/tmp/usr/bin/axiom-init $(DEBIAN_DIR)/tmp/usr/local/bin/axiom-init
 
 	dh_install --fail-missing
 	dh_installdocs -XREADME
@@ -61,7 +51,7 @@ binary-arch: make-changelog
 	dh_gconf
 	dh_icons
 	dh_perl
-	dh_usrlocal
+#	dh_usrlocal
 
 	dh_link
 	dh_installxfonts
@@ -82,6 +72,19 @@ clean: clean-changelog
 	dh_testdir
 	make clean
 	dh_clean
+
+#
+# init-install
+#
+
+init-install:
+ifeq ($(FS),x86)
+	ln -sf $(DEBIAN_DIR)/libaxiom-init-dev.install.x86 $(DEBIAN_DIR)/libaxiom-init-dev.install
+	ln -sf $(DEBIAN_DIR)/libaxiom-init.install.x86 $(DEBIAN_DIR)/libaxiom-init.install
+else
+	ln -sf $(DEBIAN_DIR)/libaxiom-init-dev.install.other $(DEBIAN_DIR)/libaxiom-init-dev.install
+	ln -sf $(DEBIAN_DIR)/libaxiom-init.install.other $(DEBIAN_DIR)/libaxiom-init.install
+endif
 
 #
 # changelog
