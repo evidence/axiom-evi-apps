@@ -25,3 +25,7 @@ axiom-run-dbg/
 changelog
 files
 tmp
+axiom-apps.install
+axiom-ethtap.install
+axiom-init.install
+axiom-run.install

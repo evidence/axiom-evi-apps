@@ -12,3 +12,5 @@ libaxiom-run-dbg.debhelper.log
 libaxiom-run-dbg.substvars
 libaxiom-run-dbg
 tmp
+libaxiom-run-dev.install
+libaxiom-run.install

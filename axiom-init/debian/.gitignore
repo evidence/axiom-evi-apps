@@ -12,3 +12,5 @@ libaxiom-init-dbg.debhelper.log
 libaxiom-init-dbg.substvars
 libaxiom-init-dbg
 tmp
+libaxiom-init-dev.install
+libaxiom-init.install
