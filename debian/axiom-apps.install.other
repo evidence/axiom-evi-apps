@@ -2,6 +2,7 @@
 /usr/bin/axiom-netperf
 /usr/bin/axiom-ping
 /usr/bin/axiom-rdma
+/usr/bin/axiom-rdma-dbg
 /usr/bin/axiom-send
 /usr/bin/axiom-recv
 /usr/bin/axiom-traceroute
