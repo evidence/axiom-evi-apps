@@ -37,5 +37,5 @@ endif
 DESTDIR=$(TARGET_DIR)
 
 install-real:
-	$(SUDO) mkdir -p $${DESTDIR}/opt/axiom/tests_axiom
-	$(SUDO) cp $(EXECS) $${DESTDIR}/opt/axiom/tests_axiom
+	$(SUDO) mkdir -p $(DESTDIR)/opt/axiom/tests_axiom
+	$(SUDO) cp $(EXECS) $(DESTDIR)/opt/axiom/tests_axiom
