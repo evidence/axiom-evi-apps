@@ -26,7 +26,6 @@ int axrun_sync(const unsigned barrier_id, int verbose) {
     char *s;
     pid_t ppid;
     header_t header;
-    //uint64_t tid=gettid();
 
     sock = -1;
     myaddr.sun_path[0] = '\0';

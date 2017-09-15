@@ -334,7 +334,6 @@ static void *master_receiver(void *data) {
                 zlogmsg(LOG_DEBUG, LOGZ_MASTER, "MASTER: send CMD_KILL to all");
                 buffer.header.command=CMD_KILL;
                 my_axiom_send_raw(info->dev, info->nodes, slave_port, sizeof (header_t), (axiom_raw_payload_t *) & buffer);
-                //exit(EXIT_SUCCESS);
                 info->services &= ~EXIT_SERVICE;
             } else {
                 if (WIFEXITED(buffer.header.status)) {
@@ -386,7 +385,6 @@ static void *master_receiver(void *data) {
             zlogmsg(LOG_DEBUG, LOGZ_MASTER, "exit_counter now is %d", exit_counter);
             if (exit_counter == 0) {
                 zlogmsg(LOG_DEBUG, LOGZ_MASTER, "MASTER: exit_counter reach zero... exiting...");
-                //exit(EXIT_SUCCESS);
                 break;
             }
         } else if (buffer.header.command == CMD_BARRIER) {

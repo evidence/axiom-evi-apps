@@ -139,7 +139,6 @@ static char const *options="p:n:hfd";
 #endif
 
 void  *sender(void *d) {
-    //int i,j,ret;
     uint8_t buf[AXIOM_LONG_PAYLOAD_MAX_SIZE];
     int sz,ret,no;
 

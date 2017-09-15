@@ -24,7 +24,7 @@
 char *cmd_to_name[] = {"CMD_EXIT", "CMD_KILL", "CMD_SEND_TO_STDOUT", "CMD_SEND_TO_STDERR", "CMD_RECV_FROM_STDIN", "CMD_BARRIER", "CMD_RPC", "CMD_START"};
 char *rpcfunc_to_name[] = {"RPC_PING"};
 
-/*
+/* PLEASE do not delete
 static char *debug_dump(char *ptr, int sz) {
     // :-(
     static char buf2[16];
@@ -386,15 +386,6 @@ static void prepare_env(strlist_t *env, regex_t *re, int slave, int noclose, uin
                 zlogmsg(LOG_WARN, LOGZ_MAIN, "AXIOM_NODES environment variable already present!");
                 already = 1;
             }
-            /*
-            if (strncmp("AXIOM_", *ptr, min(6, sz)) == 0) {
-                sl_append(env, *ptr);
-            } else if (sz == 4 && strncmp("PATH", *ptr, 4) == 0) {
-                sl_append(env, *ptr);
-            } else if (sz == 5 && strncmp("SHELL", *ptr, 5) == 0) {
-                sl_append(env, *ptr);
-            }
-             */
         }
         ptr++;
     }
@@ -969,15 +960,6 @@ int main(int argc, char **argv) {
             perror("axiom_bind()");
             exit(EXIT_FAILURE);
         }
-
-#if 0
-        if (!slave) {
-            axiom_err_t err = axiom_flush_raw(dev);
-            if (!AXIOM_RET_IS_OK(err)) {
-                zlogmsg(LOG_WARN, LOGZ_MAIN, "axiom_flush_raw() error %d", (int) err);
-            }
-        }
-#endif
     }
 
     //

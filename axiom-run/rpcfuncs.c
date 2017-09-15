@@ -92,7 +92,6 @@ int rpc_service(axiom_dev_t *dev, axiom_node_id_t src_node, size_t size, buffer_
             // RPC: ping request
             //
             // replay the same message to all slave
-            //my_axiom_send_raw(dev, nodes, slave_port, size, (axiom_raw_payload_t*) inmsg);
             reply = 1;
             break;
         case AXRUN_RPC_ALLOC:

@@ -90,25 +90,6 @@ libs-real-install:
 		done ;\
 	done
 
-#test/myinfo: test/myinfo.o
-#	$(CC) -L$(PWD)/lib -o test/myinfo test/myinfo.o -laxiom_run_api
-#
-#test/myexch: test/myexch.o
-#	$(CC) -L$(PWD)/../../axiom-evi-nic/axiom_user_library -o test/myexch test/myexch.o -laxiom_user_api -lpthread
-#
-#test/myrdma: test/myrdma.o
-#	$(CC) -L$(PWD)/../../axiom-evi-nic/axiom_user_library -L$(PWD)/$(AXIOM_OVERLAY)/usr/lib -Wl,-T$(AXIOM_ALLOC_LDS) -o test/myrdma test/myrdma.o -laxiom_allocator -levi_lmm -laxiom_user_api -lpthread
-#
-#test/mybar: test/mybar.o lib/libaxiom_run_api.a
-#	$(CC) -L$(PWD)/lib -o test/mybar test/mybar.o -laxiom_run_api
-#
-#test/myrpc: test/myrpc.o lib/libaxiom_run_api.a
-#	$(CC) -L$(PWD)/lib -o test/myrpc test/myrpc.o -laxiom_run_api
-#
-#test/myputbulk: test/myputbulk.o
-#	$(CC) -L$(PWD)/../../axiom-evi-nic/axiom_user_library -o test/myputbulk test/myputbulk.o -laxiom_user_api
-#
-
 install: all libs
 ifeq ($(FS),x86)
 ifdef TARGET_INST_DIR
