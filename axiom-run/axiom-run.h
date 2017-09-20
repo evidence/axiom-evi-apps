@@ -47,7 +47,7 @@ extern "C" {
 #define LOGZ_ALL    0x07
 
     /** max number of nodes supported */
-#define MAX_NUM_NODES 64
+#define MAX_NUM_NODES 63
     /** max output buffer size */
 #define MAX_BUFFER_SIZE BUFSIZ
 

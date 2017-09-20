@@ -190,7 +190,7 @@ static void emit(axiom_node_id_t node, uint8_t *buffer, int size, output_info_t 
     int res;
     uint8_t *p;
 
-    assert(node >= 0 && node < MAX_NUM_NODES);
+    assert(node >= 0 && node <= MAX_NUM_NODES);
     p = (emit_id ? memchr(buffer, '\n', size) : memrchr(buffer, '\n', size));
     if (p != NULL) {
         if (info[node].sz > 0) {

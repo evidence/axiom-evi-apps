@@ -76,10 +76,10 @@ static void _usage(char *msg, ...) {
     fprintf(stderr, "    [default: 0,my_port-1]\n");
     fprintf(stderr, "-n, --nodes NODELIST\n");
     fprintf(stderr, "    nodes where spawn application \n");
-    fprintf(stderr, "    [default: all nodes] ex: 0-3,7\n");
+    fprintf(stderr, "    [default: all nodes] ex: 1-3,7\n");
     fprintf(stderr, "-N, --numnodes NODECOUNT\n");
     fprintf(stderr, "    nodes where spawn application\n");
-    fprintf(stderr, "    equivalent to '-n 0-$((NODECOUNT-1))'\n");
+    fprintf(stderr, "    equivalent to '-n 1-$((NODECOUNT))'\n");
     fprintf(stderr, "-g, --gdb NODELIST:PORT\n");
     fprintf(stderr, "    run application using gdb server on port PORT on selected nodes\n");
     fprintf(stderr, "    [default: no run gdb server]\n");
@@ -530,7 +530,7 @@ static axiom_err_t start(axiom_dev_t *dev, int master_port, int slave_port, uint
 }
 
 /** max node supported by the */
-#define MAX_NODES_SUPPORTED 64
+#define MAX_NODES_SUPPORTED 63
 
 /*
  * MAX_NUM_NODES is semantically different from MAX_NODES_SUPPORTED
@@ -543,23 +543,23 @@ static axiom_err_t start(axiom_dev_t *dev, int master_port, int slave_port, uint
 #error MAX_NUM_NODES is > of MAX_NODES_SUPPORTED
 #elif MAX_NUM_NODES==MAX_NODES_SUPPORTED
 /** a bitwise for all nodes */
-#define ALL_NODES 0xffffffffffffffff
+#define ALL_NODES 0xfffffffffffffffe
 #else
 /** a bitwise for MAX_NUM_NODES nodes */
 #define ALL_NODES (((uint64_t)1<<MAX_NUM_NODES)-1)
 #endif
 
 /** a bitwise for all active nodes nodes */
-#define ALL_NODES_MASK(x) ((((x)>=MAX_NODES_SUPPORTED)?0xffffffffffffffff:(((uint64_t)1<<(x))-1)) << AXIOM_INIT_MASTER_NODE)
+#define ALL_NODES_MASK(x) (((x)>=MAX_NODES_SUPPORTED)?0xfffffffffffffffe:((((uint64_t)1<<(x))-1))<<1)
 
 /**
  * Build the bitwise node mask from a command line parameter.
  * For example correct parameter are:
- * - 0,1,5 (nodes 0, 1 and 5)
- * - 0-3,7 (nodes 0, 1, 2, 3 and 7)
- * - 0-2,1-4,7,8 (nodes 0, 1, 2, 3, 4, 7 and 8)
- * - 0x5 (nodes 0 and 2)
- * - 0x38 (nodes 3, 4 and 5)
+ * - 1,5 (nodes 1 and 5)
+ * - 1-3,7 (nodes 1, 2, 3 and 7)
+ * - 1-2,1-4,7,8 (nodes 1, 2, 3, 4, 7 and 8)
+ * - 0x5 (nodes 1 and 3)
+ * - 0x38 (nodes 4, 5 and 6)
  *
  * @param arg the node parameter
  * @return the bitwsise node mask
@@ -579,7 +579,7 @@ static uint64_t decode_node_arg(char *arg) {
         while (s != NULL) {
             if (strchr(s, '-') != NULL) {
                 n = sscanf(s, "%d-%d", &a, &b);
-                if (n != 2 || a < 0 || a > b || b >= MAX_NUM_NODES) {
+                if (n != 2 || a < 1 || a > b || b > MAX_NUM_NODES) {
                     _usage("bad option for -n|--nodes: can't decode or bad range");
                     exit(EXIT_FAILURE);
                 }
@@ -589,7 +589,7 @@ static uint64_t decode_node_arg(char *arg) {
                     r |= ((((uint64_t) 1 << (b - a + 1)) - 1) << a);
             } else {
                 n = sscanf(s, "%d", &a);
-                if (n != 1 || a < 0 || a >= MAX_NUM_NODES) {
+                if (n != 1 || a < 1 || a > MAX_NUM_NODES) {
                     _usage("bad option for -n|--nodes: can't decode or bad node number");
                     exit(EXIT_FAILURE);
                 }
@@ -805,7 +805,7 @@ int main(int argc, char **argv) {
                     _usage("error on -N|--numnodes: number of nodes must be greather than zero\n");
                     exit(-1);
                 }
-                nodes=(1<<numnodes)-1;
+                nodes=ALL_NODES_MASK(numnodes);
                 break;
             }
             case 'g':
