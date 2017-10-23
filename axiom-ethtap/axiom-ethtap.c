@@ -1,5 +1,5 @@
 /*!
- * \file axiom-tuntap.c
+ * \file axiom-ethtap.c
  *
  * \version     v0.14
  *
@@ -98,8 +98,8 @@ static void _usage(char *msg, ...) {
         fputc('\n', stderr);
         fputc('\n', stderr);
     }
-    fprintf(stderr, "usage: axiom-tuntap [ARG]*\n");
-    fprintf(stderr, "Create an AXIOM network device,\n");
+    fprintf(stderr, "usage: axiom-ethtap [ARG]*\n");
+    fprintf(stderr, "Create a virtual ethernet device on top of AXIOM device,\n");
     fprintf(stderr, "ARGs are:\n");
     fprintf(stderr, "-h, --help\n");
     fprintf(stderr, "    print this help screen and then exit\n");
@@ -223,7 +223,7 @@ void  *receiver(void *data) {
  * @param mac Last byte of mac address to set.
  * @return File handle or -1 on error.
  */
-static int tuntap_alloc(int idx, int mac) {
+static int ethtap_alloc(int idx, int mac) {
     struct ifreq ifr;
     int fd, err;
 
@@ -285,7 +285,7 @@ static int tuntap_alloc(int idx, int mac) {
     return fd;
 }
 
-static void tuntap_prepare(int axiom_port) {
+static void ethtap_prepare(int axiom_port) {
     axiom_err_t err;
     dev = axiom_open(NULL);
     if (dev == NULL) {
@@ -299,14 +299,14 @@ static void tuntap_prepare(int axiom_port) {
         elogmsg("axiom_bind()");
         exit(EXIT_FAILURE);
     }
-    tunh=tuntap_alloc(0,(int) axiom_get_node_id(dev));
+    tunh=ethtap_alloc(0,(int) axiom_get_node_id(dev));
     if (tunh<=0) {
         exit(EXIT_FAILURE);
     }
 }
 
 /*
-static void tuntap_deinit() {
+static void ethtap_deinit() {
     close(tunh);
     axiom_close(dev);
 }
@@ -321,7 +321,7 @@ int main(int argc, char **argv)
     int foreground=0;
 
     logmsg_init();
-    logmsg(LOG_INFO, "axiom-tuntap started");
+    logmsg(LOG_INFO, "axiom-ethtap started");
 
     /* command line options */
 
@@ -360,7 +360,7 @@ int main(int argc, char **argv)
 
     /* initialization */
 
-    tuntap_prepare(port);
+    ethtap_prepare(port);
 
     logmsg(LOG_INFO,"axiom port = %d",PORT);
 
