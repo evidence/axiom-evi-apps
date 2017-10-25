@@ -4,11 +4,27 @@
 This repository contains the following user space application:
 
  * axiom-init
-    + run the discovery algorithm, sets the routing table and handles control messages
+    + axiom-init is the main daemon running on all nodes of the cluster.
+    It runs the discovery algorithm, sets the routing table and handles control messages.
+    It will be run automatically by the system or through axiom-startup.sh script.
 ```
         example:
-        in n-1 nodes:           axiom-init &
-        in 1 randomly node:     axiom-init -m &
+
+        # in n-1 nodes
+        axiom-init &
+
+        # in the master node
+        axiom-init -m &
+```
+ * axiom-ethtap
+    + axiom-ethtap is another deamon that can run on each nodes in the cluster
+    to map the ethernet frames over AXIOM messages.
+    It creates a virtual ethernet device on top of AXIOM device.
+    It will be run automatically by the system or through axiom-startup.sh script.
+```
+        example:
+        # start axiom-ethtap with 4 threads
+        axiom-ethtap -n 4
 ```
  * axiom-info
     + print informations (node-id, interfaces, routing, etc.) about AXIOM NIC
@@ -46,14 +62,17 @@ This repository contains the following user space application:
     + estimate the throughput between two nodes
 ```
         example:
+        # start server on one node with 8 threads
+        axiom-netperf -s -n 8
+
         # Estimate the throughput with targat node 3, sending 512 KBytes of data
         # using RAW messages.
         axiom-netperf -d 3 -l 512K -t raw
 ```
 ```
         # Estimate the throughput with targat node 3, sending 2 MBytes of data.
-        # using LONG messages.
-        axiom-netperf -d 3 -l 2M -t long
+        # using LONG messages and 2 sending threads.
+        axiom-netperf -d 3 -l 2M -t long -n 2
 ```
  * axiom-traceroute
     + print the hops needed to reach a specified target node
