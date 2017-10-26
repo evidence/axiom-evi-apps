@@ -12,6 +12,7 @@
  * Terms of use are as specified in COPYING
  */
 #include <getopt.h>
+#include <inttypes.h>
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -52,14 +53,17 @@ usage(void)
     printf("-a, --all (default)         print all information (except NIC debug [-d])\n");
     printf("-n, --nodeid                print node id\n");
     printf("-i, --ifnumber              print number of interfaces\n");
-    printf("-f, --ifinfo      if_id     print information of given interface (if_id)\n");
+    printf("-f, --ifinfo                print information of interfaces\n");
     printf("-N, --numnodes              print number of nodes in the network\n");
     printf("-r, --routing               print routing table (only reachable nodes)\n");
     printf("-R, --routing-all           print routing table (all nodes)\n");
     printf("-s, --status                print status register\n");
     printf("-c, --control               print control register\n");
     printf("-S, --statistics            print NIC statistics\n");
-    printf("-d, --debug                 print axiom-nic debug info\n");
+    printf("-d, --debug       flag(hex) print axiom-nic debug info with specified flags\n");
+    printf("                            0x01: status - 0x02: control - 0x04: routing - 0x08: queues\n");
+    printf("                            0x10: RAW - 0x20: LONG - 0x40: RDMA - 0x80 FPGA\n");
+    printf("-D, --debug-all             print all axiom-nic debug info\n");
     printf("-q, --quiet                 easy script parsing\n");
     printf("-h, --help                  print this help\n\n");
 }
@@ -299,6 +303,7 @@ main(int argc, char **argv)
 {
     axiom_dev_t *dev = NULL;
     uint16_t print_bitmap = 0;
+    uint32_t debug_flags = 0;
 
     int long_index =0;
     int opt = 0;
@@ -307,20 +312,21 @@ main(int argc, char **argv)
         {"all", no_argument, 0, 'a'},
         {"nodeid", no_argument, 0, 'n'},
         {"ifnumber", no_argument, 0, 'i'},
-        {"ifinfo", required_argument, 0, 'f'},
+        {"ifinfo", no_argument, 0, 'f'},
         {"numnodes", no_argument, 0, 'N'},
         {"routing", no_argument, 0, 'r'},
         {"routing-all", no_argument, 0, 'R'},
         {"status", no_argument, 0, 's'},
         {"statistics", no_argument, 0, 'S'},
         {"control", no_argument, 0, 'c'},
-        {"debug", no_argument, 0, 'd'},
+        {"debug", required_argument, 0, 'd'},
+        {"debug-all", no_argument, 0, 'D'},
         {"quiet", no_argument, 0, 'q'},
         {"help", no_argument, 0, 'h'},
         {0, 0, 0, 0}
     };
 
-    while ((opt = getopt_long(argc, argv, "anqifrRNsScdh",
+    while ((opt = getopt_long(argc, argv, "anqifrRNsScd:Dh",
             long_options, &long_index)) != -1) {
         switch(opt) {
             case 'a':
@@ -365,6 +371,17 @@ main(int argc, char **argv)
 
             case 'd':
                 print_bitmap |= PRINT_DEBUG;
+                if (sscanf(optarg, "%" SCNx32, &debug_flags) != 1) {
+                    EPRINTF("wrong debug flags");
+                    usage();
+                    exit(-1);
+                }
+                break;
+
+            case 'D':
+                print_bitmap |= PRINT_DEBUG;
+                debug_flags = AXIOM_DEBUG_FLAG_ALL;
+                break;
 
             case 'q':
 	        quiet = 1;
@@ -414,7 +431,7 @@ main(int argc, char **argv)
         print_ni_control(dev);
 
     if (print_bitmap & PRINT_DEBUG)
-        axiom_debug_info(dev);
+        axiom_debug_info(dev, debug_flags);
 
     axiom_close(dev);
 
