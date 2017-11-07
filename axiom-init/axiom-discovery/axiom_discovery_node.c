@@ -198,7 +198,7 @@ axiom_discovery_slave(axiom_dev_t *dev,
 }
 
 #define NOTIFY_SCRIPT_NAME "axiom_end_discovery.sh"
-#define NOTIFY_SCRIPT ("/etc/" NOTIFY_SCRIPT_NAME)
+#define NOTIFY_SCRIPT ("/etc/axiom/" NOTIFY_SCRIPT_NAME)
 
 static void
 notify_end_of_discovery() {
