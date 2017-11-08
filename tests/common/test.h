@@ -63,5 +63,18 @@ extern void dump(FILE *fout, uint8_t *addr, size_t size);
 #define SIZESTR "%lu 0x%lx (%lu KiB %lu MiB)"
 #define SIZEDATA(size) ((size_t)(size)),((size_t)(size)),((size_t)(size))/1024,((size_t)(size))/1024/1024
 
+/*
+ * memory functions
+ */
+
+#define USE_MY_MEMFUNCTIONS 1
+
+#ifdef USE_MY_MEMFUNCTIONS
+extern void *mymemset(void *s, int c, size_t n);
+#else
+#include <string.h>
+#define mymemset(s,c,n) memset(s,c,n)
+#endif
+
 #endif /* TEST_H */
 

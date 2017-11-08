@@ -459,7 +459,7 @@ int main(int argc, char**argv) {
         fprintf(stderr,"block size " SIZESTR "\n", SIZEDATA(blocksize));
     }
 
-    memset(base,0,SIZENEED);
+    mymemset(base,0,SIZENEED);
     ret=axrun_sync(7, 0);
     if (ret) {
         perror("axrun_sync()");

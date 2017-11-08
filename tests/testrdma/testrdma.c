@@ -99,7 +99,7 @@ void  *sender(void *data) {
 
     if (debug>0)
         fprintf(stderr,"sender: start\n");
-    
+
     usleep(250000);
     rand_init(&r,seed+mynode);
     for (i=0;i<num;i++) {
@@ -114,7 +114,7 @@ void  *sender(void *data) {
             fprintf(stderr,"sending  " MEMBLOCKSTR "\n", MEMBLOCKDATA(source_addr,blocksize));
         if (debug>2)
             dump(stderr,source_addr,blocksize);
-
+        
         ret=axiom_rdma_write_sync(dev, yournode, blocksize, source_addr, source_addr, NULL);
         if (!AXIOM_RET_IS_OK(ret)) {
             perror("axiom_rdma_write()");
@@ -353,7 +353,7 @@ int main(int argc, char**argv) {
         fprintf(stderr,"block size " SIZESTR "\n", SIZEDATA(blocksize));
     }
 
-    memset(base,0,SIZENEED);
+    mymemset(base,0,SIZENEED);
     ret=axrun_sync(7, 0);
     if (ret) {
         perror("axrun_sync()");
