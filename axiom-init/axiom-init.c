@@ -44,6 +44,7 @@ usage(void)
     printf("-m, --master           start node as master\n");
     printf("-n, --nodeid    id     set node id\n");
     printf("-r, --routing   file   load routing table from file (each row (X) must contain the interface to reach node X)\n");
+    printf("-s, --save      file   save routing table to file (after discovery)\n");
     printf("-v, --verbose          verbose output\n");
     printf("-V, --version          print version\n");
     printf("-h, --help             print this help\n\n");
@@ -92,10 +93,43 @@ axiom_rt_from_file(axiom_dev_t *dev, char *filename)
 }
 
 int
+axiom_rt_to_file(axiom_dev_t *dev, char *filename)
+{
+    axiom_if_id_t routing_table[AXIOM_NODES_MAX];
+    FILE *file = NULL;
+    char *line = NULL;
+    size_t len = 0;
+    int line_count = 0;
+
+    memset(routing_table, 0, sizeof(routing_table));
+
+    /* get final routing table */
+    for (axiom_node_id_t nid = 0; nid < AXIOM_NODES_MAX; nid++) {
+        axiom_get_routing(dev, nid, routing_table+nid);
+    }
+
+    file = fopen(filename, "w");
+    if (file == NULL)  {
+        printf("Can not open file for writing\n");
+        return -1;
+    }
+
+    for (axiom_node_id_t nid = 0; nid < AXIOM_NODES_MAX; nid++) {
+        int val=__builtin_ctzl(routing_table[nid]);
+        fprintf(file,"%d\n",val);
+    }
+
+    fclose(file);
+
+    return 0;
+}
+
+int
 main(int argc, char **argv)
 {
-    int master = 0, run = 1, set_nodeid = 0, set_rt = 0;
+    int master = 0, run = 1, set_nodeid = 0, set_rt = 0, save_rt=0;
     char rt_filename[1024];
+    char rt_save_filename[1024];
     axiom_dev_t *dev = NULL;
     axiom_args_t axiom_args;
     axiom_node_id_t topology[AXIOM_NODES_MAX][AXIOM_INTERFACES_MAX];
@@ -109,13 +143,14 @@ main(int argc, char **argv)
         {"master", no_argument, 0, 'm'},
         {"nodeid", required_argument, 0, 'n'},
         {"routing", required_argument, 0, 'r'},
+        {"save", required_argument, 0, 's'},
         {"verbose", no_argument, 0, 'v'},
         {"version", no_argument, 0, 'V'},
         {"help", no_argument, 0, 'h'},
         {0, 0, 0, 0}
     };
 
-    while ((opt = getopt_long(argc, argv,"hvmn:r:V",
+    while ((opt = getopt_long(argc, argv,"hvmn:r:s:V",
                          long_options, &long_index )) != -1) {
         switch (opt) {
             case 'm':
@@ -137,6 +172,15 @@ main(int argc, char **argv)
                     exit(-1);
                 }
                 set_rt = 1;
+                break;
+            case 's':
+                if (snprintf(rt_save_filename, sizeof(rt_save_filename) - 1, "%s",
+                            optarg) < 0) {
+                    EPRINTF("wrong filename");
+                    usage();
+                    exit(-1);
+                }
+                save_rt = 1;
                 break;
             case 'v':
                 verbose = 1;
@@ -175,15 +219,25 @@ main(int argc, char **argv)
         axiom_set_node_id(dev, node_id);
     }
 
-    if (set_rt) {
+    if (master) {
+        axiom_discovery_master(dev, topology, final_routing_table, verbose);
+        if (save_rt) {
+            if (axiom_rt_to_file(dev, rt_filename)) {
+                axiom_close(dev);
+                exit(-1);
+            }
+        }
+    } else if (set_rt) {
         if (axiom_rt_from_file(dev, rt_filename)) {
             axiom_close(dev);
             exit(-1);
         }
-    }
-
-    if (master) {
-        axiom_discovery_master(dev, topology, final_routing_table, verbose);
+        if (save_rt) {
+            if (axiom_rt_to_file(dev, rt_filename)) {
+                axiom_close(dev);
+                exit(-1);
+            }
+        }
     }
 
     while(run) {
@@ -203,6 +257,12 @@ main(int argc, char **argv)
             case AXIOM_DSCV_CMD_REQ_ID:
                 axiom_discovery_slave(dev, src, &payload, topology,
                         final_routing_table, verbose);
+                if (save_rt) {
+                    if (axiom_rt_to_file(dev, rt_filename)) {
+                        axiom_close(dev);
+                        exit(-1);
+                    }
+                }
                 break;
 
             case AXIOM_CMD_PING:
