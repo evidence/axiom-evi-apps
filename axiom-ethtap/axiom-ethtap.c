@@ -100,6 +100,8 @@ static void _usage(char *msg, ...) {
     }
     fprintf(stderr, "usage: axiom-ethtap [ARG]*\n");
     fprintf(stderr, "Create a virtual ethernet device on top of AXIOM device,\n");
+    fprintf(stderr, "Version: %s\n", AXIOM_API_VERSION_STR);
+    fprintf(stderr, "\n\n");
     fprintf(stderr, "ARGs are:\n");
     fprintf(stderr, "-h, --help\n");
     fprintf(stderr, "    print this help screen and then exit\n");
@@ -114,6 +116,8 @@ static void _usage(char *msg, ...) {
     fprintf(stderr, "    override environment AXIOM_LOG_LEVEL settng it to DEBUG log level\n");
     fprintf(stderr, "    (note that this does not imply foreground run)\n");
 #endif
+    fprintf(stderr, "-V, --version\n");
+    fprintf(stderr, "    print version\n");
 }
 
 /**
@@ -129,13 +133,14 @@ static struct option long_options[] = {
 #ifndef NLOG
     {"debug", no_argument, 0, 'd'},
 #endif
+    {"version", no_argument, 0, 'V'},
     {0, 0, 0, 0}
 };
 
 #ifdef NLOG
-static char const *options="p:n:hf";
+static char const *options="p:n:hfV";
 #else
-static char const *options="p:n:hfd";
+static char const *options="p:n:hfdV";
 #endif
 
 void  *sender(void *d) {
@@ -341,6 +346,9 @@ int main(int argc, char **argv)
                 logmsg_level=LOG_DEBUG;
                 break;
 #endif
+            case 'V':
+                printf("Version: %s\n", AXIOM_API_VERSION_STR);
+                exit(EXIT_SUCCESS);
             case 'h':
                 usage();
                 exit(EXIT_SUCCESS);

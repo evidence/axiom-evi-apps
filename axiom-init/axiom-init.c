@@ -37,12 +37,15 @@ static void
 usage(void)
 {
     printf("usage: axiom-init [arguments]\n");
-    printf("Start AXIOM node in slaves mode (or master if it is specified)\n\n");
+    printf("Start AXIOM node in slaves mode (or master if it is specified)\n");
+    printf("Version: %s\n", AXIOM_API_VERSION_STR);
+    printf("\n\n");
     printf("Arguments:\n");
     printf("-m, --master           start node as master\n");
     printf("-n, --nodeid    id     set node id\n");
     printf("-r, --routing   file   load routing table from file (each row (X) must contain the interface to reach node X)\n");
     printf("-v, --verbose          verbose output\n");
+    printf("-V, --version          print version\n");
     printf("-h, --help             print this help\n\n");
 }
 
@@ -107,11 +110,12 @@ main(int argc, char **argv)
         {"nodeid", required_argument, 0, 'n'},
         {"routing", required_argument, 0, 'r'},
         {"verbose", no_argument, 0, 'v'},
+        {"version", no_argument, 0, 'V'},
         {"help", no_argument, 0, 'h'},
         {0, 0, 0, 0}
     };
 
-    while ((opt = getopt_long(argc, argv,"hvmn:r:",
+    while ((opt = getopt_long(argc, argv,"hvmn:r:V",
                          long_options, &long_index )) != -1) {
         switch (opt) {
             case 'm':
@@ -137,6 +141,9 @@ main(int argc, char **argv)
             case 'v':
                 verbose = 1;
                 break;
+            case 'V':
+                printf("Version: %s\n", AXIOM_API_VERSION_STR);
+                exit(0);
             case 'h':
             default:
                 usage();

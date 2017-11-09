@@ -42,7 +42,9 @@ usage(void)
 {
     printf("usage: axiom-netperf [arguments] -d server_id \n");
     printf("AXIOM netperf: estimate the throughput between this node and the\n");
-    printf("               specified server_id\n\n");
+    printf("               specified server_id\n");
+    printf("Version: %s\n", AXIOM_API_VERSION_STR);
+    printf("\n\n");
     printf("Arguments:\n");
     printf("client-mode:\n");
     printf("   -t, --type      raw|long|rdma|srdma message type to use [default: long]\n");
@@ -63,6 +65,7 @@ usage(void)
             AXIOM_NETPERF_DEF_PORT);
     printf("-n, --num-threads  num_threads         number of threads [def. 1]\n");
     printf("-v, --verbose                          verbose output\n");
+    printf("-V, --version                          print version\n");
     printf("-h, --help                             print this help\n\n");
 }
 
@@ -123,12 +126,13 @@ main(int argc, char **argv)
         {"num_threads", required_argument, 0, 'n'},
         {"server", no_argument, 0, 's'},
         {"verbose", no_argument, 0, 'v'},
+        {"version", no_argument, 0, 'V'},
         {"help", no_argument, 0, 'h'},
         {0, 0, 0, 0}
     };
 
 
-    while ((opt = getopt_long(argc, argv,"svhd:l:L:p:P:t:n:",
+    while ((opt = getopt_long(argc, argv,"svhd:l:L:p:P:t:n:V",
                          long_options, &long_index )) != -1) {
         char *type_string = NULL;
         char char_scale = AXIOM_NETPERF_DEF_CHAR_SCALE;
@@ -218,6 +222,10 @@ main(int argc, char **argv)
             case 'v':
                 verbose = 1;
                 break;
+
+            case 'V':
+                printf("Version: %s\n", AXIOM_API_VERSION_STR);
+                exit(0);
 
             case 'h':
             default:

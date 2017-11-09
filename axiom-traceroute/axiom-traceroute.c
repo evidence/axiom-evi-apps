@@ -37,9 +37,12 @@ usage(void)
 {
     printf("usage: axiom-traceroute [arguments] -d dest_node \n");
     printf("AXIOM traceroute: print the hops needed to reach the specified dest_node\n\n");
+    printf("Version: %s\n", AXIOM_API_VERSION_STR);
+    printf("\n\n");
     printf("Arguments:\n");
     printf("-d, --dest     dest_node   destination node of traceroute\n");
     printf("-v, --verbose              verbose output\n");
+    printf("-V, --version              print version\n");
     printf("-h, --help                 print this help\n\n");
 }
 
@@ -87,11 +90,12 @@ main(int argc, char **argv)
     static struct option long_options[] = {
         {"dest", required_argument, 0, 'd'},
         {"verbose", no_argument, 0, 'v'},
+        {"version", no_argument, 0, 'V'},
         {"help", no_argument, 0, 'h'},
         {0, 0, 0, 0}
     };
 
-    while ((opt = getopt_long(argc, argv,"vhd:",
+    while ((opt = getopt_long(argc, argv,"vhd:V",
                          long_options, &long_index )) != -1) {
         switch (opt) {
             case 'd' :
@@ -106,6 +110,10 @@ main(int argc, char **argv)
             case 'v':
                 verbose = 1;
                 break;
+
+            case 'V':
+                printf("Version: %s\n", AXIOM_API_VERSION_STR);
+                exit(0);
 
             case 'h':
             default:

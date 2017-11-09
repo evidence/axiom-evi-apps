@@ -48,7 +48,9 @@ static void
 usage(void)
 {
     printf("usage: axiom-info [arguments]\n");
-    printf("Print information about the AXIOM NIC\n\n");
+    printf("Print information about the AXIOM NIC\n");
+    printf("Version: %s\n", AXIOM_API_VERSION_STR);
+    printf("\n\n");
     printf("Arguments:\n");
     printf("-a, --all (default)         print all information (except NIC debug [-d])\n");
     printf("-n, --nodeid                print node id\n");
@@ -65,6 +67,7 @@ usage(void)
     printf("                            0x10: RAW - 0x20: LONG - 0x40: RDMA - 0x80 FPGA\n");
     printf("-D, --debug-all             print all axiom-nic debug info\n");
     printf("-q, --quiet                 easy script parsing\n");
+    printf("-V, --version               print version\n");
     printf("-h, --help                  print this help\n\n");
 }
 
@@ -322,11 +325,12 @@ main(int argc, char **argv)
         {"debug", required_argument, 0, 'd'},
         {"debug-all", no_argument, 0, 'D'},
         {"quiet", no_argument, 0, 'q'},
+        {"version", no_argument, 0, 'V'},
         {"help", no_argument, 0, 'h'},
         {0, 0, 0, 0}
     };
 
-    while ((opt = getopt_long(argc, argv, "anqifrRNsScd:Dh",
+    while ((opt = getopt_long(argc, argv, "anqifrRNsScd:DhV",
             long_options, &long_index)) != -1) {
         switch(opt) {
             case 'a':
@@ -386,6 +390,10 @@ main(int argc, char **argv)
             case 'q':
 	        quiet = 1;
 	        break;
+
+            case 'V':
+                printf("Version: %s\n", AXIOM_API_VERSION_STR);
+                exit(0);
 
             case 'h':
             default:

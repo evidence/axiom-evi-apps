@@ -52,11 +52,14 @@ usage(void)
     printf("usage: axiom-ping [arguments] -d dest_node \n");
     printf("AXIOM ping: estimate the round trip time (RTT) between this node\n");
     printf("            and the specified dest_node\n");
+    printf("Version: %s\n", AXIOM_API_VERSION_STR);
+    printf("\n\n");
     printf("Arguments:\n");
     printf("-d, --dest       dest_node   destination node id of axiom-ping\n");
     printf("-i, --interval   interval    sec between two ping messagges \n");
     printf("-c, --count      count       number of ping messagges to send \n");
     printf("-v, --verbose                verbose output\n");
+    printf("-V, --version                print version\n");
     printf("-h, --help                   print this help\n\n");
 }
 
@@ -153,6 +156,7 @@ main(int argc, char **argv)
         {"interval", required_argument, 0, 'i'},
         {"count", required_argument, 0, 'c'},
         {"verbose", no_argument, 0, 'v'},
+        {"version", no_argument, 0, 'V'},
         {"help", no_argument, 0, 'h'},
         {0, 0, 0, 0}
     };
@@ -162,7 +166,7 @@ main(int argc, char **argv)
     sig.sa_handler = sigint_handler;
     sigaction(SIGINT, &sig, NULL);
 
-    while ((opt = getopt_long(argc, argv,"vhd:i:c:",
+    while ((opt = getopt_long(argc, argv,"vhd:i:c:V",
                          long_options, &long_index )) != -1) {
         switch (opt) {
             case 'd' :
@@ -194,6 +198,10 @@ main(int argc, char **argv)
             case 'v':
                 verbose = 1;
                 break;
+
+            case 'V':
+                printf("Version: %s\n", AXIOM_API_VERSION_STR);
+                exit(0);
 
             case 'h':
             default:

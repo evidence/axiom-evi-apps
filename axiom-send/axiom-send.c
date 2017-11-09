@@ -40,7 +40,9 @@ usage(void)
 {
     printf("usage: axiom-send [arguments] -d dest   payload (list of bytes)\n");
     printf("Send AXIOM raw or long message to specified dest (dest can be remote node\n");
-    printf("or local interface, if you send a message to neighbour [-n])\n\n");
+    printf("or local interface, if you send a message to neighbour [-n])\n");
+    printf("Version: %s\n", AXIOM_API_VERSION_STR);
+    printf("\n\n");
     printf("Arguments:\n");
     printf("-t, --type      raw|long|any  message type to use [default: ANY]\n");
     printf("                              (any allow to send packet that best fit the payload)\n");
@@ -54,6 +56,7 @@ usage(void)
     printf("-i, --iovec     num           use axiom API with iovec support\n");
     printf("                              (num = number of buffers)\n");
     printf("-v, --verbose                 verbose\n");
+    printf("-V, --version                 print version\n");
     printf("-h, --help                    print this help\n\n");
 }
 
@@ -124,12 +127,13 @@ main(int argc, char **argv)
         {"sleep", required_argument, 0, 's'},
         {"iovec", required_argument, 0, 'i'},
         {"neighbour", no_argument, 0, 'n'},
+        {"version", no_argument, 0, 'V'},
         {"help", no_argument, 0, 'h'},
         {0, 0, 0, 0}
     };
 
 
-    while ((opt = getopt_long(argc, argv,"ht:p:d:nr:c:s:i:v",
+    while ((opt = getopt_long(argc, argv,"ht:p:d:nr:c:s:i:vV",
                          long_options, &long_index )) != -1) {
         char *type_string = NULL;
 
@@ -215,6 +219,10 @@ main(int argc, char **argv)
             case 'v':
                 verbose = 1;
                 break;
+
+            case 'V':
+                printf("Version: %s\n", AXIOM_API_VERSION_STR);
+                exit(0);
 
             case 'h':
             default:

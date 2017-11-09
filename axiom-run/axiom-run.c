@@ -65,6 +65,8 @@ static void _usage(char *msg, ...) {
     }
     fprintf(stderr, "usage: axiom-run [ARG]* APPLICATION [APP_ARG]*\n");
     fprintf(stderr, "Spawn application on multiple nodes\n");
+    fprintf(stderr, "Version: %s\n", AXIOM_API_VERSION_STR);
+    fprintf(stderr, "\n\n");
     fprintf(stderr, "ARGs are:\n");
     fprintf(stderr, "-s, --slave\n");
     fprintf(stderr, "    slave mode\n");
@@ -145,6 +147,8 @@ static void _usage(char *msg, ...) {
     fprintf(stderr, "    print some deep explanation about axiom-run services\n");
     fprintf(stderr, "-x, --magic MAGICNUMBER\n");
     fprintf(stderr, "    set a 'magic' number to sync the start of axiom-run master/slave [default: time()]\n");
+    fprintf(stderr, "-V, --version\n");
+    fprintf(stderr, "    print version\n");
     fprintf(stderr, "note:\n");
     fprintf(stderr, "-m is used to inform an axiom-run slave where is the master so is useless if no -s option is used\n");
 }
@@ -219,6 +223,7 @@ static struct option long_options[] = {
     {"magic", required_argument, 0, 'x'},
     {"help", no_argument, 0, 'h'},
     {"deephelp", no_argument, 0, 'H'},
+    {"version", no_argument, 0, 'V'},
     {0, 0, 0, 0}
 };
 
@@ -686,7 +691,7 @@ int main(int argc, char **argv) {
     // command line parsing
     //
 
-    while ((opt = getopt_long(argc, argv, "+rekbcasp:E:T:P:m:x:hHn:N:u:g:i::", long_options, &long_index)) != -1) {
+    while ((opt = getopt_long(argc, argv, "+rekbcasp:E:T:P:m:x:hHn:N:u:g:i::V", long_options, &long_index)) != -1) {
         switch (opt) {
             case 'P':
                 if (strcmp(optarg,"gasnet")==0) {
@@ -833,6 +838,9 @@ int main(int argc, char **argv) {
             case 'H':
                 deep_help();
                 exit(-1);
+            case 'V':
+                printf("Version: %s\n", AXIOM_API_VERSION_STR);
+                exit(0);
             case '?':
             case ':':
                 break;

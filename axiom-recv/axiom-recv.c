@@ -39,7 +39,9 @@ static void
 usage(void)
 {
     printf("usage: axiom-recv [arguments]\n");
-    printf("Receive AXIOM raw or long message\n\n");
+    printf("Receive AXIOM raw or long message\n");
+    printf("Version: %s\n", AXIOM_API_VERSION_STR);
+    printf("\n\n");
     printf("Arguments:\n");
     printf("-t, --type       raw|long|any  message type to use [default: ANY]\n");
     printf("-p, --port       port          port used for receiving\n");
@@ -52,6 +54,7 @@ usage(void)
     printf("                               (num = number of buffers)\n");
     printf("-m, --maxpayload max_payload   max payload to use\n");
     printf("-v, --verbose                  verbose\n");
+    printf("-V, --version                  print version\n");
     printf("-h, --help                     print this help\n\n");
 }
 
@@ -141,12 +144,13 @@ main(int argc, char **argv)
             {"iovec", required_argument, 0, 'i'},
             {"maxpayload", required_argument,  0, 'm'},
             {"verbose", no_argument,     0, 'v'},
+            {"version", no_argument,     0, 'V'},
             {"help", no_argument,        0, 'h'},
             {0, 0, 0, 0}
     };
 
 
-    while ((opt = getopt_long(argc, argv,"hop:s:nft:m:i:v",
+    while ((opt = getopt_long(argc, argv,"hop:s:nft:m:i:vV",
                          long_options, &long_index )) != -1) {
         char *type_string = NULL;
 
@@ -219,6 +223,10 @@ main(int argc, char **argv)
             case 'v':
                 verbose = 1;
                 break;
+
+            case 'V':
+                printf("Version: %s\n", AXIOM_API_VERSION_STR);
+                exit(0);
 
             case 'h':
             default:

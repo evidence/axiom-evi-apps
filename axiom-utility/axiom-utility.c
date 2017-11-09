@@ -25,10 +25,13 @@ int verbose = 0;
 
 static void usage(void) {
     printf("usage: axiom-utility [arguments]\n");
-    printf("Various utility\n\n");
+    printf("Various utility\n");
+    printf("Version: %s\n", AXIOM_API_VERSION_STR);
+    printf("\n\n");
     printf("Arguments:\n");
     printf("-f, --flush       flush all messages from every not already binded port\n");
     printf("-v, --verbose     verbose\n");
+    printf("-V, --version     print version\n");
     printf("-h, --help        print this help\n\n");
 }
 
@@ -85,11 +88,13 @@ int main(int argc, char **argv) {
     static struct option long_options[] = {
             {"flush", no_argument,       0, 'f'},
             {"verbose", no_argument,     0, 'v'},
+            {"version", no_argument,     0, 'V'},
             {"help", no_argument,        0, 'h'},
             {0, 0, 0, 0}
     };
 
-    while ((opt = getopt_long(argc, argv,"hop:s:nft:m:i:v", long_options, &long_index )) != -1) {
+    while ((opt = getopt_long(argc, argv,"hop:s:nft:m:i:vV", long_options,
+                    &long_index )) != -1) {
         switch (opt) {
             case 'f':
                 flush = 1;
@@ -100,6 +105,9 @@ int main(int argc, char **argv) {
             case 'h':
                 usage();
                 exit(-1);
+            case 'V':
+                printf("Version: %s\n", AXIOM_API_VERSION_STR);
+                exit(0);
             default:
                 printf("ERROR: invalid option -%c\n",opt);
                 usage();

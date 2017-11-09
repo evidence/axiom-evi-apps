@@ -54,6 +54,7 @@ usage(void)
 {
     printf("usage: axiom-rdma-dbg [arguments] -m mode [-s payload size  payload (list of bytes)]\n");
     printf("Application to debug RDMA features of Axiom NIC\n");
+    printf("Version: %s\n", AXIOM_API_VERSION_STR);
     printf("\n\n");
     printf("Arguments:\n");
     printf("-m, --mode      r,w,d,s        r = rdma read, w = rdma write, d = local dump,\n");
@@ -65,6 +66,7 @@ usage(void)
     printf("                               The suffix specifies the size unit\n");
     printf("-p, --port      port           port used for the RDMA transfer\n");
     printf("-v, --verbose                  verbose\n");
+    printf("-V, --version                  print version\n");
     printf("-h, --help                     print this help\n\n");
 }
 
@@ -221,12 +223,13 @@ main(int argc, char **argv)
         {"size", required_argument, 0, 's'},
         {"port", required_argument, 0, 'p'},
         {"verbose", no_argument, 0, 'v'},
+        {"version", no_argument, 0, 'V'},
         {"help", no_argument, 0, 'h'},
         {0, 0, 0, 0}
     };
 
 
-    while ((opt = getopt_long(argc, argv,"m:n:o:O:s:fp:vh",
+    while ((opt = getopt_long(argc, argv,"m:n:o:O:s:fp:vVh",
                          long_options, &long_index )) != -1) {
         char char_scale = 'b';
         int data_scale = 0;
@@ -290,6 +293,9 @@ main(int argc, char **argv)
             case 'v':
                 verbose = 1;
                 break;
+            case 'V':
+                printf("Version: %s\n", AXIOM_API_VERSION_STR);
+                exit(0);
             case 'h':
             default:
                 usage();
