@@ -1,7 +1,7 @@
 /*!
  * \file axiom_session.c
  *
- * \version     v0.14
+ * \version     v0.15
  *
  * Axiom session management.
  *

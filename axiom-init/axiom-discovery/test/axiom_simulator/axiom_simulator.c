@@ -1,7 +1,7 @@
 /*!
  * \file axiom_simulator.c
  *
- * \version     v0.14
+ * \version     v0.15
  *
  * This file implements AXIOM node network simulation
  *

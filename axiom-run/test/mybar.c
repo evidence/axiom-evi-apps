@@ -1,7 +1,7 @@
 /*!
  * \file mybar.c
  *
- * \version     v0.14
+ * \version     v0.15
  *
  * A simple test program to test axiom-run barriers.
  *
