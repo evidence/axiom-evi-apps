@@ -115,6 +115,7 @@ void *checker(void *_data) {
         for (;;) {
             ret=axiom_rdma_check(dev, &data->token, 1);
             if (ret == 1) break;
+            if (ret == 0) continue;
             if (ret!=AXIOM_RET_NOTAVAIL) {
                 perror("axiom_rdma_check()");
                 usleep(1000000);
@@ -383,7 +384,7 @@ int main(int argc, char**argv) {
             case 'b':
                 blocksize=asc2int(optarg);
                 if (blocksize<sizeof(unsigned int)+1||blocksize>AXIOM_RDMA_PAYLOAD_MAX_SIZE) {
-                    fprintf(stderr, "ERROR: bad block size (-b option)\n");
+                    fprintf(stderr, "ERROR: bad block size (-b %s)\n",optarg);
                     help();
                     exit(EXIT_FAILURE);
                 }
