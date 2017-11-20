@@ -48,6 +48,10 @@ static inline int asc2int(const char *s) {
     return (int)strtol(s,NULL,0);
 }
 
+static inline int asc2long(const char *s) {
+    return (long)strtol(s,NULL,0);
+}
+
 extern void dump(FILE *fout, uint8_t *addr, size_t size);
 
 /*
