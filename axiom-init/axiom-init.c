@@ -54,7 +54,7 @@ usage(void)
 int
 axiom_rt_from_file(axiom_dev_t *dev, char *filename)
 {
-    axiom_if_id_t routing_table[AXIOM_NODES_MAX];
+    axiom_if_id_t routing_table[AXIOM_NODES_NUM];
     FILE *file = NULL;
     char *line = NULL;
     size_t len = 0;
@@ -70,14 +70,14 @@ axiom_rt_from_file(axiom_dev_t *dev, char *filename)
 
     while ((getline(&line, &len, file)) != -1) {
         line_count++;
-        if (line_count > AXIOM_NODES_MAX) {
-            printf("The routing table contains more than %d nodes\n", AXIOM_NODES_MAX);
+        if (line_count > AXIOM_NODES_NUM) {
+            printf("The routing table contains more than %d nodes\n", AXIOM_NODES_NUM);
             free(line);
             return -1;
         }
 
         long val = strtol(line, NULL, 10);
-        if ((val >= 0) || (val < AXIOM_INTERFACES_MAX))
+        if ((val >= 0) || (val <= AXIOM_INTERFACES_MAX))
             routing_table[line_count - 1] = (1 << val);
     }
 
@@ -85,7 +85,7 @@ axiom_rt_from_file(axiom_dev_t *dev, char *filename)
     fclose(file);
 
     /* set final routing table */
-    for (axiom_node_id_t nid = 0; nid < AXIOM_NODES_MAX; nid++) {
+    for (int nid = 0; nid < AXIOM_NODES_NUM; nid++) {
         axiom_set_routing(dev, nid, routing_table[nid]);
     }
 
@@ -95,16 +95,13 @@ axiom_rt_from_file(axiom_dev_t *dev, char *filename)
 int
 axiom_rt_to_file(axiom_dev_t *dev, char *filename)
 {
-    axiom_if_id_t routing_table[AXIOM_NODES_MAX];
+    axiom_if_id_t routing_table[AXIOM_NODES_NUM];
     FILE *file = NULL;
-    char *line = NULL;
-    size_t len = 0;
-    int line_count = 0;
 
     memset(routing_table, 0, sizeof(routing_table));
 
     /* get final routing table */
-    for (axiom_node_id_t nid = 0; nid < AXIOM_NODES_MAX; nid++) {
+    for (int nid = 0; nid < AXIOM_NODES_NUM; nid++) {
         axiom_get_routing(dev, nid, routing_table+nid);
     }
 
@@ -114,7 +111,7 @@ axiom_rt_to_file(axiom_dev_t *dev, char *filename)
         return -1;
     }
 
-    for (axiom_node_id_t nid = 0; nid < AXIOM_NODES_MAX; nid++) {
+    for (int nid = 0; nid < AXIOM_NODES_NUM; nid++) {
         int val=__builtin_ctzl(routing_table[nid]);
         fprintf(file,"%d\n",val);
     }
@@ -132,9 +129,9 @@ main(int argc, char **argv)
     char rt_save_filename[1024];
     axiom_dev_t *dev = NULL;
     axiom_args_t axiom_args;
-    axiom_node_id_t topology[AXIOM_NODES_MAX][AXIOM_INTERFACES_MAX];
+    axiom_node_id_t topology[AXIOM_NODES_NUM][AXIOM_INTERFACES_NUM];
     axiom_node_id_t node_id = 0;
-    axiom_if_id_t final_routing_table[AXIOM_NODES_MAX];
+    axiom_if_id_t final_routing_table[AXIOM_NODES_NUM];
     axiom_err_t ret;
 
     int long_index =0;

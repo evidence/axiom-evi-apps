@@ -233,8 +233,8 @@ main(int argc, char **argv)
 
     /* check port parameter */
     if (port_ok == 1) {
-        if ((port < 0) || (port >= AXIOM_PORT_MAX)) {
-            printf("Port not allowed [%u]; [0 <= port < %d]\n", port,
+        if ((port < 0) || (port > AXIOM_PORT_MAX)) {
+            printf("Port not allowed [%u]; [0 <= port <= %d]\n", port,
                     AXIOM_PORT_MAX);
             exit(-1);
         }
@@ -249,8 +249,8 @@ main(int argc, char **argv)
     /* check destination node parameter */
     if (dst_ok == 1) {
         /* port arameter inserted */
-        if ((dst_id < 0) || (dst_id >= AXIOM_NODES_MAX)) {
-            printf("Destination node id not allowed [%u]; [0 <= dst_id < %d]\n",
+        if ((dst_id < 0) || (dst_id > AXIOM_NODES_MAX)) {
+            printf("Destination node id not allowed [%u]; [0 <= dst_id <= %d]\n",
                     dst_id, AXIOM_NODES_MAX);
             exit(-1);
         }
@@ -351,8 +351,12 @@ main(int argc, char **argv)
         }
 
         if (!AXIOM_RET_IS_OK(send_ret)) {
-            EPRINTF("send error");
-            goto err;
+            if (send_ret == AXIOM_RET_NOTREACH) {
+                printf("Destination node id not reachable [%u]\n", dst_id);
+            } else {
+                EPRINTF("send error");
+                goto err;
+            }
         }
 
         printf("[node %u seq %d] %s msg sent - msg_id %d dest_id %d "

@@ -22,9 +22,9 @@ typedef struct node_args {
     pthread_t tid;
     int num_interfaces;
     axiom_node_id_t node_id;
-    axiom_node_id_t node_topology[AXIOM_NODES_MAX][AXIOM_INTERFACES_MAX];
-    int local_routing[AXIOM_NODES_MAX][AXIOM_INTERFACES_MAX];
-    axiom_if_id_t final_routing_table[AXIOM_NODES_MAX];
+    axiom_node_id_t node_topology[AXIOM_NODES_NUM][AXIOM_INTERFACES_NUM];
+    int local_routing[AXIOM_NODES_NUM][AXIOM_INTERFACES_NUM];
+    axiom_if_id_t final_routing_table[AXIOM_NODES_NUM];
     axiom_net_t *net;   /* net emulator status */
 } axiom_sim_node_args_t;
 
@@ -33,7 +33,7 @@ typedef axiom_topology_t axiom_sim_topology_t;
 
 void print_topology(axiom_sim_topology_t *tpl);
 void print_local_routing_table(axiom_sim_node_args_t *nodes, int num_nodes);
-void print_routing_tables (axiom_if_id_t rt[][AXIOM_NODES_MAX], int num_nodes);
+void print_routing_tables (axiom_if_id_t rt[][AXIOM_NODES_NUM], int num_nodes);
 void print_received_routing_table(axiom_sim_node_args_t *nodes, int num_nodes);
 int start_nodes(axiom_sim_node_args_t *nodes, int num_nodes, int master_node,
                 void *(*master_body)(void *), void *(*slave_body)(void *));

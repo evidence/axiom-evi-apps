@@ -183,7 +183,7 @@ print_routing_table(axiom_dev_t *dev, int all_nodes)
 
     printf("\n\t\tnode\tIF0\tIF1\tIF2\tIF3\n");
 
-    for (i = 0; i < AXIOM_NODES_MAX; i++) {
+    for (i = 0; i < AXIOM_NODES_NUM; i++) {
         err = axiom_get_routing(dev, i, &enabled_mask);
         if (err) {
             EPRINTF("err: %x enabled_mask: %x", err, enabled_mask);
@@ -195,7 +195,7 @@ print_routing_table(axiom_dev_t *dev, int all_nodes)
 
         printf("\t\t%d\t",i);
 
-        for (j = 0; j < AXIOM_INTERFACES_MAX; j++) {
+        for (j = 0; j < AXIOM_INTERFACES_NUM; j++) {
             int on = ((enabled_mask & (1 << j)) != 0);
 
             printf("%d\t", on);

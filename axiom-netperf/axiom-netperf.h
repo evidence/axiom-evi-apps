@@ -79,7 +79,7 @@ typedef struct {
     pthread_t threads[AXNP_MAX_THREADS];
     pthread_mutex_t mutex;
     axnetperf_client_t client;
-    axnetperf_server_t server[AXIOM_NODES_MAX];
+    axnetperf_server_t server[AXIOM_NODES_NUM];
 } axnetperf_status_t;
 
 void *axnetperf_client(void *s);

@@ -47,7 +47,7 @@ static inline void exec_flush(void) {
     int counter,oldcounter;
 
     axiom_args.flags = AXIOM_FLAG_NOFLUSH;
-    for (port=0;port<AXIOM_PORT_MAX;port++) {
+    for (port=0;port<=AXIOM_PORT_MAX;port++) {
         if (dev!=NULL) axiom_close(dev);
         dev=axiom_open(&axiom_args);
         if (dev==NULL) {

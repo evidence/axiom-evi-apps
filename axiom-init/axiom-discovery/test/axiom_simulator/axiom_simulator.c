@@ -67,7 +67,7 @@ print_local_routing_table(axiom_sim_node_args_t *nodes, int num_nodes)
 }
 
 void
-print_routing_tables (axiom_if_id_t rt[][AXIOM_NODES_MAX], int num_nodes)
+print_routing_tables (axiom_if_id_t rt[][AXIOM_NODES_NUM], int num_nodes)
 {
     int i, j;
     int comma = 0;
@@ -122,7 +122,7 @@ print_received_routing_table(axiom_sim_node_args_t *nodes, int num_nodes)
 
     for (index = 0; index < num_nodes; index++) {
         printf("\nNode %d RECEIVED ROUTING TABLE\n", nodes[index].node_id);
-        for (j = 0; j < AXIOM_NODES_MAX; j++) {
+        for (j = 0; j < AXIOM_NODES_NUM; j++) {
             printf("\tNode%d", j);
         }
 
@@ -182,7 +182,7 @@ start_nodes(axiom_sim_node_args_t *nodes, int num_nodes, int master_node,
 
 
         /* init the number of node interfaces */
-        nodes[i].num_interfaces = AXIOM_INTERFACES_MAX;
+        nodes[i].num_interfaces = AXIOM_INTERFACES_NUM;
         /* init the node local routing table */
         for (j = 0; j < num_nodes; j++) {
             for (h = 0; h < nodes[i].num_interfaces; h++) {

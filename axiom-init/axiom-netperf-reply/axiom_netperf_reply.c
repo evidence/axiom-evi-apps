@@ -37,7 +37,7 @@ typedef struct axiom_netperf_status {
 } axiom_netperf_status_t;
 
 /*! \brief axiom-netperf status array to handle all nodes */
-axiom_netperf_status_t status[AXIOM_NODES_MAX];
+axiom_netperf_status_t status[AXIOM_NODES_NUM];
 
 void
 axiom_netperf_send_reply(axiom_dev_t *dev, axiom_netperf_status_t *cur_status,

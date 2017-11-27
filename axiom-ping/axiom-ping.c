@@ -105,8 +105,13 @@ sender_body(void *opaque)
         send_ret =  axiom_send_raw(p->dev, (axiom_node_id_t)p->dst_id,
                 remote_port, type, sizeof(payload), &payload);
         if (!AXIOM_RET_IS_OK(send_ret)) {
-            IPRINTF(verbose, "send error");
-            goto err;
+            if (send_ret == AXIOM_RET_NOTREACH) {
+                printf("Destination node id not reachable [%u]\n",
+                        (axiom_node_id_t)p->dst_id);
+            } else {
+                IPRINTF(verbose, "send error");
+                goto err;
+            }
         }
 
         sent_packets++;

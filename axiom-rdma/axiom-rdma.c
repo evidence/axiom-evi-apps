@@ -134,6 +134,9 @@ axrdma_read(axrdma_status_t *s)
 
     if (!AXIOM_RET_IS_OK(ret)) {
         EPRINTF("axiom_rdma_read() failed - ret: 0x%x", ret);
+        if (ret == AXIOM_RET_NOTREACH) {
+            printf("Destination node id not reachable [%u]\n", s->slave_id);
+        }
         return -1;
     }
 
@@ -168,6 +171,9 @@ axrdma_write(axrdma_status_t *s)
 
     if (!AXIOM_RET_IS_OK(ret)) {
         EPRINTF("axiom_rdma_write() failed - ret: 0x%x", ret);
+        if (ret == AXIOM_RET_NOTREACH) {
+            printf("Destination node id not reachable [%u]\n", s->slave_id);
+        }
         return -1;
     }
 

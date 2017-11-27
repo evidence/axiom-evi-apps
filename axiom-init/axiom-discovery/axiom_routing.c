@@ -41,12 +41,12 @@
 
 /* init a node routing table */
 static void
-axiom_init_routing_neighbour(axiom_if_id_t rt[][AXIOM_NODES_MAX],
-        axiom_if_id_t neighbour_table[][AXIOM_NODES_MAX])
+axiom_init_routing_neighbour(axiom_if_id_t rt[][AXIOM_NODES_NUM],
+        axiom_if_id_t neighbour_table[][AXIOM_NODES_NUM])
 {
     int i;
 
-    for (i = 0; i < AXIOM_NODES_MAX; i++)
+    for (i = 0; i < AXIOM_NODES_NUM; i++)
     {
         /* node routing table */
         rt[0][i] = AXIOM_NULL_RT_INTERFACE;
@@ -65,9 +65,9 @@ axiom_init_routing_neighbour(axiom_if_id_t rt[][AXIOM_NODES_MAX],
  */
 static uint8_t
 axiom_compute_neighbours_route(axiom_node_id_t actual_node_id,
-        axiom_node_id_t topology[][AXIOM_INTERFACES_MAX],
-        axiom_if_id_t routing_tables[][AXIOM_NODES_MAX],
-        axiom_node_id_t neighbour_table[][AXIOM_NODES_MAX])
+        axiom_node_id_t topology[][AXIOM_INTERFACES_NUM],
+        axiom_if_id_t routing_tables[][AXIOM_NODES_NUM],
+        axiom_node_id_t neighbour_table[][AXIOM_NODES_NUM])
 {
     axiom_if_id_t interface_index, interface_index_to_set;
     axiom_node_id_t neighbour_id;
@@ -75,7 +75,7 @@ axiom_compute_neighbours_route(axiom_node_id_t actual_node_id,
 
     neighbours_counter = 0;
 
-    for (interface_index = 0; interface_index < AXIOM_INTERFACES_MAX;
+    for (interface_index = 0; interface_index <= AXIOM_INTERFACES_MAX;
             interface_index++)
     {
         if (topology[actual_node_id][interface_index] == AXIOM_NULL_NODE)
@@ -110,8 +110,8 @@ axiom_compute_neighbours_route(axiom_node_id_t actual_node_id,
 
 
 void
-axiom_compute_routing_tables(axiom_node_id_t topology[][AXIOM_INTERFACES_MAX],
-        axiom_if_id_t routing_tables[][AXIOM_NODES_MAX],
+axiom_compute_routing_tables(axiom_node_id_t topology[][AXIOM_INTERFACES_NUM],
+        axiom_if_id_t routing_tables[][AXIOM_NODES_NUM],
         axiom_node_id_t master_id,
         axiom_node_id_t last_node)
 {
@@ -119,7 +119,7 @@ axiom_compute_routing_tables(axiom_node_id_t topology[][AXIOM_INTERFACES_MAX],
     axiom_node_id_t actual_node_id;
     /* temp_rt[0] contains info about the n-level 'actual_node_id' neighbours*/
     /* temp_rt[1] contains info about the (n+1)-level 'actual_node_id' neighbours*/
-    axiom_node_id_t neighbour_table[2][AXIOM_NODES_MAX];
+    axiom_node_id_t neighbour_table[2][AXIOM_NODES_NUM];
 
     axiom_node_id_t node_index;
     axiom_if_id_t interface_index;
@@ -152,7 +152,7 @@ axiom_compute_routing_tables(axiom_node_id_t topology[][AXIOM_INTERFACES_MAX],
                first_neighbour_id = neighbour_table[0][node_index];
 
                /* compute the neighbours of 'neighbour_id' node */
-               for (interface_index = 0; interface_index < AXIOM_INTERFACES_MAX;
+               for (interface_index = 0; interface_index <= AXIOM_INTERFACES_MAX;
                        interface_index++)
                {
                    if ((topology[first_neighbour_id][interface_index]
@@ -185,9 +185,9 @@ axiom_compute_routing_tables(axiom_node_id_t topology[][AXIOM_INTERFACES_MAX],
            /* the second level neighbours become the next first level
             * neighbours in the algorithm */
            memcpy(&neighbour_table[0], &neighbour_table[1],
-                   AXIOM_NODES_MAX*sizeof(axiom_node_id_t));
+                   AXIOM_NODES_NUM*sizeof(axiom_node_id_t));
        /* exit from cycle when 'actual_node_id' routing table has
-        * been completed with all the AXIOM_NODES_MAX - 1 nodes info */
+        * been completed with all the AXIOM_NODES_NUM - 1 nodes info */
        } while (neighbours_counter < last_node - master_id - 1);
     }
 }
@@ -196,11 +196,11 @@ axiom_compute_routing_tables(axiom_node_id_t topology[][AXIOM_INTERFACES_MAX],
 /************************ Routing table delivery ******************************/
 
 static void
-axiom_init_routing_table(axiom_if_id_t routing_table[AXIOM_NODES_MAX])
+axiom_init_routing_table(axiom_if_id_t routing_table[AXIOM_NODES_NUM])
 {
-    uint8_t i;
+    int i;
 
-    for (i = 0; i < AXIOM_NODES_MAX; i++)
+    for (i = 0; i < AXIOM_NODES_NUM; i++)
     {
         routing_table[i] = AXIOM_NULL_RT_INTERFACE;
     }
@@ -208,7 +208,7 @@ axiom_init_routing_table(axiom_if_id_t routing_table[AXIOM_NODES_MAX])
 
 axiom_err_t
 axiom_delivery_routing_tables(axiom_dev_t *dev,
-        axiom_if_id_t routing_tables[][AXIOM_NODES_MAX],
+        axiom_if_id_t routing_tables[][AXIOM_NODES_NUM],
         axiom_node_id_t master_id, axiom_node_id_t last_node)
 {
     axiom_node_id_t dest_node_index, rt_node_index;
@@ -266,7 +266,7 @@ axiom_wait_rt_received(axiom_dev_t *dev, axiom_node_id_t master_id,
 {
     axiom_routing_cmd_t cmd = 0;
     axiom_node_id_t payload_node_id;
-    axiom_node_id_t reply_received[AXIOM_NODES_MAX];
+    axiom_node_id_t reply_received[AXIOM_NODES_NUM];
     axiom_if_id_t payload_if_id;
     int reply_received_num = 0;
     axiom_err_t ret;
@@ -301,7 +301,7 @@ axiom_wait_rt_received(axiom_dev_t *dev, axiom_node_id_t master_id,
 
 axiom_err_t
 axiom_receive_routing_tables(axiom_dev_t *dev, axiom_node_id_t node_id,
-        axiom_if_id_t routing_table[AXIOM_NODES_MAX],
+        axiom_if_id_t routing_table[AXIOM_NODES_NUM],
         axiom_node_id_t *max_node_id)
 {
     axiom_node_id_t src_node_id, node_to_set;
@@ -367,12 +367,12 @@ axiom_receive_routing_tables(axiom_dev_t *dev, axiom_node_id_t node_id,
 
 static void
 axiom_write_routing_table(axiom_dev_t *dev,
-        axiom_if_id_t routing_table[AXIOM_NODES_MAX])
+        axiom_if_id_t routing_table[AXIOM_NODES_NUM])
 {
-    axiom_node_id_t node_id_index;
+    int node_id_index;
 
     /* set final routing table */
-    for (node_id_index = 0; node_id_index < AXIOM_NODES_MAX; node_id_index++)
+    for (node_id_index = 0; node_id_index < AXIOM_NODES_NUM; node_id_index++)
     {
         axiom_set_routing(dev, node_id_index, routing_table[node_id_index]);
     }
@@ -381,7 +381,7 @@ axiom_write_routing_table(axiom_dev_t *dev,
 
 axiom_err_t
 axiom_set_routing_table(axiom_dev_t *dev,
-        axiom_if_id_t routing_table[AXIOM_NODES_MAX], int master)
+        axiom_if_id_t routing_table[AXIOM_NODES_NUM], int master)
 {
     axiom_if_id_t if_index;
     uint8_t if_features = 0;
@@ -405,7 +405,7 @@ axiom_set_routing_table(axiom_dev_t *dev,
         indicating to set their routing tables */
 
         /* For each interface send all messages */
-        for (if_index = 0; (if_index < AXIOM_INTERFACES_MAX) &&
+        for (if_index = 0; (if_index <= AXIOM_INTERFACES_MAX) &&
                 AXIOM_RET_IS_OK(ret); if_index++)
         {
             /* get interface features */
@@ -431,7 +431,7 @@ axiom_set_routing_table(axiom_dev_t *dev,
         }
 
         /* For each interface receive all messages */
-        for (if_index = 0; (if_index < AXIOM_INTERFACES_MAX) &&
+        for (if_index = 0; (if_index <= AXIOM_INTERFACES_MAX) &&
                 AXIOM_RET_IS_OK(ret); if_index++)
         {
             /* get interface features */
@@ -478,7 +478,7 @@ axiom_set_routing_table(axiom_dev_t *dev,
         }
 
         /* For each interface send all messages */
-        for (if_index = 0; (if_index < AXIOM_INTERFACES_MAX) &&
+        for (if_index = 0; (if_index <= AXIOM_INTERFACES_MAX) &&
                 AXIOM_RET_IS_OK(ret); if_index++)
         {
             /* get interface features */

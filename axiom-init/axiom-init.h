@@ -25,8 +25,8 @@
  */
 void
 axiom_discovery_master(axiom_dev_t *dev,
-        axiom_node_id_t topology[][AXIOM_INTERFACES_MAX],
-        axiom_if_id_t routing_table[AXIOM_NODES_MAX], int verbose);
+        axiom_node_id_t topology[][AXIOM_INTERFACES_NUM],
+        axiom_if_id_t routing_table[AXIOM_NODES_NUM], int verbose);
 
 /*!
  * \brief Discovery algorithm and routing table delivery for the slave nodes
@@ -40,8 +40,8 @@ axiom_discovery_master(axiom_dev_t *dev,
  */
 void
 axiom_discovery_slave(axiom_dev_t *dev, axiom_node_id_t first_src,
-        void *first_payload, axiom_node_id_t topology[][AXIOM_INTERFACES_MAX],
-        axiom_if_id_t routing_table[AXIOM_NODES_MAX], int verbose);
+        void *first_payload, axiom_node_id_t topology[][AXIOM_INTERFACES_NUM],
+        axiom_if_id_t routing_table[AXIOM_NODES_NUM], int verbose);
 
 /*!
  * \brief This function implements the reply (pong) of ping message.

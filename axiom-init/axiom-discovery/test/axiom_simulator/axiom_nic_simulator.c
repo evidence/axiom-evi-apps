@@ -74,7 +74,7 @@ axiom_err_t
 axiom_get_if_info(axiom_dev_t *dev, axiom_if_id_t if_number,
         uint8_t* if_features)
 {
-    if (if_number >= AXIOM_INTERFACES_MAX) {
+    if (if_number > AXIOM_INTERFACES_MAX) {
         return AXIOM_RET_ERROR;
     }
 
@@ -101,7 +101,7 @@ axiom_set_routing(axiom_dev_t *dev, axiom_node_id_t node_id,
 {
     uint8_t i;
 
-    for (i = 0; i < AXIOM_INTERFACES_MAX; i++) {
+    for (i = 0; i <= AXIOM_INTERFACES_MAX; i++) {
         if (enabled_mask & (uint8_t)(1 << i)) {
             ((axiom_sim_node_args_t*)dev)->local_routing[node_id][i] = 1;
         } else {
@@ -126,7 +126,7 @@ axiom_get_routing(axiom_dev_t *dev, axiom_node_id_t node_id,
 
     *enabled_mask = 0;
 
-    for (i = 0; i < AXIOM_INTERFACES_MAX; i++) {
+    for (i = 0; i <= AXIOM_INTERFACES_MAX; i++) {
         if (((axiom_sim_node_args_t*)dev)->local_routing[node_id][i] == 1) {
             *enabled_mask |= (uint8_t)(1 << i);
         }

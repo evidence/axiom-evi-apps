@@ -136,6 +136,9 @@ axnetperf_raw_long(axnetperf_status_t *s)
             pthread_mutex_unlock(&s->mutex);
 
             EPRINTF("send error");
+            if (err == AXIOM_RET_NOTREACH) {
+                printf("Destination node id not reachable [%u]\n", s->server_id);
+            }
             return err;
         }
 
@@ -384,8 +387,11 @@ axnetperf_rdma(axnetperf_status_t *s)
         err = axiom_send_raw(s->dev, s->server_id, s->server_port,
                 AXIOM_TYPE_RAW_DATA, sizeof(payload), &payload);
         if (unlikely(!AXIOM_RET_IS_OK(err))) {
-            EPRINTF("send error");
             pthread_mutex_unlock(&s->mutex);
+            EPRINTF("send error");
+            if (err == AXIOM_RET_NOTREACH) {
+                printf("Destination node id not reachable [%u]\n", s->server_id);
+            }
             return err;
         }
     }
@@ -410,6 +416,9 @@ axnetperf_start(axnetperf_status_t *s)
             AXIOM_TYPE_RAW_DATA, sizeof(payload), &payload);
     if (unlikely(!AXIOM_RET_IS_OK(err))) {
         EPRINTF("send error");
+        if (err == AXIOM_RET_NOTREACH) {
+            printf("Destination node id not reachable [%u]\n", s->server_id);
+        }
         return err;
     }
 
