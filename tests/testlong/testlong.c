@@ -64,6 +64,8 @@ static int mynode,yournode,numnodes;
 #define NUM 64
 // size of every transfer
 #define BUFSIZE 2442
+// receiver delay (usec)
+#define RECEIVER_DELAY 0
 
 typedef struct {
     int destnode;
@@ -74,6 +76,7 @@ static int blocksize=BUFSIZE;
 static int mode=MODE_FULL;
 static int port=PORT;
 static int seed=SEED;
+static int long rdelay=RECEIVER_DELAY;
 
 void  *sender(void *data) {
     sender_data_t *p=(sender_data_t *)data;
@@ -132,11 +135,12 @@ void  *receiver(void *data) {
     axiom_node_id_t src_id;
     uint8_t *addr;
     uint8_t c;
-    int i,j;
+    int j;
     int emit=0;
     uint8_t buffer[AXIOM_LONG_PAYLOAD_MAX_SIZE];
     long sc=0;
     rand_t r;
+    long mydelay=0;
 
     const int endnum=(mode==MODE_MULTI?num*numnodes:num);
     if (debug>0) {
@@ -146,12 +150,17 @@ void  *receiver(void *data) {
     while (endnum>__sync_fetch_and_or(&received,0)) {
         size=sizeof(buffer);
         myport=port;
+        if (mydelay>0) {
+            usleep(mydelay);
+            mydelay=0;
+        }
         err= axiom_recv_long(dev, &src_id, &myport, &size, buffer);
         if (err==AXIOM_RET_NOTAVAIL) continue;
         if (!AXIOM_RET_IS_OK(err)) {
             perror("axiom_recv_long()");
             continue;
         }
+        mydelay=rdelay;
         __sync_fetch_and_add(&received,1);
         if (size!=blocksize) {
             fprintf(stderr,"ERROR received from %2u %u bytes but expected %d bytes\n", (unsigned)src_id, (unsigned)size, blocksize);
@@ -215,6 +224,7 @@ static void help() {
     fprintf(stderr, "  -M|--multi          multi mode (i.e. every send to all other nodes)\n");
     fprintf(stderr, "  -k|--noblock        open device in NOT BLOCKING operation mode\n");
     fprintf(stderr, "  -r|--receivers NUM  number of receivers thread [default: 1]\n");
+    fprintf(stderr, "  -D|--delay NUM      receiver delay after each successfull message (in msec) [default: 0]\n");
     fprintf(stderr, "note:\n");
     fprintf(stderr, "  if you use more than one receivers (i.e. -r NUM with NUM>1) and a blocking operation (i.e. no -k specified) than the test should not terminate!");
 }
@@ -232,7 +242,7 @@ int main(int argc, char**argv) {
     int c;
 
     opterr = 0;
-    while ((opt = getopt_long(argc, argv, "hs:p:n:b:g:HMFdkr:", long_options, &long_index)) != -1) {
+    while ((opt = getopt_long(argc, argv, "hs:p:n:b:g:HMFdkr:D:", long_options, &long_index)) != -1) {
         switch (opt) {
             case 'd':
                 debug++;
@@ -248,6 +258,9 @@ int main(int argc, char**argv) {
                 break;
             case 'r':
                 receivers=asc2int(optarg);
+                break;
+            case 'D':
+                rdelay=asc2long(optarg)*1000;
                 break;
             case 'b':
                 blocksize=asc2int(optarg);

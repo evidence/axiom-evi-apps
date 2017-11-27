@@ -21,9 +21,12 @@
 #include <string.h>
 #include <unistd.h>
 #include <getopt.h>
+#include <errno.h>
 
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <sys/un.h>
+#include <sys/stat.h>
 
 #include "axiom_nic_types.h"
 #include "axiom_nic_packets.h"
@@ -133,6 +136,10 @@ main(int argc, char **argv)
     axiom_node_id_t node_id = 0;
     axiom_if_id_t final_routing_table[AXIOM_NODES_NUM];
     axiom_err_t ret;
+    int sock;
+    struct sockaddr_un myaddr;
+    int result, maxfd,fd_raw;
+    fd_set set;
 
     int long_index =0;
     int opt = 0;
@@ -237,18 +244,83 @@ main(int argc, char **argv)
         }
     }
 
+    //
+    // create a Unix domain socket
+    // and bind it to INIT_SOCKET_PATHNAME
+    //
+    sock = socket(AF_UNIX, SOCK_DGRAM, 0);
+    if (sock == -1) {
+        EPRINTF("error creating unix domain socket");
+        axiom_close(dev);
+        exit(-1);
+    }
+    result=unlink(AXIOM_INIT_SOCKET_PATHNAME); // paranoia
+    myaddr.sun_family = AF_UNIX;
+    snprintf(myaddr.sun_path, sizeof (myaddr.sun_path), AXIOM_INIT_SOCKET_PATHNAME);
+    result = bind(sock, (struct sockaddr *) &myaddr, sizeof (myaddr));
+    if (result == -1) {
+        EPRINTF("error binding unix domain socket");
+        close(sock);
+        axiom_close(dev);
+        exit(-1);
+    }
+    result = chmod(AXIOM_INIT_SOCKET_PATHNAME,S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP);
+    if (result == -1) {
+        EPRINTF("error chaning permission of unix domain socket");
+        close(sock);
+        unlink(AXIOM_INIT_SOCKET_PATHNAME);
+        axiom_close(dev);
+        exit(-1);
+    }    
+    ret=axiom_get_fds(dev,&fd_raw,NULL,NULL);
+    if (!AXIOM_RET_IS_OK(ret)) {
+        EPRINTF("error retrieving axiom raw file descriptor");
+        close(sock);
+        unlink(AXIOM_INIT_SOCKET_PATHNAME);
+        axiom_close(dev);
+        exit(-1);
+    }
+    maxfd=fd_raw>sock?fd_raw+1:sock+1;
+
     while(run) {
         axiom_node_id_t src;
         axiom_type_t type;
         axiom_init_cmd_t cmd;
         axiom_long_payload_t payload;
         size_t payload_size = sizeof(payload);
-
-        ret = axiom_recv_init(dev, &src, &type, &cmd, &payload_size,
-                &payload);
-        if (!AXIOM_RET_IS_OK(ret)) {
-            EPRINTF("error receiving message");
+        int res;
+       
+        FD_ZERO(&set);
+        FD_SET(sock,&set);
+        FD_SET(fd_raw,&set);
+        res=select(maxfd,&set,NULL,NULL,NULL);
+        if (res==-1) {
+            if (errno == EINTR) continue; // paranoia
+            EPRINTF("select() error");
             break;
+        }
+        if (FD_ISSET(sock,&set)) {
+            struct msghdr msg;
+            struct iovec iov;
+            iov.iov_base=&payload;
+            iov.iov_len=sizeof(payload);
+            memset(&msg,0,sizeof(msg));
+            msg.msg_iov=&iov;
+            msg.msg_iovlen=1;
+            res=recvmsg(sock,&msg,0);
+            if (res<=0) {
+                EPRINTF("error during recvmsg() from unix domain socket");
+                break;
+            }
+            cmd = ((axiom_init_payload_t*)&payload)->command;
+            payload_size=res;
+        } else {
+            ret = axiom_recv_init(dev, &src, &type, &cmd, &payload_size,
+                    &payload);
+            if (!AXIOM_RET_IS_OK(ret)) {
+                EPRINTF("error receiving message");
+                break;
+            }
         }
         switch (cmd) {
             case AXIOM_DSCV_CMD_REQ_ID:
@@ -256,8 +328,16 @@ main(int argc, char **argv)
                         final_routing_table, verbose);
                 if (save_rt) {
                     if (axiom_rt_to_file(dev, rt_filename)) {
-                        axiom_close(dev);
-                        exit(-1);
+                        EPRINTF("error writing routing-table file");
+                    }
+                }
+                break;
+
+            case AXIOM_CMD_START_DISCOVERY:
+                axiom_discovery_master(dev, topology, final_routing_table, verbose);
+                if (save_rt) {
+                    if (axiom_rt_to_file(dev, rt_filename)) {
+                        EPRINTF("error writing routing-table file");
                     }
                 }
                 break;
@@ -289,6 +369,8 @@ main(int argc, char **argv)
         }
     }
 
+    close(sock);
+    unlink(AXIOM_INIT_SOCKET_PATHNAME);
     axiom_close(dev);
 
     return 0;

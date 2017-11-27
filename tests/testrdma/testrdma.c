@@ -290,7 +290,7 @@ int main(int argc, char**argv) {
             case 'b':
                 blocksize=asc2int(optarg);
                 if (blocksize<sizeof(unsigned int)+1||blocksize>AXIOM_RDMA_PAYLOAD_MAX_SIZE) {
-                    fprintf(stderr, "ERROR: bad block size (-b option)\n");
+                    fprintf(stderr, "ERROR: bad block size (-b %s)\n",optarg);
                     help();
                     exit(EXIT_FAILURE);
                 }
