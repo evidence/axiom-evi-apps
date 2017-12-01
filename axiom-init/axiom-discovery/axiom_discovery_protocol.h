@@ -16,11 +16,13 @@
 #include "axiom_nic_types.h"
 #include "axiom_nic_api_user.h"
 #include "axiom_nic_packets.h"
+#include "axiom_nic_regs.h"
 #include "axiom_nic_discovery.h"
 #include "axiom_sim_topology.h"
 
 /*! \brief Value returned by axiom_get_if_info() for a connected interface */
-#define AXIOM_IF_CONNECTED              0x01
+#define AXIOM_IF_CONNECTED              AXIOMREG_IFINFO_CONNECTED
+#define AXIOM_IF_LOOPBACK               AXIOMREG_ROUTING_LOOPBACK_IF
 
 /*
  * \brief This function implements the Master node Discovery Algorithm.

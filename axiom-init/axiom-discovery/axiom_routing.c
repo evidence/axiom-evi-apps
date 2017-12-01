@@ -20,7 +20,9 @@
 #include "axiom_routing.h"
 #include "axiom_nic_api_user.h"
 #include "axiom_nic_routing.h"
+#include "axiom_nic_regs.h"
 
+extern int verbose;
 
 /* At the end of the discovery algorithm,  Master node (which knows the entire
  * network topology) performs a similar-Dijkstra algorithm in order to compute
@@ -140,8 +142,8 @@ axiom_compute_routing_tables(axiom_node_id_t topology[][AXIOM_INTERFACES_NUM],
                                                             topology,
                                                             routing_tables,
                                                             neighbour_table);
-       do
-       {
+        do
+        {
             /* Compute the second level neighbours*/
            for (node_index = master_id; node_index < last_node; node_index++)
            {
@@ -229,6 +231,9 @@ axiom_delivery_routing_tables(axiom_dev_t *dev,
             ifaces = routing_tables[dest_node_index][rt_node_index];
             if (ifaces != AXIOM_NULL_RT_INTERFACE)
             {
+                IPRINTF(verbose, "send RT row - dest: %d node: %d if: %d",
+                        dest_node_index, rt_node_index, ifaces)
+
                  /* (node, ifaces codified) to send to dest_node_id*/
                 /* (node, if) to send to dest_node_id*/
                 ret = axiom_send_raw_delivery(dev, dest_node_index,
@@ -246,7 +251,9 @@ axiom_delivery_routing_tables(axiom_dev_t *dev,
     for (dest_node_index = master_id + 1;
             (dest_node_index < last_node) && AXIOM_RET_IS_OK(ret);
             dest_node_index++)
-	{
+    {
+        IPRINTF(verbose, "send RT END INFO - dest: %d", dest_node_index);
+
         /* end of sending routing tables */
         ret = axiom_send_raw_delivery(dev, dest_node_index,
                 AXIOM_RT_CMD_END_INFO, 0, 0);
@@ -282,8 +289,8 @@ axiom_wait_rt_received(axiom_dev_t *dev, axiom_node_id_t master_id,
                 &cmd, &payload_node_id, &payload_if_id);
         if (!AXIOM_RET_IS_OK(ret) || (cmd != AXIOM_RT_CMD_RT_REPLY))
         {
-            EPRINTF("MASTER, Error receiving AXIOM_RT_CMD_RT_REPLY message");
-            EPRINTF("%d, %d", ret, cmd);
+            EPRINTF("MASTER, Error receiving AXIOM_RT_CMD_RT_REPLY message"
+                    "ret: %d cmd: %d src_node: %d", ret, cmd, src_node_id);
             return AXIOM_RET_ERROR;
         }
 
@@ -317,6 +324,9 @@ axiom_receive_routing_tables(axiom_dev_t *dev, axiom_node_id_t node_id,
         /* receive routing info with raw messages */
         ret = axiom_recv_raw_delivery(dev, &src_node_id,
                 &cmd, &node_to_set, &if_to_set);
+
+        IPRINTF(verbose, "recv RT row - src: %d cmd: %d node: %d if: %d",
+                src_node_id, cmd, node_to_set, if_to_set);
 
         if (!AXIOM_RET_IS_OK(ret)) {
             EPRINTF("Slave %d, Error receiving AXIOM_RT_TYPE_INFO message",
@@ -394,6 +404,9 @@ axiom_set_routing_table(axiom_dev_t *dev,
     /* The node reads its node id */
     axiom_node_id_t node_id = axiom_get_node_id(dev);
 
+    /* Set loopback interface for local node */
+    routing_table[node_id] = (1 << AXIOMREG_ROUTING_LOOPBACK_IF);
+
     if (master)
     {
         /* ********************** Master node ******************** */
@@ -409,12 +422,12 @@ axiom_set_routing_table(axiom_dev_t *dev,
                 AXIOM_RET_IS_OK(ret); if_index++)
         {
             /* get interface features */
-            axiom_get_if_info (dev, if_index, &if_features);
+            axiom_get_if_info(dev, if_index, &if_features);
 
             /* Interface connected to another board*/
-            if ((if_features & 0x01) != 0)
+            if ((if_features & AXIOM_IF_CONNECTED) != 0)
             {
-                DPRINTF("Node:%d, Send to interface number = %d the "
+                IPRINTF(verbose, "Node:%d, Send to interface number = %d the "
                         "AXIOM_RAW_TYPE_SET_ROUTING message",
                         node_id, if_index);
 
@@ -435,10 +448,10 @@ axiom_set_routing_table(axiom_dev_t *dev,
                 AXIOM_RET_IS_OK(ret); if_index++)
         {
             /* get interface features */
-            axiom_get_if_info (dev, if_index, &if_features);
+            axiom_get_if_info(dev, if_index, &if_features);
 
             /* Interface connected to another board*/
-            if ((if_features & 0x01) != 0)
+            if ((if_features & AXIOM_IF_CONNECTED) != 0)
             {
                 /* Wait answers */
                 ret = axiom_recv_raw_set_routing(dev, &src_interface, &cmd);
@@ -482,10 +495,10 @@ axiom_set_routing_table(axiom_dev_t *dev,
                 AXIOM_RET_IS_OK(ret); if_index++)
         {
             /* get interface features */
-            axiom_get_if_info (dev, if_index, &if_features);
+            axiom_get_if_info(dev, if_index, &if_features);
 
             /* Interface connected to another board */
-            if ((if_features & 0x01) != 0)
+            if ((if_features & AXIOM_IF_CONNECTED) != 0)
             {
                 DPRINTF("Node:%d, Send to interface number = %d "
                         "the AXIOM_RAW_TYPE_SET_ROUTING message",

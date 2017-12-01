@@ -12,7 +12,7 @@
 #ifndef AXIOM_ROUTING_H
 #define AXIOM_ROUTING_H
 
-#define AXIOM_NULL_RT_INTERFACE  0
+#define AXIOM_NULL_RT_INTERFACE         0x0
 
 /*!
  * \brief This function is executed by the Master node in order to compute the

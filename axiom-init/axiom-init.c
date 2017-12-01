@@ -224,7 +224,7 @@ main(int argc, char **argv)
     }
 
     if (master) {
-        axiom_discovery_master(dev, topology, final_routing_table, verbose);
+        axiom_discovery_master(dev, topology, final_routing_table);
         if (save_rt) {
             if (axiom_rt_to_file(dev, rt_filename)) {
                 axiom_close(dev);
@@ -325,7 +325,7 @@ main(int argc, char **argv)
         switch (cmd) {
             case AXIOM_DSCV_CMD_REQ_ID:
                 axiom_discovery_slave(dev, src, &payload, topology,
-                        final_routing_table, verbose);
+                        final_routing_table);
                 if (save_rt) {
                     if (axiom_rt_to_file(dev, rt_filename)) {
                         EPRINTF("error writing routing-table file");
@@ -334,7 +334,7 @@ main(int argc, char **argv)
                 break;
 
             case AXIOM_CMD_START_DISCOVERY:
-                axiom_discovery_master(dev, topology, final_routing_table, verbose);
+                axiom_discovery_master(dev, topology, final_routing_table);
                 if (save_rt) {
                     if (axiom_rt_to_file(dev, rt_filename)) {
                         EPRINTF("error writing routing-table file");

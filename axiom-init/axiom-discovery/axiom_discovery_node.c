@@ -26,6 +26,7 @@
 #include "../axiom-init.h"
 
 static void notify_end_of_discovery();
+extern int verbose;
 
 static void
 print_topology(axiom_node_id_t tpl[][AXIOM_INTERFACES_NUM],
@@ -84,9 +85,9 @@ print_routing_table(axiom_dev_t *dev, axiom_node_id_t node_id,
 void
 axiom_discovery_master(axiom_dev_t *dev,
         axiom_node_id_t topology[][AXIOM_INTERFACES_NUM],
-        axiom_if_id_t final_routing_table[AXIOM_NODES_NUM], int verbose)
+        axiom_if_id_t final_routing_table[AXIOM_NODES_NUM])
 {
-    axiom_msg_id_t ret;
+    axiom_err_t ret;
     axiom_node_id_t last_node = 0, master_id = AXIOM_INIT_MASTER_NODE;
     axiom_if_id_t routing_tables[AXIOM_NODES_NUM][AXIOM_NODES_NUM];
 
@@ -119,12 +120,16 @@ axiom_discovery_master(axiom_dev_t *dev,
         EPRINTF("MASTER: axiom_delivery_routing_tables failed");
         return;
     }
+
     IPRINTF(verbose, "MASTER: wait for all delivery reply");
+
     ret = axiom_wait_rt_received(dev, master_id, last_node);
     if (!AXIOM_RET_IS_OK(ret)) {
         EPRINTF("Master: axiom_wait_rt_received failed");
         return;
     }
+
+    IPRINTF(verbose, "MASTER: set routing table");
 
     /* Say to all nodes to set the received routing table */
     ret = axiom_set_routing_table(dev, final_routing_table, 1);
@@ -151,7 +156,7 @@ void
 axiom_discovery_slave(axiom_dev_t *dev,
         axiom_node_id_t first_src, void *first_payload,
         axiom_node_id_t topology[][AXIOM_INTERFACES_NUM],
-        axiom_if_id_t final_routing_table[AXIOM_NODES_NUM], int verbose)
+        axiom_if_id_t final_routing_table[AXIOM_NODES_NUM])
 {
     axiom_node_id_t node_id, max_node_id = 0;
     axiom_msg_id_t ret;
