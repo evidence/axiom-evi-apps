@@ -85,6 +85,8 @@ static void _usage(char *msg, ...) {
     fprintf(stderr, "-g, --gdb NODELIST:PORT\n");
     fprintf(stderr, "    run application using gdb server on port PORT on selected nodes\n");
     fprintf(stderr, "    [default: no run gdb server]\n");
+    fprintf(stderr, "    note that if you specify -g you should specify --no-kill to disable the kill service\n");
+    fprintf(stderr, "    otherwise the gdbserver could be killed\n");
     fprintf(stderr, "-u, --env REGEXP\n");
     fprintf(stderr, "    environmet to run application\n");
     fprintf(stderr, "    [default: PATH|SHELL|AXIOM_.*|EXTRAE_.*]\n");
@@ -141,6 +143,14 @@ static void _usage(char *msg, ...) {
     fprintf(stderr, "             (flags required by ompss@cluster with axiom gasnet conduit)\n");
     fprintf(stderr, "    all    = -r -i -b -c -k\n");
     fprintf(stderr, "             (all services but NOT exit service)\n");
+    fprintf(stderr, "-S, --sched SCHED[:PRIO]\n");
+    fprintf(stderr, "    set the scheduling parameters for the threads; SCHED can be (see 'sched' man page):\n");
+    fprintf(stderr, "    NORMAL = synonymous for OTHER\n");
+    fprintf(stderr, "    OTHER  = use SCHED_OTHER (default if no --sched)\n");
+    fprintf(stderr, "    FIFO   = use SCHED_FIFO\n");
+    fprintf(stderr, "    RR     = use SCHED_RR (default if --sched without parameters; with PRIO equals 1)\n");
+    fprintf(stderr, "    the optional parameter PRIO in a number that has different meanings for different SCHED\n");
+    fprintf(stderr, "    (use 'chrt -m' to see parameter range and 'man sched' for more information)\n");
     fprintf(stderr, "-h, --help\n");
     fprintf(stderr, "    print this help\n");
     fprintf(stderr, "-H, --deephelp\n");
@@ -224,6 +234,7 @@ static struct option long_options[] = {
     {"help", no_argument, 0, 'h'},
     {"deephelp", no_argument, 0, 'H'},
     {"version", no_argument, 0, 'V'},
+    {"sched", optional_argument, 0, 'S'},
     {0, 0, 0, 0}
 };
 
@@ -483,7 +494,7 @@ static axiom_err_t start(axiom_dev_t *dev, int master_port, int slave_port, uint
     axiom_node_id_t node = 0;
     int counter = 0;
     uint64_t nodesbak=nodes;
-    char **gdb_argv;
+    char **gdb_argv=NULL;
     if (gdb_nodes != 0) {
         // TODO: check malloc!
         int sz = 0;
@@ -656,6 +667,10 @@ static void axiom_memory_cleanup() {
     }
 }
 
+/* used for thread scheduling */
+int sched_policy=SCHED_OTHER;
+int sched_priority=0;
+
 /**
  * Main axiom-run entry point.
  * @param argc number of argment
@@ -691,7 +706,7 @@ int main(int argc, char **argv) {
     // command line parsing
     //
 
-    while ((opt = getopt_long(argc, argv, "+rekbcasp:E:T:P:m:x:hHn:N:u:g:i::V", long_options, &long_index)) != -1) {
+    while ((opt = getopt_long(argc, argv, "+rekbcasp:E:T:P:m:x:hHn:N:u:g:i::VS:", long_options, &long_index)) != -1) {
         switch (opt) {
             case 'P':
                 if (strcmp(optarg,"gasnet")==0) {
@@ -739,6 +754,57 @@ int main(int argc, char **argv) {
                     if (mode == 1) {
                         flags |= ALTERNATE_IDENT_FLAG;
                     }
+                }
+                break;
+            case 'S':
+                if (optarg != NULL) {
+                    char *start=optarg;
+                    char *end=NULL;
+                    sched_policy=(int)strtol(start,&end,10);
+                    if (start==end) {
+                        if (strncmp(start,"OTHER",5)==0) {
+                            sched_policy=SCHED_OTHER;
+                            sched_priority=0;
+                            end+=5;
+                        } else 
+                        if (strncmp(start,"NORMAL",6)==0) {
+                            sched_policy=SCHED_OTHER;
+                            sched_priority=0;
+                            end+=6;
+                        } else
+                        if (strncmp(start,"FIFO",4)==0) {
+                            sched_policy=SCHED_FIFO;
+                            sched_priority=1;
+                            end+=4;
+                        } else
+                        if (strncmp(optarg,"RR",2)==0) {
+                            sched_policy=SCHED_RR;
+                            sched_priority=1;
+                            end+=2;
+                        } else {
+                            _usage("error on -S or --sched: unrecognized policy name or value");
+                            exit(-1);
+                        }
+                    }
+                    if (*end!='\0') {
+                        if (*end!=',') {
+                            _usage("error on -S or --sched: comma expected");
+                            exit(-1);
+                        }
+                        char *start=end+1;
+                        sched_priority=strtol(start,&end,10);
+                        if (start==end) {
+                            _usage("error on -S or --sched: unrecognized param value");
+                        }
+                    }
+                    if (*end!='\0') {
+                        _usage("error on -S or --sched: unexpected characers after parameter");
+                        exit(-1);
+                    }
+                } else {
+                    // default if no optarg
+                    sched_policy=SCHED_RR;
+                    sched_priority=1;
                 }
                 break;
             case 'b':
@@ -1141,6 +1207,9 @@ int main(int argc, char **argv) {
             sl_append(&list, "-m");
             snprintf(buf, sizeof (buf), "%d,%d", master_node, master_port);
             sl_append(&list, buf);
+            sl_append(&list,"-S");
+            snprintf(buf, sizeof(buf), "%d,%d", sched_policy, sched_priority);
+            sl_append(&list, buf);
             sl_append(&list, "-u");
             sl_append(&list, ".*");
             sl_append(&list, "-x");
@@ -1170,7 +1239,7 @@ int main(int argc, char **argv) {
                 snprintf(buf, sizeof (buf), "0x%lx:%d", gdb_nodes, gdb_port);
                 sl_append(&list, buf);
             }
-
+            
             sl_append_all(&list, args);
             sl_append(&list, NULL);
 

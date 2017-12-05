@@ -65,6 +65,10 @@ extern "C" {
     extern char *rpcfunc_to_name[];
 #define RPCFUNC_TO_NAME(func) ((func)>=AXRUN_RPC_PING&&(func)<=AXRUN_RPC_PING?rpcfunc_to_name[(func)-AXRUN_RPC_PING]:"unknown")
 
+    /** thread scheduler policy */
+    extern int sched_policy;
+    /** thread scheduler priority */
+    extern int sched_priority;
 
     /**
      * message between master and slave structure

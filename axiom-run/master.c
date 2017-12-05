@@ -523,6 +523,8 @@ static void myexit(int sig) {
 
 /* see axiom-run.h */
 int manage_master_services(axiom_dev_t *_dev, int _services, uint64_t _nodes, int _flags, axiom_app_id_t app_id) {
+    pthread_attr_t attr;
+    struct sched_param param;
     pthread_t threcv, thsend;
     thread_info_t recvinfo, sendinfo;
     sigset_t oldset;
@@ -558,13 +560,36 @@ int manage_master_services(axiom_dev_t *_dev, int _services, uint64_t _nodes, in
 
     block_all_signals(&oldset);
 
-    res = pthread_create(&threcv, NULL, master_receiver, &recvinfo);
+    // scheduling parameters
+    res = pthread_attr_init(&attr);
+    if (res != 0) {
+        elogmsg("pthread_attr_init()");
+        exit(EXIT_FAILURE);
+    }
+    res = pthread_attr_setinheritsched(&attr,PTHREAD_EXPLICIT_SCHED);
+    if (res != 0) {
+        elogmsg("pthread_attr_setinheritsched()");
+        exit(EXIT_FAILURE);
+    }
+    res = pthread_attr_setschedpolicy(&attr,sched_policy);
+    if (res != 0) {
+        elogmsg("pthread_attr_setschedpolicy()");
+        exit(EXIT_FAILURE);
+    }
+    param.__sched_priority=sched_priority;
+    res = pthread_attr_setschedparam(&attr,&param);
+    if (res != 0) {
+        elogmsg("pthread_attr_setschedparam()");
+        exit(EXIT_FAILURE);
+    }
+
+    res = pthread_create(&threcv, &attr, master_receiver, &recvinfo);
     if (res != 0) {
         elogmsg("pthread_create()");
         exit(EXIT_FAILURE);
     }
     if (_services & REDIRECT_SERVICE) {
-        res = pthread_create(&thsend, NULL, master_sender, &sendinfo);
+        res = pthread_create(&thsend, &attr, master_sender, &sendinfo);
         if (res != 0) {
             elogmsg("pthread_create()");
             exit(EXIT_FAILURE);
