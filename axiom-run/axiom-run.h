@@ -69,6 +69,8 @@ extern "C" {
     extern int sched_policy;
     /** thread scheduler priority */
     extern int sched_priority;
+    /** thread scheduler nice value */
+    extern int sched_nice;
 
     /**
      * message between master and slave structure

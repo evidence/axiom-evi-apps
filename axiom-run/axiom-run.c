@@ -670,6 +670,7 @@ static void axiom_memory_cleanup() {
 /* used for thread scheduling */
 int sched_policy=SCHED_OTHER;
 int sched_priority=0;
+int sched_nice=0;
 
 /**
  * Main axiom-run entry point.
@@ -765,21 +766,31 @@ int main(int argc, char **argv) {
                         if (strncmp(start,"OTHER",5)==0) {
                             sched_policy=SCHED_OTHER;
                             sched_priority=0;
+                            sched_nice=0;
                             end+=5;
-                        } else 
-                        if (strncmp(start,"NORMAL",6)==0) {
-                            sched_policy=SCHED_OTHER;
-                            sched_priority=0;
-                            end+=6;
                         } else
                         if (strncmp(start,"FIFO",4)==0) {
                             sched_policy=SCHED_FIFO;
                             sched_priority=1;
+                            sched_nice=0;
                             end+=4;
+                        } else
+                        if (strncmp(start,"IDLE",4)==0) {
+                            sched_policy=SCHED_IDLE;
+                            sched_priority=0;
+                            sched_nice=0;
+                            end+=4;
+                        } else
+                        if (strncmp(start,"BATCH",5)==0) {
+                            sched_policy=SCHED_BATCH;
+                            sched_priority=0;
+                            sched_nice=0;
+                            end+=5;
                         } else
                         if (strncmp(optarg,"RR",2)==0) {
                             sched_policy=SCHED_RR;
                             sched_priority=1;
+                            sched_nice=0;
                             end+=2;
                         } else {
                             _usage("error on -S or --sched: unrecognized policy name or value");
@@ -787,14 +798,29 @@ int main(int argc, char **argv) {
                         }
                     }
                     if (*end!='\0') {
+                        int v;
                         if (*end!=',') {
                             _usage("error on -S or --sched: comma expected");
                             exit(-1);
                         }
                         char *start=end+1;
-                        sched_priority=strtol(start,&end,10);
+                        v=strtol(start,&end,10);
                         if (start==end) {
                             _usage("error on -S or --sched: unrecognized param value");
+                            exit(-1);
+                        }
+                        switch (sched_policy) {
+                            case SCHED_BATCH:
+                            case SCHED_OTHER:
+                                sched_nice=v;
+                                break;
+                            case SCHED_FIFO:
+                            case SCHED_RR:
+                                sched_priority=v;
+                                break;
+                            case SCHED_IDLE:
+                                _usage("error on -S or --sched: extra parameters not needed for IDLE policy");
+                                exit(-1);
                         }
                     }
                     if (*end!='\0') {
@@ -805,6 +831,7 @@ int main(int argc, char **argv) {
                     // default if no optarg
                     sched_policy=SCHED_RR;
                     sched_priority=1;
+                    sched_nice=0;
                 }
                 break;
             case 'b':
