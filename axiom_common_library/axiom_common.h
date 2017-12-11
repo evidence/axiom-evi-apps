@@ -348,6 +348,20 @@ extern "C" {
      */
     pid_t daemonize(char *cwd, char *exec, char **args, char **env, int *pipefd, int newsession, int verbose);
 
+
+    /* */
+    /* */
+    /* scheduling functions */
+    /* */
+    /* */
+
+#include <stdio.h>
+
+    void sch_usage(FILE *out);
+    int sch_decodeopt(char *optarg, void(*_usage)(char *,...));
+    int sch_encodeopt(char *buf, int bufsize);
+    int sch_setsched();
+
 #ifdef __cplusplus
 }
 #endif

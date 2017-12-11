@@ -23,6 +23,8 @@
 
 #include "axiom-run.h"
 
+#include "axiom_common.h"
+
 #ifndef UNIX_PATH_MAX
 // safe default
 #define UNIX_PATH_MAX 108
@@ -59,6 +61,9 @@ static void *send_thread(void *data) {
     char *id = (info->cmd == CMD_SEND_TO_STDOUT) ? "STDOUT" : "STDERR";
 
     zlogmsg(LOG_INFO, LOGZ_SLAVE, "SLAVE: redirect loop for %s started (thread=%ld)", id, (long) pthread_self());
+    if (sch_setsched()!=0) {
+        zlogmsg(LOG_ERROR, LOGZ_SLAVE, "SLAVE: can't set scheduling parameters (thread=%ld) on send_tread()", (long) pthread_self());
+    }
     buffer.header.command = ((thread_info_t*) data)->cmd;
     //
     // main loop
@@ -151,6 +156,9 @@ static void *recv_thread(void *data) {
     fd_set set;
     
     zlogmsg(LOG_INFO, LOGZ_SLAVE, "SLAVE: receiver thread started (thread=%ld)", (long) pthread_self());
+    if (sch_setsched()!=0) {
+        zlogmsg(LOG_ERROR, LOGZ_SLAVE, "SLAVE: can't set scheduling parameters (thread=%ld) on recv_tread()", (long) pthread_self());
+    }
 
     if (info->services & (BARRIER_SERVICE|RPC_SERVICE)) {
         // socket used to inform the child process of barrier synchronization...
@@ -294,6 +302,9 @@ static void *sock_thread(void *data) {
     // read synchornization request from a socket and send the request to the master...
 
     zlogmsg(LOG_INFO, LOGZ_SLAVE, "SLAVE: socket thread started (thread=%ld)", (long) pthread_self());
+    if (sch_setsched()!=0) {
+        zlogmsg(LOG_ERROR, LOGZ_SLAVE, "SLAVE: can't set scheduling parameters (thread=%ld) on sock_tread()", (long) pthread_self());
+    }
 
     // socket used for slave<->child comunnication
     sock = socket(AF_UNIX, SOCK_DGRAM, 0);
@@ -406,7 +417,6 @@ int manage_slave_services(axiom_dev_t *_dev, int _services, int *_fd, pid_t _pid
 {
     thread_info_t forout, forerr, forin, forsock;
     pthread_t thout, therr, thin, thsock;
-    //pthread_attr_t attr;
     sigset_t oldset;
     pid_t resp;
     int res;
@@ -419,32 +429,6 @@ int manage_slave_services(axiom_dev_t *_dev, int _services, int *_fd, pid_t _pid
     forsock.pid = forout.pid = forerr.pid = forin.pid = _pid;
 
     if (_services && _pid > 0) {
-        pthread_attr_t attr;
-        struct sched_param param;
-
-        // scheduling parameters
-        res = pthread_attr_init(&attr);
-        if (res != 0) {
-            elogmsg("pthread_attr_init()");
-            exit(EXIT_FAILURE);
-        }
-        res = pthread_attr_setinheritsched(&attr,PTHREAD_EXPLICIT_SCHED);
-        if (res != 0) {
-            elogmsg("pthread_attr_setinheritsched()");
-            exit(EXIT_FAILURE);
-        }
-        res = pthread_attr_setschedpolicy(&attr,sched_policy);
-        if (res != 0) {
-            elogmsg("pthread_attr_setschedpolicy()");
-            exit(EXIT_FAILURE);
-        }
-        param.__sched_priority=sched_priority;
-        res = pthread_attr_setschedparam(&attr,&param);
-        if (res != 0) {
-            elogmsg("pthread_attr_setschedparam()");
-            exit(EXIT_FAILURE);
-        }
-
         //
         // start service threads...
         //
@@ -461,7 +445,7 @@ int manage_slave_services(axiom_dev_t *_dev, int _services, int *_fd, pid_t _pid
                 elogmsg("eventfd()");
                 exit(EXIT_FAILURE);        
             }
-            res = pthread_create(&thout, &attr, send_thread, &forout);
+            res = pthread_create(&thout, NULL, send_thread, &forout);
             if (res != 0) {
                 elogmsg("pthread_create()");
                 exit(EXIT_FAILURE);
@@ -473,7 +457,7 @@ int manage_slave_services(axiom_dev_t *_dev, int _services, int *_fd, pid_t _pid
                 elogmsg("eventfd()");
                 exit(EXIT_FAILURE);        
             }
-            res = pthread_create(&therr, &attr, send_thread, &forerr);
+            res = pthread_create(&therr, NULL, send_thread, &forerr);
             if (res != 0) {
                 elogmsg("pthread_create()");
                 exit(EXIT_FAILURE);
@@ -488,7 +472,7 @@ int manage_slave_services(axiom_dev_t *_dev, int _services, int *_fd, pid_t _pid
                 elogmsg("eventfd()");
                 exit(EXIT_FAILURE);        
             }            
-            res = pthread_create(&thin, &attr, recv_thread, &forin);
+            res = pthread_create(&thin, NULL, recv_thread, &forin);
             if (res != 0) {
                 elogmsg("pthread_create()");
                 exit(EXIT_FAILURE);
@@ -500,7 +484,7 @@ int manage_slave_services(axiom_dev_t *_dev, int _services, int *_fd, pid_t _pid
                 elogmsg("eventfd()");
                 exit(EXIT_FAILURE);        
             }            
-            res = pthread_create(&thsock, &attr, sock_thread, &forsock);
+            res = pthread_create(&thsock, NULL, sock_thread, &forsock);
             if (res != 0) {
                 elogmsg("pthread_create()");
                 exit(EXIT_FAILURE);

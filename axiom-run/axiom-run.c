@@ -143,14 +143,7 @@ static void _usage(char *msg, ...) {
     fprintf(stderr, "             (flags required by ompss@cluster with axiom gasnet conduit)\n");
     fprintf(stderr, "    all    = -r -i -b -c -k\n");
     fprintf(stderr, "             (all services but NOT exit service)\n");
-    fprintf(stderr, "-S, --sched SCHED[:PRIO]\n");
-    fprintf(stderr, "    set the scheduling parameters for the threads; SCHED can be (see 'sched' man page):\n");
-    fprintf(stderr, "    NORMAL = synonymous for OTHER\n");
-    fprintf(stderr, "    OTHER  = use SCHED_OTHER (default if no --sched)\n");
-    fprintf(stderr, "    FIFO   = use SCHED_FIFO\n");
-    fprintf(stderr, "    RR     = use SCHED_RR (default if --sched without parameters; with PRIO equals 1)\n");
-    fprintf(stderr, "    the optional parameter PRIO in a number that has different meanings for different SCHED\n");
-    fprintf(stderr, "    (use 'chrt -m' to see parameter range and 'man sched' for more information)\n");
+    sch_usage(stderr);
     fprintf(stderr, "-h, --help\n");
     fprintf(stderr, "    print this help\n");
     fprintf(stderr, "-H, --deephelp\n");
@@ -667,11 +660,6 @@ static void axiom_memory_cleanup() {
     }
 }
 
-/* used for thread scheduling */
-int sched_policy=SCHED_OTHER;
-int sched_priority=0;
-int sched_nice=0;
-
 /**
  * Main axiom-run entry point.
  * @param argc number of argment
@@ -758,81 +746,7 @@ int main(int argc, char **argv) {
                 }
                 break;
             case 'S':
-                if (optarg != NULL) {
-                    char *start=optarg;
-                    char *end=NULL;
-                    sched_policy=(int)strtol(start,&end,10);
-                    if (start==end) {
-                        if (strncmp(start,"OTHER",5)==0) {
-                            sched_policy=SCHED_OTHER;
-                            sched_priority=0;
-                            sched_nice=0;
-                            end+=5;
-                        } else
-                        if (strncmp(start,"FIFO",4)==0) {
-                            sched_policy=SCHED_FIFO;
-                            sched_priority=1;
-                            sched_nice=0;
-                            end+=4;
-                        } else
-                        if (strncmp(start,"IDLE",4)==0) {
-                            sched_policy=SCHED_IDLE;
-                            sched_priority=0;
-                            sched_nice=0;
-                            end+=4;
-                        } else
-                        if (strncmp(start,"BATCH",5)==0) {
-                            sched_policy=SCHED_BATCH;
-                            sched_priority=0;
-                            sched_nice=0;
-                            end+=5;
-                        } else
-                        if (strncmp(optarg,"RR",2)==0) {
-                            sched_policy=SCHED_RR;
-                            sched_priority=1;
-                            sched_nice=0;
-                            end+=2;
-                        } else {
-                            _usage("error on -S or --sched: unrecognized policy name or value");
-                            exit(-1);
-                        }
-                    }
-                    if (*end!='\0') {
-                        int v;
-                        if (*end!=',') {
-                            _usage("error on -S or --sched: comma expected");
-                            exit(-1);
-                        }
-                        char *start=end+1;
-                        v=strtol(start,&end,10);
-                        if (start==end) {
-                            _usage("error on -S or --sched: unrecognized param value");
-                            exit(-1);
-                        }
-                        switch (sched_policy) {
-                            case SCHED_BATCH:
-                            case SCHED_OTHER:
-                                sched_nice=v;
-                                break;
-                            case SCHED_FIFO:
-                            case SCHED_RR:
-                                sched_priority=v;
-                                break;
-                            case SCHED_IDLE:
-                                _usage("error on -S or --sched: extra parameters not needed for IDLE policy");
-                                exit(-1);
-                        }
-                    }
-                    if (*end!='\0') {
-                        _usage("error on -S or --sched: unexpected characers after parameter");
-                        exit(-1);
-                    }
-                } else {
-                    // default if no optarg
-                    sched_policy=SCHED_RR;
-                    sched_priority=1;
-                    sched_nice=0;
-                }
+                sch_decodeopt(optarg,_usage);
                 break;
             case 'b':
                 services |= BARRIER_SERVICE;
@@ -1235,7 +1149,7 @@ int main(int argc, char **argv) {
             snprintf(buf, sizeof (buf), "%d,%d", master_node, master_port);
             sl_append(&list, buf);
             sl_append(&list,"-S");
-            snprintf(buf, sizeof(buf), "%d,%d", sched_policy, sched_priority);
+            sch_encodeopt(buf,sizeof(buf));
             sl_append(&list, buf);
             sl_append(&list, "-u");
             sl_append(&list, ".*");
