@@ -22,6 +22,7 @@
 #include <unistd.h>
 #include <getopt.h>
 #include <errno.h>
+#include <stdarg.h>
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -33,6 +34,7 @@
 #include "axiom_nic_api_user.h"
 #include "axiom_nic_init.h"
 #include "axiom-init.h"
+#include "axiom_common.h"
 
 int verbose = 0;
 
@@ -48,11 +50,27 @@ usage(void)
     printf("-n, --nodeid    id     set node id\n");
     printf("-r, --routing   file   load routing table from file (each row (X) must contain the interface to reach node X)\n");
     printf("-s, --save      file   save routing table to file (after discovery)\n");
+    sch_usage(stdout);
     printf("-v, --verbose          verbose output\n");
     printf("-V, --version          print version\n");
     printf("-h, --help             print this help\n\n");
 }
 
+static void
+_usage(char *msg, ...) {
+    char mymsg[256];
+    if (msg != NULL) {
+        va_list list;
+        va_start(list, msg);
+        vsnprintf(mymsg,sizeof(mymsg), msg, list);
+        va_end(list);
+    } else {
+        *mymsg='\0';
+    }
+    _DPRINTF("*ERROR*","%s",mymsg,"");
+    usage();
+    exit(-1);
+}
 
 int
 axiom_rt_from_file(axiom_dev_t *dev, char *filename)
@@ -148,15 +166,19 @@ main(int argc, char **argv)
         {"nodeid", required_argument, 0, 'n'},
         {"routing", required_argument, 0, 'r'},
         {"save", required_argument, 0, 's'},
+        {"sched", optional_argument, 0, 'S'},
         {"verbose", no_argument, 0, 'v'},
         {"version", no_argument, 0, 'V'},
         {"help", no_argument, 0, 'h'},
         {0, 0, 0, 0}
     };
 
-    while ((opt = getopt_long(argc, argv,"hvmn:r:s:V",
+    while ((opt = getopt_long(argc, argv,"hvmn:r:s:VS:",
                          long_options, &long_index )) != -1) {
         switch (opt) {
+            case 'S':
+                sch_decodeopt(optarg,_usage);
+                break;
             case 'm':
                 master = 1;
                 break;
@@ -197,6 +219,11 @@ main(int argc, char **argv)
                 usage();
                 exit(-1);
         }
+    }
+
+    if (sch_setsched()!=0) {
+        EPRINTF("can't set scheduler parameters");
+        exit(-1);
     }
 
     /* avoid the flush of previous packets */
