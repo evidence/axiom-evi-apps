@@ -80,6 +80,7 @@ include/config
 include/linux/version.h
 include/generated
 arch/*/include/generated
+configure-params.mk
 
 # stgit generated dirs
 patches-*

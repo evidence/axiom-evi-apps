@@ -1,5 +1,16 @@
 #!/usr/bin/make -f
 
+ifeq ($(GCC_TARGET),arm64)
+CC:=$(LINARO)/host/usr/bin/aarch64-linux-gnu-gcc
+PATH:=$(LINARO)/host/usr/bin:$(LINARO)/host/bin:$(PATH)
+export CC
+export PATH
+endif
+ifndef ROOTFS
+ROOTFS=/
+export ROOTFS
+endif
+
 DEBIAN_DIR := $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
 
 .PHONY: build build-arch build-indep binary binary-arch binary-indep clean
@@ -19,7 +30,7 @@ binary-arch: make-changelog init-install
 	dh_prep
 	dh_installdirs
 
-	make SYSROOT_INST_DIR=$(DEBIAN_DIR)/tmp TARGET_INST_DIR=$(DEBIAN_DIR)/tmp install
+	make DESTDIR=$(DEBIAN_DIR)/tmp install
 	rm -r -f $(DEBIAN_DIR)/tmp/usr/lib $(DEBIAN_DIR)/tmp/usr/include
 
 	dh_install --fail-missing
@@ -51,7 +62,7 @@ binary-arch: make-changelog init-install
 	dh_gconf
 	dh_icons
 	dh_perl
-#	dh_usrlocal
+	dh_usrlocal
 
 	dh_link
 	dh_installxfonts
@@ -63,7 +74,7 @@ binary-arch: make-changelog init-install
 	dh_strip -paxiom-run --dbg-package=axiom-run-dbg
 	dh_strip -paxiom-ethtap --dbg-package=axiom-ethtap-dbg
 
-	PATH=$(LINARO)/host/usr/bin:$(PATH) dh_makeshlibs
+	dh_makeshlibs
 	dh_shlibdeps  --sysroot=$(ROOTFS)
 	dh_installdeb
 	dh_gencontrol
@@ -74,7 +85,7 @@ binary-indep:
 
 clean: clean-changelog clean-install
 	dh_testdir
-	make clean
+#	make clean
 	dh_clean
 
 #
