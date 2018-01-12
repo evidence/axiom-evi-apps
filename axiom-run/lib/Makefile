@@ -29,7 +29,7 @@ libaxiom_run_api.so.$(VERSION): $(OBJS)
 # installation
 #
 
-install:
+install: all
 	mkdir -p $(DESTDIR)$(PREFIX)/lib/pkgconfig ;\
 	mkdir -p $(DESTDIR)$(PREFIX)/include/axiom ;\
 	for LIB in $(LIBS); do \

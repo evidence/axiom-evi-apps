@@ -174,6 +174,7 @@ endif
 
 # show configurated variables
 
+ifndef NCONF
 $(info Actual configuration:)
 ifeq ($(MODE),aarch64)
 $(info $(ccgreen)MODE$(ccend)=aarch64 (using arm 64bit))
@@ -191,6 +192,7 @@ ifeq ($(MODE),x86)
 $(info $(ccgreen)KVERSION$(ccend)=$(KVERSION) (kernel version for X86))
 endif
 $(info $(ccgreen)DFLAGS$(ccend)=$(DFLAGS) (other cflags for compilation))
+endif
 
 # targets
 
