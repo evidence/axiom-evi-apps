@@ -143,6 +143,10 @@ static void _usage(char *msg, ...) {
     fprintf(stderr, "             (flags required by ompss@cluster with axiom gasnet conduit)\n");
     fprintf(stderr, "    all    = -r -i -b -c -k\n");
     fprintf(stderr, "             (all services but NOT exit service)\n");
+    fprintf(stderr, "-X, --extension EXT_NAME\n");
+    fprintf(stderr, "    add other options to a profile (or already options):\n");
+    fprintf(stderr, "    vimar = add 'GST_.*|OPENCV_.*' to -u\n");
+    fprintf(stderr, "            (required by some Vimar applications)\n");
     sch_usage(stderr);
     fprintf(stderr, "-h, --help\n");
     fprintf(stderr, "    print this help\n");
@@ -223,6 +227,7 @@ static struct option long_options[] = {
     {"allocator", no_argument, 0, 'a'},
     {"no-allocator", no_argument, 0, NO_ALLOCATOR},
     {"profile", required_argument, 0, 'P'},
+    {"extension", required_argument, 0, 'X'},
     {"magic", required_argument, 0, 'x'},
     {"help", no_argument, 0, 'h'},
     {"deephelp", no_argument, 0, 'H'},
@@ -350,6 +355,9 @@ void terminate_thread(pthread_t th, int endfd, char *logheader) {
 #define min(x,y) ((x)<(y)?(x):(y))
 
 extern char **environ;
+
+#define DEFAULT_SPAWN_ENV_REGEXP "PATH|SHELL|AXIOM_.*|EXTRAE_.*"
+
 /**
  * Prepare the environment.
  * 
@@ -374,7 +382,8 @@ static void prepare_env(strlist_t *env, regex_t *re, int slave, int noclose, uin
     int res;
     int sz;
     if (re == NULL) {
-        regcomp(&myre, "PATH|SHELL|AXIOM_.*|EXTRAE_.*", REG_EXTENDED);
+        // paranoia: should never go here
+        regcomp(&myre, DEFAULT_SPAWN_ENV_REGEXP, REG_EXTENDED);
         re = &myre;
     }
     while (*ptr != NULL) {
@@ -660,6 +669,8 @@ static void axiom_memory_cleanup() {
     }
 }
 
+#define MAXENVREGEXP 2048
+
 /**
  * Main axiom-run entry point.
  * @param argc number of argment
@@ -678,8 +689,8 @@ int main(int argc, char **argv) {
     int flags = 0;
     int termmode = SIGTERM;
     int gdb_port = 0;
-    int envreg = 0;
     long magic=0;
+    static char envstr[MAXENVREGEXP]=DEFAULT_SPAWN_ENV_REGEXP;
     regex_t _envreg;
     int num_nodes;
     axiom_err_t err;
@@ -695,7 +706,7 @@ int main(int argc, char **argv) {
     // command line parsing
     //
 
-    while ((opt = getopt_long(argc, argv, "+rekbcasp:E:T:P:m:x:hHn:N:u:g:i::VS:", long_options, &long_index)) != -1) {
+    while ((opt = getopt_long(argc, argv, "+rekbcasp:E:T:P:X:m:x:hHn:N:u:g:i::VS:", long_options, &long_index)) != -1) {
         switch (opt) {
             case 'P':
                 if (strcmp(optarg,"gasnet")==0) {
@@ -703,13 +714,11 @@ int main(int argc, char **argv) {
                     flags |= IDENT_FLAG;
                     flags |= FIRST_ABS_EXIT_FLAG;
                     termmode = SIGQUIT;
-                    envreg = 1;
-                    regcomp(&_envreg, "PATH|SHELL|AXIOM_.*|GASNET_.*|EXTRAE_.*", REG_EXTENDED);
+                    strncpy(envstr, "PATH|SHELL|AXIOM_.*|GASNET_.*|EXTRAE_.*", MAXENVREGEXP);
                 } else if (strcmp(optarg,"ompss")==0) {
                     services |= REDIRECT_SERVICE|EXIT_SERVICE|RPC_SERVICE|KILL_SERVICE|BARRIER_SERVICE|ALLOCATOR_SERVICE;
                     flags |= IDENT_FLAG;
-                    envreg = 1;
-                    regcomp(&_envreg, "PATH|SHELL|AXIOM_.*|GASNET_.*|NX_.*|EXTRAE_.*|LD_LIBRARY_PATH|LD_PRELOAD", REG_EXTENDED);
+                    strncpy(envstr, "PATH|SHELL|AXIOM_.*|GASNET_.*|NX_.*|EXTRAE_.*|LD_LIBRARY_PATH|LD_PRELOAD", MAXENVREGEXP);
                 } else if (strcmp(optarg,"all")==0) {
                     services |= REDIRECT_SERVICE|RPC_SERVICE|BARRIER_SERVICE|ALLOCATOR_SERVICE|KILL_SERVICE;
                     flags |= IDENT_FLAG;
@@ -718,13 +727,16 @@ int main(int argc, char **argv) {
                     exit(-1);
                 }
                 break;
-            case 'u':
-                envreg = 1;
-                res = regcomp(&_envreg, optarg, REG_EXTENDED);
-                if (res != 0) {
-                    _usage("error on env flag: '%s' is not an extended regular expression\n", optarg);
-                    exit(EXIT_FAILURE);
+            case 'X':
+                if (strcmp(optarg,"vimar")==0) {
+                    strncat(envstr, "|GST_.*|OPENCV_.*",MAXENVREGEXP);
+                } else {
+                    _usage("error on -X and/or --extension argument");
+                    exit(-1);
                 }
+                break;
+            case 'u':
+                strncpy(envstr,optarg,MAXENVREGEXP);
                 break;
             case 'r':
                 services |= REDIRECT_SERVICE;
@@ -855,6 +867,13 @@ int main(int argc, char **argv) {
                 _usage("internal error on getopt_long()\n");
                 exit(-1);
         }
+    }
+
+    envstr[MAXENVREGEXP-1]='\0';
+    res=regcomp(&_envreg, envstr, REG_EXTENDED);
+    if (res != 0) {
+        _usage("error on env flag: '%s' is not an extended regular expression\n", envstr);
+        exit(EXIT_FAILURE);
     }
 
     //
@@ -1019,7 +1038,7 @@ int main(int argc, char **argv) {
     //
 
     sl_init(&env);
-    prepare_env(&env, envreg ? &_envreg : NULL, slave, 1, nodes);
+    prepare_env(&env, &_envreg, slave, 1, nodes);
     if (slave && (services & (BARRIER_SERVICE|RPC_SERVICE))) {
         char var[128];
         snprintf(var, sizeof (var), "AXIOM_USOCK=%d", getpid());
