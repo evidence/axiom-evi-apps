@@ -311,8 +311,8 @@ axiom_receive_routing_tables(axiom_dev_t *dev, axiom_node_id_t node_id,
         axiom_if_id_t routing_table[AXIOM_NODES_NUM],
         axiom_node_id_t *max_node_id)
 {
-    axiom_node_id_t src_node_id, node_to_set;
-    axiom_if_id_t if_to_set;
+    axiom_node_id_t src_node_id, node_to_set = 0;
+    axiom_if_id_t if_to_set = 0;
     axiom_routing_cmd_t cmd = 0;
     axiom_node_id_t max_id = 0;
     axiom_err_t ret;
