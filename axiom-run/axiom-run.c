@@ -1080,6 +1080,7 @@ int main(int argc, char **argv) {
         // argument for the exec call
         char *myexec = *(argv + optind);
         char **myargv = argv + optind;
+        sync_t sync;
 
         int rungdb = 0;
         int fd[3];
@@ -1113,7 +1114,7 @@ int main(int argc, char **argv) {
         wait_on_barrier(dev, magic);
         
         // fork/exec the child...
-        pid = daemonize(NULL, myexec, myargv, sl_get(&env), (services & REDIRECT_SERVICE) ? fd : NULL, 0, 1);
+        pid = daemonize(NULL, myexec, myargv, sl_get(&env), (services & REDIRECT_SERVICE) ? fd : NULL, 0, 1, &sync);
         
         // release resources...
         if (rungdb) {
@@ -1123,7 +1124,7 @@ int main(int argc, char **argv) {
 
         // manage services....
         if (services) {
-            exitval = manage_slave_services(dev, services, fd, pid, termmode);
+            exitval = manage_slave_services(dev, services, fd, pid, termmode, &sync);
         }
 
     } else {

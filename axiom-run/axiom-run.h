@@ -166,7 +166,7 @@ extern "C" {
      * @param termmode signal usde to kill child process
      * @return exit status (see 'man 2 waitpid')
      */
-    int manage_slave_services(axiom_dev_t *dev, int services, int *fd, pid_t pid, int termode);
+    int manage_slave_services(axiom_dev_t *dev, int services, int *fd, pid_t pid, int termode, sync_t *sync);
 
     /** node number of the master  */
     extern int master_node;

@@ -12,6 +12,7 @@ LDFLAGS += \
 
 LDLIBS += \
   -lpthread \
+  -lrt \
   $(call PKG-LDLIBS, axiom_init_api axiom_run_api axiom_allocator evi_lmm)
 
 axiom-run: $(OBJS)
