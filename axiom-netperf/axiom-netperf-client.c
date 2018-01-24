@@ -461,7 +461,7 @@ axnetperf_stop(axnetperf_status_t *s)
     tx_raw_th = (double)(s->client.sent_raw_bytes) / nsec2sec(elapsed_nsec);
     tx_pps = (double)(s->client.total_packets) / nsec2sec(elapsed_nsec);
 
-    printf("Throughput bytes/Sec    TX %3.3f (raw %3.3f) Gb/s - "
+    printf("Throughput bit/Sec    TX %3.3f (raw %3.3f) Gbps - "
             "packets/Sec  TX %3.3f Kpps\n",
             tx_th * 8 / AXNP_RES_BYTE_SCALE, tx_raw_th * 8 / AXNP_RES_BYTE_SCALE,
             tx_pps / AXNP_RES_PKT_SCALE);
@@ -490,7 +490,7 @@ axnetperf_stop(axnetperf_status_t *s)
     IPRINTF(verbose, "elapsed_tx_nsec = %" PRIu64 " - elapsed_rx_nsec = %"
             PRIu64, elapsed_nsec, elapsed_rx_nsec);
 
-    printf("Throughput bytes/Sec    RX %3.3f (raw %3.3f) Gb/s - "
+    printf("Throughput bit/Sec    RX %3.3f (raw %3.3f) Gbps - "
             "packets/Sec  RX %3.3f Kpps\n",
             rx_th * 8 / AXNP_RES_BYTE_SCALE, rx_raw_th * 8 / AXNP_RES_BYTE_SCALE,
             rx_pps / AXNP_RES_PKT_SCALE);
