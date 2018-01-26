@@ -362,7 +362,7 @@ int main(int argc, char **argv)
     /* foreground or background */
 
     if (!foreground) {
-        pid_t pid=daemonize(NULL,NULL,NULL,NULL,NULL,1,0);
+        pid_t pid=daemonize(NULL,NULL,NULL,NULL,NULL,1,0,NULL);
         if (pid!=0) exit(EXIT_SUCCESS);
     }
 

@@ -182,7 +182,7 @@ void axiom_spawn_req(axiom_dev_t *dev, axiom_node_id_t src, size_t payload_size,
         sl_append(&info[idx].args, NULL);
         sl_append(&info[idx].env, NULL);
         //
-        daemonize(info[idx].cwd, info[idx].exec, sl_get(&info[idx].args), sl_get(&info[idx].env), NULL, 1, verbose);
+        daemonize(info[idx].cwd, info[idx].exec, sl_get(&info[idx].args), sl_get(&info[idx].env), NULL, 1, verbose, NULL);
         // release the session info to default values...
         sl_free(&info[idx].env);
         sl_free(&info[idx].args);
