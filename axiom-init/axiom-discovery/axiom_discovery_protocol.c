@@ -39,6 +39,18 @@ axiom_codify_routing_mask(axiom_if_id_t if_id)
     return (uint8_t)(1 << if_id);
 }
 
+/* reset local routing table */
+static void
+axiom_routing_init(axiom_dev_t *dev)
+{
+    int node_id;
+
+    for (node_id = 0; node_id < AXIOM_NODES_NUM; node_id++) {
+        axiom_set_routing(dev, node_id, 0);
+    }
+
+}
+
 /* Master and Slave common part of the discover algorithm */
 static int
 discover_phase(axiom_dev_t *dev, axiom_node_id_t *next_id,
@@ -265,9 +277,11 @@ axiom_master_node_discovery(axiom_dev_t *dev,
     axiom_node_id_t next_id = master_id;
     int ret;
 
+    /* init local topolgy structure and routing table */
     axiom_topology_init(topology);
+    axiom_routing_init(dev);
 
-    /* sets master id */
+    /* set master node id */
     axiom_set_node_id(dev, master_id);
 
     ret = discover_phase(dev, &next_id, topology);
@@ -301,8 +315,9 @@ axiom_slave_node_discovery (axiom_dev_t *dev,
         return AXIOM_RET_ERROR;
     }
 
-    /* init local topolgy structure */
+    /* init local topolgy structure and routing table */
     axiom_topology_init(topology);
+    axiom_routing_init(dev);
 
     /* reset id when discovery phase starts */
     *node_id = 0;
