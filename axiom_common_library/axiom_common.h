@@ -328,6 +328,42 @@ extern "C" {
     /* */
     /* */
 
+    /**
+     * Struct used for fork/join process synchornization
+     */
+    typedef struct {
+        int smfd;
+        int *smptr; /** pointer to a inter-process shared memory region */
+    } sync_t ;
+
+    /**
+     * Open and initilize the sync structure.
+     * @param sync The sync structure.
+     * @return 0 success, -1 error
+     */
+    int sync_open(sync_t *sync);
+
+    /**
+     * Wait (active) for a wake up.
+     * @param sync The sync structure.
+     * @return 0 success, -1 error
+     */
+    int sync_wait(sync_t *sync);
+
+    /**
+     * Wakeup a wainting process on sync_wait().
+     * @param sync The sync structure.
+     * @return 0 success, -1 error
+     */
+    int sync_wakeup(sync_t *sync);
+
+    /**
+     * Release sync_t resources.
+     * @param sync The sync structure.
+     * @return 0 success, -1 error
+     */
+    int sync_close(sync_t *sync);
+
 #include <sys/types.h>
 
     /**
@@ -344,9 +380,10 @@ extern "C" {
      * @param pipefd A pointer to int[3] for pipes (can be null).
      * @param newsession if true create a new session/new process group
      * @param verbose Emit log message of "what are you doing?"
+     * @param sync If not NULL uninitilized sync_t that shall be used for process syncronization
      * @return The pid of the new process or 0 in the new process (only if exec is NULL this is returned into the new process) or -1 in case of failure (set errno).
      */
-    pid_t daemonize(char *cwd, char *exec, char **args, char **env, int *pipefd, int newsession, int verbose);
+    pid_t daemonize(char *cwd, char *exec, char **args, char **env, int *pipefd, int newsession, int verbose, sync_t *sync);
 
 
     /* */

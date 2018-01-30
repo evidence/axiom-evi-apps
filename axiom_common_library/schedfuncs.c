@@ -48,8 +48,9 @@ void sch_usage(FILE *out)
     fprintf(out, "      IDLE         has no optional parameters\n");
     fprintf(out, "      BATCH, OTHER P_0 is the nice value (default is 0)\n");
     fprintf(out, "      FIFO, RR     P_0 is the priority value (default is 1)\n");
-    fprintf(out, "      DEADLINE     P_0 is the mean execution time, P_1 is the deadline, P_2 is the periond (using ms)\n");
+    fprintf(out, "      DEADLINE     P_0 is the mean execution time, P_1 is the deadline, P_2 is the periond\n");
     fprintf(out, "    (for P_0 use 'chrt -m' to see parameter range and 'man sched' for more information)\n");
+    fprintf(out, "    (for DEADLINE you should use 'u' for usec, 'm' for msec and none for sec)\n");
 }
 
 /* used for thread scheduling */
@@ -70,7 +71,7 @@ int sch_encodeopt(char *buf, int bufsize) {
             snprintf(buf,bufsize,"%d,%lu",sched_policy,sched_p0);
             break;
         case SCHED_DEADLINE:
-            snprintf(buf,bufsize,"%d,%lu,%lu,%lu",sched_policy,sched_p0,sched_p1,sched_p2);
+            snprintf(buf,bufsize,"%d,%luu,%luu,%luu",sched_policy,sched_p0,sched_p1,sched_p2);
             break;
     }
     return 0;
@@ -79,6 +80,7 @@ int sch_encodeopt(char *buf, int bufsize) {
 int sch_decodeopt(char *optarg, void(*_usage)(const char *, ...))
 {
     if (optarg != NULL) {
+        int per = 0;
         char *start, *end;
         start = optarg;
         end = NULL;
@@ -90,7 +92,7 @@ int sch_decodeopt(char *optarg, void(*_usage)(const char *, ...))
             } else
                 if (strncmp(start, "DEADLINE", 8) == 0) {
                 sched_policy = SCHED_DEADLINE;
-                end += 6;
+                end += 8;
             } else
                 if (strncmp(start, "FIFO", 4) == 0) {
                 sched_policy = SCHED_FIFO;
@@ -117,7 +119,7 @@ int sch_decodeopt(char *optarg, void(*_usage)(const char *, ...))
         if (*end != '\0') {
             if (*end != ',') {
                 if (_usage!=NULL) {
-                    _usage( "'%s': comma expected\n", optarg);
+                    _usage( "'%s': comma expected (1)\n", optarg);
                 }
                 return -1;
             }
@@ -125,10 +127,19 @@ int sch_decodeopt(char *optarg, void(*_usage)(const char *, ...))
             sched_p0 = strtol(start, &end, 10);
             if (start == end) {
                 if (_usage!=NULL) {
-                    _usage("'%s': unrecognized param value\n", optarg);
+                    _usage("'%s': unrecognized param value (1)\n", optarg);
                 }
                 return -1;
             }
+           if (sched_policy==SCHED_DEADLINE) {
+               if (*end=='u'||*end=='m'||*end=='%') {
+                   if (*end=='m') sched_p0*=1000;
+                   if (*end=='%') per=1;
+                   end++;
+               } else {
+                   sched_p0*=1000*1000;
+               }
+           }
         } else {
             // DEFAULT VALUES
             switch (sched_policy) {
@@ -144,17 +155,17 @@ int sch_decodeopt(char *optarg, void(*_usage)(const char *, ...))
                     break;
                 case SCHED_DEADLINE:
                     // dummy :-(
-                    // msec
-                    sched_p0 = 100;
-                    sched_p1 = 995;
-                    sched_p2 = 1000;
+                    // usec
+                    sched_p0 = 100*1000;
+                    sched_p1 = 995*1000;
+                    sched_p2 = 1000*1000;
                     break;
             }
         }
         if (*end != '\0') {
             if (*end != ',') {
                 if (_usage!=NULL) {
-                    _usage("'%s': comma expected", optarg);
+                    _usage("'%s': comma expected (2)", optarg);
                 }
                 return -1;
             }
@@ -162,15 +173,23 @@ int sch_decodeopt(char *optarg, void(*_usage)(const char *, ...))
             sched_p1 = strtol(start, &end, 10);
             if (start == end) {
                 if (_usage!=NULL) {
-                    _usage("'%s': unrecognized param value", optarg);
+                    _usage("'%s': unrecognized param value (2)", optarg);
                 }
                 return -1;
+            }
+            if (sched_policy==SCHED_DEADLINE) {
+                if (*end=='u'||*end=='m') {
+                    if (*end=='m') sched_p1*=1000;
+                    end++;
+                } else {
+                    sched_p1*=1000*1000;
+                }
             }
         }
         if (*end != '\0') {
             if (*end != ',') {
                 if (_usage!=NULL) {
-                    _usage("'%s': comma expected", optarg);
+                    _usage("'%s': comma expected (3)", optarg);
                 }
                 return -1;
             }
@@ -178,9 +197,17 @@ int sch_decodeopt(char *optarg, void(*_usage)(const char *, ...))
             sched_p2 = strtol(start, &end, 10);
             if (start == end) {
                 if (_usage!=NULL) {
-                    _usage("'%s': unrecognized param value", optarg);
+                    _usage("'%s': unrecognized param value (3)", optarg);
                 }
                 return -1;
+            }
+            if (sched_policy==SCHED_DEADLINE) {
+                if (*end=='u'||*end=='m') {
+                    if (*end=='m') sched_p2*=1000;
+                    end++;
+                } else {
+                    sched_p2*=1000*1000;
+                }
             }
         }
         if (*end != '\0') {
@@ -188,6 +215,10 @@ int sch_decodeopt(char *optarg, void(*_usage)(const char *, ...))
                 _usage("'%s': unexpected chars after parameter", optarg);
             }
             return -1;
+        }
+
+        if (per) {
+            sched_p0=sched_p0*sched_p2/100;
         }
     }
     return 0;
@@ -212,9 +243,9 @@ int sch_setsched()
             attr.sched_priority = sched_p0;
             break;
         case SCHED_DEADLINE:
-            attr.sched_runtime = sched_p0 * 1000 * 1000;
-            attr.sched_deadline = sched_p1 * 1000 * 1000;
-            attr.sched_period = sched_p2 * 1000 * 1000;
+            attr.sched_runtime = sched_p0 * 1000;
+            attr.sched_deadline = sched_p1 * 1000;
+            attr.sched_period = sched_p2 * 1000;
             break;
     }
     return sched_setattr(mytid, &attr, 0);

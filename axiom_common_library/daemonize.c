@@ -14,6 +14,7 @@
 
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/mman.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <errno.h>
@@ -38,8 +39,50 @@ extern char **environ;
   }\
 }
 
+int sync_open(sync_t *sync) {
+    //sync->smfd=shm_open("/pippo",O_CREAT|O_RDWR,S_IRWXU);
+    //if (sync->smfd<0) {
+    //    elogmsg("shm_open() (errno=%d %s)!", errno, strerror(errno));
+    //    return -1;
+    //}
+    sync->smptr=mmap(NULL,sizeof(int),PROT_READ|PROT_WRITE,MAP_SHARED|MAP_ANONYMOUS,0,0);
+    if (sync->smptr==MAP_FAILED) {
+        close(sync->smfd);
+        elogmsg("mmap() (errno=%d %s)!", errno, strerror(errno));
+        return -1;
+    }
+    *sync->smptr=0;
+    return 0;
+}
+
+int sync_wakeup(sync_t *sync) {
+    __sync_fetch_and_add(sync->smptr,1);
+    return 0;
+}
+
+int sync_wait(sync_t *sync) {
+    while (__sync_fetch_and_add(sync->smptr,0)==0) {
+        usleep(100);
+    }
+    return 0;
+}
+
+int sync_close(sync_t *sync) {
+    int ret=0;
+    if (munmap(sync->smptr,sizeof(int))!=0) {
+        elogmsg("munmap() (errno=%d %s)!", errno, strerror(errno));
+    }
+    //if (close(sync->smfd)!=0) {
+    //    elogmsg("close() (errno=%d %s)!", errno, strerror(errno));
+    //}
+    //if (shm_unlink("/pippo")!=0) {
+    //    elogmsg("shm_unlink() (errno=%d %s)!", errno, strerror(errno));
+    //}
+    return ret;
+}
+
 /* See axiom_common.h */
-pid_t daemonize(char *cwd, char *exec, char **args, char **env, int *pipefd, int newsession, int verbose) {
+pid_t daemonize(char *cwd, char *exec, char **args, char **env, int *pipefd, int newsession, int verbose, sync_t *sync) {
 
     pid_t pid;
     char *oldcwd;
@@ -111,6 +154,14 @@ pid_t daemonize(char *cwd, char *exec, char **args, char **env, int *pipefd, int
         }
     }
 
+    if (sync!=NULL) {
+        if (sync_open(sync)!=0) {
+            CLEAN();
+            return -1;
+        }
+        if (verbose) logmsg(LOG_INFO, "daemonize() - sync ready...");
+    }
+
     pid = fork();
     if (pid != 0) {
         //
@@ -170,6 +221,15 @@ pid_t daemonize(char *cwd, char *exec, char **args, char **env, int *pipefd, int
             dup2(fd, STDERR_FILENO);
         } else {
             logmsg(LOG_WARN, "daemonize() - open of new stderr failed! (errno=%d %s)!", errno, strerror(errno));
+        }
+        //
+        // sync
+        //
+        if (sync!=NULL) {
+            logmsg(LOG_INFO,"daemonize() - on forked process, waiting for sync....");
+            sync_wait(sync);
+            logmsg(LOG_INFO,"daemonize() - on forked process, sync done!");
+            sync_close(sync);
         }
         //
         // close unused file descriptor

@@ -30,6 +30,9 @@
 #define UNIX_PATH_MAX 108
 #endif
 
+static volatile int started_threads=0;
+static volatile int tostart_threads=0;
+
 typedef struct {
     axiom_dev_t *dev;
     uint64_t services;
@@ -65,6 +68,9 @@ static void *send_thread(void *data) {
         zlogmsg(LOG_ERROR, LOGZ_SLAVE, "SLAVE: can't set scheduling parameters (thread=%ld) on send_tread()", (long) pthread_self());
     }
     buffer.header.command = ((thread_info_t*) data)->cmd;
+
+    __sync_fetch_and_add(&started_threads,1);
+
     //
     // main loop
     // (exit in case of read failure)
@@ -160,6 +166,8 @@ static void *recv_thread(void *data) {
         zlogmsg(LOG_ERROR, LOGZ_SLAVE, "SLAVE: can't set scheduling parameters (thread=%ld) on recv_tread()", (long) pthread_self());
     }
 
+    __sync_fetch_and_add(&started_threads,1);
+    
     if (info->services & (BARRIER_SERVICE|RPC_SERVICE)) {
         // socket used to inform the child process of barrier synchronization...
         sock = socket(AF_UNIX, SOCK_DGRAM, 0);
@@ -306,6 +314,8 @@ static void *sock_thread(void *data) {
         zlogmsg(LOG_ERROR, LOGZ_SLAVE, "SLAVE: can't set scheduling parameters (thread=%ld) on sock_tread()", (long) pthread_self());
     }
 
+    __sync_fetch_and_add(&started_threads,1);
+
     // socket used for slave<->child comunnication
     sock = socket(AF_UNIX, SOCK_DGRAM, 0);
     if (sock == -1) {
@@ -412,8 +422,9 @@ static void myexit(int sig) {
     }
     exit(EXIT_SUCCESS);
 }
+
 /* see axiom-run.h */
-int manage_slave_services(axiom_dev_t *_dev, int _services, int *_fd, pid_t _pid, int termmode)
+int manage_slave_services(axiom_dev_t *_dev, int _services, int *_fd, pid_t _pid, int termmode, sync_t *sync)
 {
     thread_info_t forout, forerr, forin, forsock;
     pthread_t thout, therr, thin, thsock;
@@ -445,6 +456,7 @@ int manage_slave_services(axiom_dev_t *_dev, int _services, int *_fd, pid_t _pid
                 elogmsg("eventfd()");
                 exit(EXIT_FAILURE);        
             }
+            tostart_threads++;
             res = pthread_create(&thout, NULL, send_thread, &forout);
             if (res != 0) {
                 elogmsg("pthread_create()");
@@ -457,6 +469,7 @@ int manage_slave_services(axiom_dev_t *_dev, int _services, int *_fd, pid_t _pid
                 elogmsg("eventfd()");
                 exit(EXIT_FAILURE);        
             }
+            tostart_threads++;
             res = pthread_create(&therr, NULL, send_thread, &forerr);
             if (res != 0) {
                 elogmsg("pthread_create()");
@@ -471,7 +484,8 @@ int manage_slave_services(axiom_dev_t *_dev, int _services, int *_fd, pid_t _pid
             if (forin.endfd==-1) {
                 elogmsg("eventfd()");
                 exit(EXIT_FAILURE);        
-            }            
+            }
+            tostart_threads++;
             res = pthread_create(&thin, NULL, recv_thread, &forin);
             if (res != 0) {
                 elogmsg("pthread_create()");
@@ -483,7 +497,8 @@ int manage_slave_services(axiom_dev_t *_dev, int _services, int *_fd, pid_t _pid
             if (forsock.endfd==-1) {
                 elogmsg("eventfd()");
                 exit(EXIT_FAILURE);        
-            }            
+            }
+            tostart_threads++;
             res = pthread_create(&thsock, NULL, sock_thread, &forsock);
             if (res != 0) {
                 elogmsg("pthread_create()");
@@ -498,6 +513,24 @@ int manage_slave_services(axiom_dev_t *_dev, int _services, int *_fd, pid_t _pid
     }
 
     if (_pid > 0) {
+
+        // waiting slave threads...
+        zlogmsg(LOG_DEBUG, LOGZ_SLAVE, "SLAVE: waiting slave threads...");
+        while (__sync_fetch_and_add(&started_threads,0)!=tostart_threads) {
+            usleep(100);
+        }
+
+        // set scheduling for main thread
+        // can not be done before! (SCHED_DEADLINE is not heritable)
+        if (sch_setsched()!=0) {
+            zlogmsg(LOG_ERROR, LOGZ_SLAVE, "SLAVE: can't set scheduling parameters (thread=%ld) on sock_tread()", (long) pthread_self());
+        }
+
+        // wake up forked process...
+        zlogmsg(LOG_DEBUG, LOGZ_SLAVE, "SLAVE: wakeing up child process...");
+        sync_wakeup(sync);
+        sync_close(sync);
+
         //
         // wait termination of child process...
         //)

@@ -22,7 +22,7 @@
 int axrun_sync(const unsigned barrier_id, int verbose) {
     struct sockaddr_un myaddr, itsaddr;
     int sock, res;
-    int line;
+    int line=__LINE__;
     char *s;
     pid_t ppid;
     header_t header;

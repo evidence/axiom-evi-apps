@@ -1,5 +1,5 @@
 
-.PHONY: clean build install distclean
+.PHONY: clean build install distclean mrproper
 
 include ../../common.mk
 
@@ -16,5 +16,5 @@ libtest.a: $(OBJS)
 
 install: build
 
-clean distclean:
+clean distclean mrproper:
 	rm -f $(OBJS) $(DEPS) libtest.a

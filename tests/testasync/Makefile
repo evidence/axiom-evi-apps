@@ -1,5 +1,5 @@
 
-.PHONY: clean build install distclean install-real
+.PHONY: clean build install distclean mrproper
 
 include ../../common.mk
 
@@ -17,25 +17,9 @@ LDLIBS += $(call PKG-LDLIBS, axiom_user_api axiom_run_api axiom_allocator evi_lm
 
 build: $(OBJS) $(EXECS)
 
-clean distclean:
+clean distclean mrproper:
 	rm -f $(OBJS) $(DEPS) $(EXECS)
 
 install: build
-	$(FAKEROOT) $(MAKE) install-real
-
-ifeq ($(FS),x86)
-ifdef FROMDEB
-SUDO :=
-else
-SUDO := sudo
-endif
-else
-SUDO :=
-endif
-
-# default if not overwritten
-DESTDIR:=$(TARGET_DIR)
-
-install-real:
-	$(SUDO) mkdir -p $(DESTDIR)/opt/axiom/tests_axiom
-	$(SUDO) cp $(EXECS) $(DESTDIR)/opt/axiom/tests_axiom
+	mkdir -p $(DESTDIR)/opt/axiom/tests_axiom
+	cp $(EXECS) $(DESTDIR)/opt/axiom/tests_axiom

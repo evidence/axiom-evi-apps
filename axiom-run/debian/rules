@@ -2,6 +2,10 @@
 
 DEBIAN_DIR := $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
 
+ifndef LINARO
+$(warning LINARO environment variable not found)
+endif
+
 .PHONY: build build-arch build-indep binary binary-arch binary-indep clean
 
 build: build-arch build-indep
@@ -19,7 +23,7 @@ binary-arch: make-changelog init-install
 	dh_prep
 	dh_installdirs
 
-	make FROMDEB=1 SYSROOT_INST_DIR=$(DEBIAN_DIR)/tmp TARGET_INST_DIR=$(DEBIAN_DIR)/tmp install
+	make DESTDIR=$(DEBIAN_DIR)/tmp install
 	rm -f $(DEBIAN_DIR)/tmp/usr/bin/axiom-run
 
 	dh_install --list-missing
@@ -70,7 +74,7 @@ binary-indep:
 
 clean: clean-changelog
 	dh_testdir
-	make clean
+#	make clean
 	dh_clean
 
 #

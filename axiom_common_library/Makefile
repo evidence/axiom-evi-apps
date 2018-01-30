@@ -8,9 +8,9 @@ DEPS=$(SRCS:.c=.d)
 
 CLEANFILES = $(LIBS) $(OBJS) $(DEPS)
 
-CFLAGS += -fPIC -Wall $(DFLAGS) -I$(AXIOM_APPS_INCLUDE)
+CFLAGS += -fPIC -Wall $(DFLAGS) -I$(AXIOM_APPS_INCLUDE_DIR)
 
-.PHONY: all libs clean install
+.PHONY: all libs clean disteclean mrproper install
 
 all: libs
 
@@ -24,5 +24,5 @@ libaxiom_common.a: $(OBJS)
 
 install: libs
 
-clean distclean:
+clean distclean mrproper:
 	rm -rf $(CLEANFILES)

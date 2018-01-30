@@ -22,7 +22,7 @@
 int axrun_rpc(int function, size_t send_size, void *send_payload, size_t *recv_size, void *recv_payload, int verbose) {
     struct sockaddr_un myaddr, itsaddr;
     int sock, res;
-    int line;
+    int line = __LINE__;
     char *s;
     int ppid;
     struct msghdr msg;
