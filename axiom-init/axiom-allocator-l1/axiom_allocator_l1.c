@@ -1,7 +1,7 @@
 /*!
  * \file axiom_allocator_l1.c
  *
- * \version     v0.15
+ * \version     v1.0
  * \date        2016-09-23
  *
  * This file contains the functions used in the axiom-init deamon to handle

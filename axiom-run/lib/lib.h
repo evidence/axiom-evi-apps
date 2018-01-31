@@ -1,7 +1,7 @@
 /*!
  * \file lib.h
  *
- * \version     v0.15
+ * \version     v1.0
  *
  * Copyright (C) 2016, Evidence Srl.
  * Terms of use are as specified in COPYING

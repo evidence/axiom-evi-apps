@@ -1,7 +1,7 @@
 /*!
  * \file testasync.c
  *
- * \version     v0.15
+ * \version     v1.0
  *
  * A simple program to test axiom async rdma message exchange
  *

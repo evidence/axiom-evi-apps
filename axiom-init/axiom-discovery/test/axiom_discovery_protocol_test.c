@@ -1,7 +1,7 @@
 /*!
  * \file axiom_discovery_protocol_test.c
  *
- * \version     v0.15
+ * \version     v1.0
  *
  * This file tests the AXIOM discovery-routing implementation
  *

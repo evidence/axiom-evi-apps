@@ -1,7 +1,7 @@
 /*!
  * \file myrpc.c
  *
- * \version     v0.15
+ * \version     v1.0
  *
  * A simple program to test axiom-run RPC
  *

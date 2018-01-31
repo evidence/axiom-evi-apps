@@ -1,7 +1,7 @@
 /*!
  * \file slave.c
  *
- * \version     v0.15
+ * \version     v1.0
  *
  * Manage services for axion-run slave process.
  *
