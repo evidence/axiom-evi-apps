@@ -299,7 +299,7 @@ axiom_slave_node_discovery (axiom_dev_t *dev,
 {
     axiom_node_id_t next_id;
     axiom_discovery_cmd_t msg_cmd ;
-    axiom_node_id_t src_node_id, dst_node_id;
+    axiom_node_id_t src_node_id, dst_node_id = 0;
     axiom_if_id_t src_interface, data_src_if, data_dst_if;
     int i, j, w;
     uint8_t b_mask;

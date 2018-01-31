@@ -35,16 +35,16 @@ print_topology(axiom_node_id_t tpl[][AXIOM_INTERFACES_NUM],
     int i, j;
 
     printf("\n************* Master computed Topology *******************\n");
-    printf("Node");
+    printf("%-10s ", "Node");
     for (i = 0; i < AXIOM_INTERFACES_NUM; i++) {
-        printf("\tIF%d", i);
+        printf("%+5s%d ", "IF", i);
     }
     printf("\n");
 
     for (i = 0; i < last_node; i++) {
-        printf("%d", i);
+        printf("%-10u ", i);
         for (j = 0; j < AXIOM_INTERFACES_NUM; j++) {
-            printf("\t%u", tpl[i][j]);
+            printf("%+6u ", tpl[i][j]);
         }
         printf("\n");
     }
@@ -58,23 +58,23 @@ print_routing_table(axiom_dev_t *dev, axiom_node_id_t node_id,
     uint8_t enabled_mask;
 
     printf("\nNode %d ROUTING TABLE\n", node_id);
-    printf("Node");
+    printf("%-10s ", "Node");
     for (i = 0; i < AXIOM_INTERFACES_NUM; i++) {
-        printf("\tIF%d", i);
+        printf("%+5s%d ", "IF", i);
     }
     printf("\n");
 
     for (i = 0; i <= max_node_id; i++) {
-        printf("%d", i);
+        printf("%-10u ", i);
 
         axiom_get_routing(dev, i, &enabled_mask);
 
         for (j = 0; j < AXIOM_INTERFACES_NUM; j++) {
             if (enabled_mask & (uint8_t)(1 << j)) {
-                printf("\t1");
+                printf("%+5s  ", "1");
             }
             else {
-                printf("\t0");
+                printf("%+5s  ", "0");
             }
         }
         printf("\n");
