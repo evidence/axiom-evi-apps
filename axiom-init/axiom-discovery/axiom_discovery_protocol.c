@@ -16,6 +16,7 @@
 
 #include "axiom_discovery_protocol.h"
 #include "axiom_nic_discovery.h"
+#include "axiom_nic_init.h"
 
 extern int verbose;
 
@@ -328,10 +329,13 @@ axiom_slave_node_discovery (axiom_dev_t *dev,
             *node_id, src_node_id);
 
     /* Immediately update local routing table: src_node_id node is connceted to
-     * local 'src_interface' interface */
-    //axiom_get_routing(dev, src_node_id, &b_mask);
+     * local 'src_interface' interface
+     * We can reach all nodes <= src_node_id through src_interface
+     */
     b_mask = axiom_codify_routing_mask(src_interface);
-    axiom_set_routing(dev, src_node_id, b_mask);
+    for (i = AXIOM_INIT_MASTER_NODE; i <= src_node_id; i++) {
+        axiom_set_routing(dev, i, b_mask);
+    }
 
     /* If I have a node _id */
     if (*node_id != 0) {
