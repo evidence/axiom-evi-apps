@@ -1,7 +1,7 @@
 /*!
  * \file common.h
  *
- * \version     v1.0
+ * \version     v1.1
  *
  * Used internally by axiom-run.
  *

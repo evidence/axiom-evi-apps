@@ -1,7 +1,7 @@
 /*!
  * \file dump.c
  *
- * \version     v1.0
+ * \version     v1.1
  *
  * Copyright (C) 2016, Evidence Srl.
  * Terms of use are as specified in COPYING

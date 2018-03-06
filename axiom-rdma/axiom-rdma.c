@@ -1,7 +1,7 @@
 /*!
  * \file axiom-rdma.c
  *
- * \version     v1.0
+ * \version     v1.1
  * \date        2016-07-07
  *
  * This file contains the implementation of axiom-rdma application.

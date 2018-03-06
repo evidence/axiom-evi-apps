@@ -1,7 +1,7 @@
 /*!
  * \file strlist.c
  *
- * \version     v1.0
+ * \version     v1.1
  *
  * String list manipulation functions.
  *

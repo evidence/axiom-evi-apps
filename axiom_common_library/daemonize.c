@@ -1,7 +1,7 @@
 /*!
  * \file daemonize.c
  *
- * \version     v1.0
+ * \version     v1.1
  *
  * The daemonize() utility function.
  *

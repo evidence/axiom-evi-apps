@@ -1,7 +1,7 @@
 /*!
  * \file axiom_net.h
  *
- * \version     v1.0
+ * \version     v1.1
  *
  * This file contains the defines and prototypes of axiom discovery phase.
  *

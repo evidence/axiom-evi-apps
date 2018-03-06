@@ -1,7 +1,7 @@
 /*!
  * \file axiom-netperf-client.c
  *
- * \version     v1.0
+ * \version     v1.1
  * \date        2017-09-05
  *
  * This file contains the implementation of axiom-netperf client application.

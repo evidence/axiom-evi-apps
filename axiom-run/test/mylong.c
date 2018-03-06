@@ -1,7 +1,7 @@
 /*!
  * \file mylong.c
  *
- * \version     v1.0
+ * \version     v1.1
  *
  * A simple program to test axiom long message exchange
  *

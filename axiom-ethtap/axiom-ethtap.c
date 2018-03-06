@@ -1,7 +1,7 @@
 /*!
  * \file axiom-ethtap.c
  *
- * \version     v1.0
+ * \version     v1.1
  *
  * Tun/Tap user space program to utilize the tun/tap linux network device on top of Axiom driver.
  *
