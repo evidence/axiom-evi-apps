@@ -1,7 +1,7 @@
 /*!
  * \file axiom-run.c
  *
- * \version     v1.1
+ * \version     v1.2
  *
  * The axiom-run application.
  *

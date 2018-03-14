@@ -1,7 +1,7 @@
 /*!
  * \file axiom-ping.c
  *
- * \version     v1.1
+ * \version     v1.2
  * \date        2016-05-03
  *
  * This file contains the implementation of axiom-ping application.

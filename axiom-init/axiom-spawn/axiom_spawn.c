@@ -1,7 +1,7 @@
 /*!
  * \file axiom_spawn.c
  *
- * \version     v1.1
+ * \version     v1.2
  *
  * Axiom process spawn (i.e. exec) service management.
  *

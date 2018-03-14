@@ -1,7 +1,7 @@
 /*!
  * \file execvpe.c
  *
- * \version     v1.1
+ * \version     v1.2
  *
  * Copyright (C) 2016, Evidence Srl.
  * Terms of use are as specified in COPYING

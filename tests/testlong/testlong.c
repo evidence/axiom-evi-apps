@@ -1,7 +1,7 @@
 /*!
  * \file testlong.c
  *
- * \version     v1.1
+ * \version     v1.2
  *
  * A simple program to test axiom rdma/long message exchange
  *

@@ -1,7 +1,7 @@
 /*!
  * \file axiom_simulator.h
  *
- * \version     v1.1
+ * \version     v1.2
  *
  * This file contains AXIOM node network simulation structure and prototypes
  *

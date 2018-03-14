@@ -1,7 +1,7 @@
 /*!
  * \file axiom_run_api.h
  *
- * \version     v1.1
+ * \version     v1.2
  *
  * axiom-run services.
  * API for applications using service provided by axiom-run application.
