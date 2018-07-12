@@ -1,5 +1,6 @@
-                            AXIOM NIC applications
-===============================================================================
+# AXIOM NIC applications
+
+----
 
 **NOTE: This repository is a submodule of axiom-evi project. Please clone the
 master project from https://github.com/evidence/axiom-evi**
